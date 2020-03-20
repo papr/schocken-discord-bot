@@ -19,5 +19,7 @@ class DeckelManagement:
         self._deckel_stand = {S: 0 for S in spieler_reihenfolge}
         self._würfe = {S: [] for S in spieler_reihenfolge}
 
-    def wurf(self, spieler: str, wurf: T.Tuple[int, int, int]):
+    def wurf(
+        self, spieler: str, wurf: T.Tuple[int, int, int], aus_der_hand: bool = True
+    ):
         pass
