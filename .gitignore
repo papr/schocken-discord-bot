@@ -132,3 +132,6 @@ pip-selfcheck.json
 .history
 
 # End of https://www.gitignore.io/api/python,virtualenv,visualstudiocode
+
+### VIM swap files ###
+*.swp

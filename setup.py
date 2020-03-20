@@ -12,4 +12,5 @@ setup(
     package_dir={"": package_dir},
     packages=find_namespace_packages(where=package_dir),
     zip_safe=False,
+    install_requires=["python-statemachine"],
 )
