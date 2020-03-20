@@ -1,7 +1,7 @@
 from random import randrange
-from wuerfel import werfen
-from spieler import Spieler
-from deckel_management import DeckelManagement
+from .wuerfel import werfen
+from .spieler import Spieler
+from .deckel_management import DeckelManagement
 
 
 class SchockenRunde:
