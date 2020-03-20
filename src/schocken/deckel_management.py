@@ -50,6 +50,11 @@ class RundenDeckelManagement:
         self._aktueller_spieler_idx = 0
         self._würfe = {S.name: [] for S in spieler}
 
+    def weiter(self):
+        if self._aktueller_spieler_idx + 1 >= len(self._spieler):
+            raise ValueError("Runde ist bereits vorbei!")
+        self._aktueller_spieler_idx += 1
+
     def wurf(
         self,
         spieler_name: str,
