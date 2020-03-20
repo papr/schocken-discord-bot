@@ -2,16 +2,17 @@ import os
 
 import discord
 from dotenv import load_dotenv
-from schocken_state_machine
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
+TOKEN = os.getenv("DISCORD_TOKEN")
+GUILD = os.getenv("DISCORD_GUILD")
 
-class SchockenBot():
+
+class SchockenBot:
     def __init__(self):
-        self.valid_commands = ["start",
-                              ]
+        self.valid_commands = [
+            "start",
+        ]
         self.schock_channel_name = "programmierbereich"
         self.game_running = False
 
@@ -33,13 +34,15 @@ class SchockenBot():
         if msg_text.startswith("!"):
             command = msg_text.split("!")[-1]
             if not self.check_if_valid_command(command):
-                await self.print_to_channel(channel, 
-                                      "Kein zulässiger Befehl: !"+command)
+                await self.print_to_channel(
+                    channel, "Kein zulässiger Befehl: !" + command
+                )
             else:
                 if command == "start":
                     if self.game_running:
-                        await self.print_to_channel(channel,
-                                                    "Es läuft bereits eine Runde")
+                        await self.print_to_channel(
+                            channel, "Es läuft bereits eine Runde"
+                        )
                     else:
                         game = SchockenRunde()
                 else:
@@ -51,16 +54,14 @@ class SchockenBot():
     async def print_to_channel(self, channel, text):
         return await channel.send(text)
 
-class SchockenRunde()
-    def __init__(self, initial_state):
-        self.current_state = initial_state
-        self.current_state.run()
 
 # @client.event
 # async def on_ready():
 
 client = discord.Client()
 bot = SchockenBot()
+
+
 @client.event
 async def on_message(message):
     channel = message.channel
@@ -68,5 +69,6 @@ async def on_message(message):
         await bot.parse_input(message)
 
     return
+
 
 client.run(TOKEN)
