@@ -1,16 +1,7 @@
 from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
-<<<<<<< Updated upstream
 from .deckel_management import DeckelManagement, FalscherSpieler
-=======
-from .deckel_management import DeckelManagement
-from .deckel_management import RundenDeckelManagement
-
-
-class ZuOftGeworfen(ValueError):
-    pass
->>>>>>> Stashed changes
 
 
 class FalscheAktion(ValueError):
