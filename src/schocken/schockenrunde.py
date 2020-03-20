@@ -22,7 +22,8 @@ class SchockenRunde():
             einwurf = werfen1W()[0]
             spieler.einwurf = einwurf
             self.spieler_liste.append(Spieler(name))
-            return spieler.name + " hatt mit einer " + str(einwurf) + " eingeworfen"
+            # find smallest 
+            return spieler.name + " hat mit einer " + str(einwurf) + " eingeworfen"
         elif command == "weiter":
             einwuerfe = [sp.einwurf for sp in self.spieler_liste]
             # implement logic if more than one player has the same lowest roll
@@ -52,35 +53,3 @@ class SchockenRunde():
         else:
             self.message = message
             return self.run()
-
-if __name__ == "__main__":
-    class Author():
-        def __init__(self, name):
-            self.name = name
-
-    class Einwurf():
-        def __init__(self, name):
-            self.content = "!einwerfen"
-            self.author = Author(name)
-
-    class Wurf():
-        def __init__(self, name):
-            self.content = "!würfeln"
-            self.author = Author(name)
-
-    class Weiter():
-        def __init__(self, name):
-            self.content = "!weiter"
-            self.author = Author(name)
-
-    runde = SchockenRunde()
-    message = Einwurf("Andre")
-    print(runde.parse_input(message))
-    message = Einwurf("Jasmin")
-    print(runde.parse_input(message))
-    message = Weiter("Andre") 
-    print(runde.parse_input(message))
-    message = Wurf("Andre")
-    print(runde.parse_input(message))
-    message = Wurf("Jasmin")
-    print(runde.parse_input(message))
