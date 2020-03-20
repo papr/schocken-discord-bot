@@ -1,13 +1,16 @@
 from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
-from .deckel_management import DeckelManagement
+from .deckel_management import DeckelManagement, FalscherSpieler
 
+
+class FalscheAktion(ValueError):
+    pass
 
 class SchockenRunde:
     def __init__(self):
         self.state = "Einwerfen"
-        self.zulaessige_befehle = {"Einwerfen": ["einwerfen"], "Runde": ["würfeln"]}
+        self.zulaessige_befehle = {"Einwerfen": ["einwerfen", "würfeln", "stechen"], "Runde": ["würfeln"]}
         self.spieler_liste = []
         self.aktiver_spieler = 0
 
@@ -21,6 +24,9 @@ class SchockenRunde:
         command = self.message.content.split("!")[-1]
         if command == "einwerfen":
             name = self.message.author.name
+            schon_eingeworfen = [sp.name for sp in self.spieler_liste] 
+            if name in schon_eingeworfen:
+                raise FalscherSpieler
             spieler = Spieler(name)
             einwurf = werfen(1)[0]
             spieler.einwurf = einwurf
@@ -37,6 +43,7 @@ class SchockenRunde:
             min_roll_players = [
                 sp for sp in self.spieler_liste if sp.einwurf == min_roll
             ]
+            self._stecher_liste = min_roll_players
             count = len(min_roll_players)
 
             # output
@@ -45,7 +52,8 @@ class SchockenRunde:
                 return out_str.rstrip("\n")
             elif count == 1:
                 out_str += f"{self.spieler_liste[0].name} hat den niedrigsten Wurf. `!würfeln` um das Spiel zu beginnen."
-                self.zulaessige_befehle.update({"einwerfen": ["einwerfen", "würfeln"]})
+                self._wuerfeln_possible = True
+                self._stechen_possible = False
             elif count > 1:
                 out_str += (
                     ", ".join([pl.name for pl in min_roll_players])
@@ -54,16 +62,26 @@ class SchockenRunde:
                     + " geworfen\n"
                 )
                 out_str += "`!stechen` um zu stechen"
-                self.zulaessige_befehle.update({"einwerfen": ["einwerfen", "stechen"]})
+                self._wuerfeln_possible = False 
+                self._stechen_possible = True 
             return out_str
 
-        elif command == "weiter":
-            einwuerfe = [sp.einwurf for sp in self.spieler_liste]
-            # implement logic if more than one player has the same lowest roll
-            self.spieler_liste = sorted(self.spieler_liste, key=lambda sp: sp.einwurf)
-            print("Erster Mitspieler: " + self.spieler_liste[0].name)
-            self.state = "Runde"
-            return "Now in state: " + str(self.state)
+        elif command == "würfeln":
+            out_str = ""
+            if not self._wuerfeln_possible:
+                raise FalscheAktion
+            first_player_name = self.spieler_liste[0].name
+            if self.message.author.name != first_player_name:
+                raise FalscherSpieler
+
+        elif command == "stechen":
+            if not self._stechen_possible:
+                raise FalscheAktion
+            if self.message.author.name not in self._stecher_liste:
+                raise FalscherSpieler                      
+
+    def stechen(self):
+        pass
 
     def wuerfeln(self):
         command = self.message.content.split("!")[-1]
