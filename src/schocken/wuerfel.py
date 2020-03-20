@@ -1,11 +1,18 @@
 from random import randint
 
 
-def werfen3W():
-    return sorted(tuple(randint(1, 6) for _ in range(3)), reverse=True)
+class ZuVieleWuerfel(Exception):
+    pass
 
-def werfen2W():
-    return sorted(tuple(randint(1, 6) for _ in range(2)), reverse=True)
 
-def werfen1W():
-    return tuple(randint(1, 6) for _ in range(1))
+def werfen(anzahl):
+    if anzahl == 3:
+        return sorted(tuple(randint(1, 6) for _ in range(3)), reverse=True)
+    elif anzahl == 2:
+        return sorted(tuple(randint(1, 6) for _ in range(2)), reverse=True)
+    elif anzahl == 1:
+        return tuple(randint(1, 6) for _ in range(1))
+    else:
+        raise ZuVieleWuerfel(
+            f"Es dürfen maximal 3 Würfel geworfen werden! Nicht {anzahl}."
+        )
