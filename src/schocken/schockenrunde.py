@@ -1,7 +1,16 @@
 from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
+<<<<<<< Updated upstream
 from .deckel_management import DeckelManagement, FalscherSpieler
+=======
+from .deckel_management import DeckelManagement
+from .deckel_management import RundenDeckelManagement
+
+
+class ZuOftGeworfen(ValueError):
+    pass
+>>>>>>> Stashed changes
 
 
 class FalscheAktion(ValueError):
@@ -84,17 +93,27 @@ class SchockenRunde:
         pass
 
     def wuerfeln(self):
+        RDM = RundenDeckelManagement(15, self.spieler_liste)
         command = self.message.content.split("!")[-1]
+        zuruecklegen = []
         if command == "würfeln":
-            name = self.message.author.name
-            spieler = Spieler(name)
-            print("wurf..")
-            wurf = werfen(3)
-            print("wurf" + str(wurf))
-            return str(wurf)
+            # erster Wurf (immer 3 Würfel)
+            if self.aktiver_spieler.anzahl_wuerfe == 0:
+                augen = werfen(3)
+                RDM.wurf(self.aktiver_spieler.name, augen, aus_der_hand=True)
+                self.aktiver_spieler.anzahl_wuerfe += 1
+                print(str(RDM.num_maximale_würfe))
+                return str(augen)
+            else:
+                raise ZuOftGeworfen(
+                    f"Maximal 3 Würfe sind erlaubt, {self.aktiver_spieler.name}!"
+                )
+
         elif command == "weiter":
             self.message = message
             return self.run()
+
+    def beiseite_legen(self, augen)
 
     def parse_input(self, message):
         command = message.content.split("!")[-1]
