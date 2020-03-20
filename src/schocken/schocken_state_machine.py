@@ -49,9 +49,7 @@ class SchockenRunde():
         if command == "würfeln":
             name = self.message.author.name
             spieler = Spieler(name)
-            print("wurf..")
             wurf = werfen3W()
-            print("wurf" + str(wurf))
             return str(wurf) 
         elif command == "weiter":
             self.message = message
