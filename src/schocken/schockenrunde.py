@@ -1,11 +1,16 @@
 from random import randrange
-from wuerfel import werfen3W, werfen2W, werfen1W
+from wuerfel import werfen
 from spieler import Spieler
+from deckel_management import DeckelManagement
 
-class SchockenRunde():
+
+class SchockenRunde:
     def __init__(self):
         self.state = "Einwerfen"
-        self.zulaessige_befehle = {"Einwerfen": ["einwerfen", "weiter"], "Runde": ["würfeln"]}
+        self.zulaessige_befehle = {
+            "Einwerfen": ["einwerfen", "weiter"],
+            "Runde": ["würfeln"],
+        }
         self.spieler_liste = []
 
     def run(self):
@@ -19,15 +24,15 @@ class SchockenRunde():
         if command == "einwerfen":
             name = self.message.author.name
             spieler = Spieler(name)
-            einwurf = werfen1W()[0]
+            einwurf = werfen(1)[0]
             spieler.einwurf = einwurf
             self.spieler_liste.append(Spieler(name))
-            # find smallest 
+            # find smallest
             return spieler.name + " hat mit einer " + str(einwurf) + " eingeworfen"
         elif command == "weiter":
             einwuerfe = [sp.einwurf for sp in self.spieler_liste]
             # implement logic if more than one player has the same lowest roll
-            self.spieler_liste = sorted(self.spieler_liste, key=lambda sp:sp.einwurf)
+            self.spieler_liste = sorted(self.spieler_liste, key=lambda sp: sp.einwurf)
             print("Erster Mitspieler: " + self.spieler_liste[0].name)
             self.state = "Runde"
             return "Now in state: " + str(self.state)
@@ -38,9 +43,9 @@ class SchockenRunde():
             name = self.message.author.name
             spieler = Spieler(name)
             print("wurf..")
-            wurf = werfen3W()
+            wurf = werfen(3)
             print("wurf" + str(wurf))
-            return str(wurf) 
+            return str(wurf)
         elif command == "weiter":
             self.message = message
             return self.run()
@@ -48,8 +53,14 @@ class SchockenRunde():
     def parse_input(self, message):
         command = message.content.split("!")[-1]
         if command not in self.zulaessige_befehle[self.state]:
-            return "Kein zulässiger Befehl während "+self.state+": "+command+\
-                    "\n Zulässige Befehle: "+", ".join(self.zulaessige_befehle[self.state])
+            return (
+                "Kein zulässiger Befehl während "
+                + self.state
+                + ": "
+                + command
+                + "\n Zulässige Befehle: "
+                + ", ".join(self.zulaessige_befehle[self.state])
+            )
         else:
             self.message = message
             return self.run()
