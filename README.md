@@ -2,7 +2,6 @@
 
 ## Valid Commands
 
-
 - Command - **State** - Comment
 - `!start` - **start** - startet eine neue Runde Schocken
 - `!einwerfen` - **vorrunde** - Zeitfenster in dem alle einwerfen
