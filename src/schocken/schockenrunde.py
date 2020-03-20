@@ -7,10 +7,14 @@ from .deckel_management import DeckelManagement, FalscherSpieler
 class FalscheAktion(ValueError):
     pass
 
+
 class SchockenRunde:
     def __init__(self):
         self.state = "Einwerfen"
-        self.zulaessige_befehle = {"Einwerfen": ["einwerfen", "würfeln", "stechen"], "Runde": ["würfeln"]}
+        self.zulaessige_befehle = {
+            "Einwerfen": ["einwerfen", "würfeln", "stechen"],
+            "Runde": ["würfeln"],
+        }
         self.spieler_liste = []
         self.aktiver_spieler = 0
 
@@ -24,7 +28,7 @@ class SchockenRunde:
         command = self.message.content.split("!")[-1]
         if command == "einwerfen":
             name = self.message.author.name
-            schon_eingeworfen = [sp.name for sp in self.spieler_liste] 
+            schon_eingeworfen = [sp.name for sp in self.spieler_liste]
             if name in schon_eingeworfen:
                 raise FalscherSpieler
             spieler = Spieler(name)
@@ -62,8 +66,8 @@ class SchockenRunde:
                     + " geworfen\n"
                 )
                 out_str += "`!stechen` um zu stechen"
-                self._wuerfeln_possible = False 
-                self._stechen_possible = True 
+                self._wuerfeln_possible = False
+                self._stechen_possible = True
             return out_str
 
         elif command == "würfeln":
@@ -78,7 +82,7 @@ class SchockenRunde:
             if not self._stechen_possible:
                 raise FalscheAktion
             if self.message.author.name not in self._stecher_liste:
-                raise FalscherSpieler                      
+                raise FalscherSpieler
 
     def stechen(self):
         pass
@@ -103,8 +107,6 @@ class SchockenRunde:
         elif command == "weiter":
             self.message = message
             return self.run()
-
-    def beiseite_legen(self, augen)
 
     def parse_input(self, message):
         command = message.content.split("!")[-1]
