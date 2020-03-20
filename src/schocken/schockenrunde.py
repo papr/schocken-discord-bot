@@ -53,16 +53,6 @@ class SchockenRunde():
             self.message = message
             return self.run()
 
-class Halbzeit():
-    def __init__(self, num):
-        self.num = num
-        self.anzahl_deckel = 15
-    
-    # def runde(self, spieler):
-
-
-
-
 if __name__ == "__main__":
     class Author():
         def __init__(self, name):
