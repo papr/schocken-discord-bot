@@ -1,19 +1,6 @@
-# from statemachine import StateMachine, State
-
-# class SchockenRunde(StateMachine):
-    # einwerfen = State("Einwerfen", initial = True)
-    # halbzeit = State("Halbzeit")
-    # # runde = State("Runde")
-
-    # eingeworfen = einwerfen.to(halbzeit)
-
-    # def on_enter_halbzeit(self):
-        
-
-# game = SchockenRunde()
-# SchockenRunde.current_state
 from random import randrange
 from wuerfel import werfen3W, werfen2W, werfen1W
+from spieler import Spieler
 
 class SchockenRunde():
     def __init__(self):
@@ -74,32 +61,28 @@ class Halbzeit():
     # def runde(self, spieler):
 
 
-class Spieler():
-    def __init__(self, name):
-        self.name = name
-        self.deckel = 0
-        self.einwurf = 0
 
-class Author():
-    def __init__(self, name):
-        self.name = name
-
-class Einwurf():
-    def __init__(self, name):
-        self.content = "!einwerfen"
-        self.author = Author(name)
-
-class Wurf():
-    def __init__(self, name):
-        self.content = "!würfeln"
-        self.author = Author(name)
-
-class Weiter():
-    def __init__(self, name):
-        self.content = "!weiter"
-        self.author = Author(name)
 
 if __name__ == "__main__":
+    class Author():
+        def __init__(self, name):
+            self.name = name
+
+    class Einwurf():
+        def __init__(self, name):
+            self.content = "!einwerfen"
+            self.author = Author(name)
+
+    class Wurf():
+        def __init__(self, name):
+            self.content = "!würfeln"
+            self.author = Author(name)
+
+    class Weiter():
+        def __init__(self, name):
+            self.content = "!weiter"
+            self.author = Author(name)
+
     runde = SchockenRunde()
     message = Einwurf("Andre")
     print(runde.parse_input(message))
