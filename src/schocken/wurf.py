@@ -39,9 +39,12 @@ Straße = Wurf("Straße", _straßen)
 Straße.deckel_wert = property(lambda self: 2)
 
 
-class Gemüse(Wurf):
-    tiefes = auto()
-    hohes = auto()
+class Gemüse:
+    def __init__(self, augen):
+        self._value_ = augen
+
+    def __repr__(self):
+        return f"<{type(self).__name__}: {self._value_}>"
 
     @property
     def deckel_wert(self):
@@ -57,7 +60,21 @@ def welcher_wurf(würfel_augen: T.Tuple[int, int, int], aus_der_hand: bool = Tru
         if würfel_augen in [wurf._value_ for wurf in wurf_klasse]:
             return wurf_klasse(würfel_augen)
     else:
-        if würfel_augen[0] < 5:
-            return Gemüse.tiefes
-        else:
-            return Gemüse.hohes
+        return Gemüse(würfel_augen)
+
+
+def priorität(wurf):
+    prio = None
+    if isinstance(wurf, Gemüse) or wurf is SonderWurf.Herrenwurf:
+        prio = wurf._value_[0] / 10 + wurf._value_[1] / 100 + wurf._value_[2] / 1000
+    elif wurf is SonderWurf.Jule:
+        prio = 4.07
+    elif wurf in Schock:
+        prio = 4 + wurf.deckel_wert / 100
+    elif wurf in General:
+        prio = 3 + wurf._value_[0] / 10
+    elif wurf in Straße:
+        prio = 2 + wurf._value_[0] / 10
+    else:
+        raise ValueError(f"Unhandled wurf {wurf}")
+    return prio
