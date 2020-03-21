@@ -17,20 +17,25 @@ class SchockenRunde:
         self._wuerfeln_possible = False
         self._stechen_possible = False
 
+    def _spieler_from_name(self, name):
+        # TODO hier weiter
+        for sp in self.spieler_liste:
+            print(sp.name)
+            print(name)
+            print(sp.name == name)
+        return [sp for sp in self.spieler_liste if sp.name == name][0]
 
-    def run(self):
+    def perform_action(self, player, command):
         if self.state == "Einwerfen":
-            return self.einwerfen()
+            return self.einwerfen(player, command)
         elif self.state == "Runde":
             return self.wuerfeln()
         elif self.state == "Stechen":
-            return self.stechen()
+            return self.stechen(player, command)
 
-    def einwerfen(self):
-        raise NotImplementedError
-        command = self.message.content.split("!")[-1]
+    def einwerfen(self, player, command):
         if command == "einwerfen":
-            name = self.message.author.name
+            name = player
             schon_eingeworfen = [sp.name for sp in self.spieler_liste]
             if name in schon_eingeworfen:
                 raise FalscherSpieler
@@ -38,7 +43,6 @@ class SchockenRunde:
             # einwurf = werfen(1)[0]
             einwurf = 1
             spieler.einwurf = einwurf
-            spieler.msg_author = self.message.author
             self.spieler_liste.append(spieler)
             # find smallest roll
             roll_list = [sp.einwurf for sp in self.spieler_liste]
@@ -49,38 +53,30 @@ class SchockenRunde:
                 self.spieler_liste[min_index:] + self.spieler_liste[:min_index]
             )
             # check if lowest roll only occurs once
-            min_roll_players = [
+            self.stecher_liste = [
                 sp for sp in self.spieler_liste if sp.einwurf == min_roll
             ]
-            self._stecher_liste = [pl for pl in min_roll_players]
-            count = len(min_roll_players)
+            stecher_count = len(self.stecher_liste)
 
             # output
-            out_str = f"{spieler.name} hat mit einer {self.emoji_names[einwurf]} eingeworfen.\n"
-            if len(self.spieler_liste) == 1:
-                return out_str.rstrip("\n")
-            elif count == 1:
-                out_str += f"{self.spieler_liste[0].name} hat den niedrigsten Wurf. `!würfeln` um das Spiel zu beginnen."
-                self._wuerfeln_possible = True
-                self._stechen_possible = False
-            elif count > 1:
-                out_str += (
-                    ", ".join([pl.name for pl in min_roll_players])
-                    + " haben eine "
-                    + str(min_roll)
-                    + " geworfen\n"
-                )
-                out_str += "`!stechen` um zu stechen"
-                self._wuerfeln_possible = False
-                self._stechen_possible = True
-            return out_str
+            self.last_roll = einwurf
+            # out_str = f"{spieler.name} hat mit einer {self.emoji_names[einwurf]} eingeworfen.\n"
+            if len(self.spieler_liste) > 1:
+                if stecher_count == 1:
+                    # out_str += f"{self.spieler_liste[0].name} hat den niedrigsten Wurf. `!würfeln` um das Spiel zu beginnen."
+                    self._wuerfeln_possible = True
+                    self._stechen_possible = False
+
+                elif stecher_count > 1:
+                    self._wuerfeln_possible = False
+                    self._stechen_possible = True
 
         elif command == "würfeln":
             out_str = ""
             if not self._wuerfeln_possible:
                 raise FalscheAktion
             first_player_name = self.spieler_liste[0].name
-            if self.message.author.name != first_player_name:
+            if player != first_player_name:
                 raise FalscherSpieler
 
             raise NotImplementedError
@@ -88,37 +84,35 @@ class SchockenRunde:
         elif command == "stechen":
             if not self._stechen_possible:
                 raise FalscheAktion
-            stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
-            if stecher not in self._stecher_liste:
+            if player not in [st.name for st in self.stecher_liste]:
                 raise FalscherSpieler
             self._gestochen_liste= []
-            self.state = "Stechen"
-            self.stechen()
+            self.stechen(player, command)
 
-    def stechen(self):
+    def stechen(self, player, command):
         # no stiche yet, init how many stiche are expected:
         if len(self._gestochen_liste) == 0:
-            self._init_stecher_count = len(self._stecher_liste)
+            self._init_stecher_count = len(self.stecher_liste)
 
-        stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
         # check if already gestochen
-        if stecher in self._gestochen_liste:
+        if player in [pl.name for pl in self._gestochen_liste]:
             raise FalscherSpieler
         # check if eligible
-        if stecher not in self._stecher_liste:
+        if player not in [st.name for st in self.stecher_liste]:
             raise FalscherSpieler
 
         stich = werfen(1)[0]
+        stecher = self._spieler_from_name(player)
         stecher.stich = stich
-        self._gestochen_liste.append(stecher)
-        self._stecher_liste = [st for st in self._stecher_liste if st not in self._gestochen_liste]
 
-        out_str = f"{stecher.name} hat "
+        self._gestochen_liste.append(self._spieler_from_name(stecher))
+        self.stecher_liste = [st for st in self.stecher_liste if st not in self._gestochen_liste]
+
         # if all stiche done, determine starting player or stech again
         if len(self._gestochen_liste) == self._init_stecher_count:
             stich_list = [st.stich for st in self._gestochen_liste]
             min_stich = min(stich_list)
-            self._stecher_liste = [
+            self.stecher_liste = [
                 sp for sp in self._gestochen_liste if sp.stich == min_stich
             ]
 
@@ -152,17 +146,17 @@ class SchockenRunde:
             self.message = message
             return self.run()
 
-    def parse_input(self, message):
-        command = message.content.split("!")[-1]
-        if command not in self.zulaessige_befehle[self.state]:
-            return (
-                "Kein zulässiger Befehl während "
-                + self.state
-                + ": "
-                + command
-                + "\n Zulässige Befehle: "
-                + ", ".join(self.zulaessige_befehle[self.state])
-            )
-        else:
-            self.message = message
-            return self.run()
+    # def parse_input(self, message):
+        # command = message.content.split("!")[-1]
+        # if command not in self.zulaessige_befehle[self.state]:
+            # return (
+                # "Kein zulässiger Befehl während "
+                # + self.state
+                # + ": "
+                # + command
+                # + "\n Zulässige Befehle: "
+                # + ", ".join(self.zulaessige_befehle[self.state])
+            # )
+        # else:
+            # self.message = message
+            # return self.run()
