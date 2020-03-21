@@ -3,3 +3,6 @@ class FalscheAktion(ValueError):
 
 class FalscherServer(ValueError):
     pass
+
+class SpielLäuft(ValueError):
+    pass
