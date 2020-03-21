@@ -1,19 +1,21 @@
 from .exceptions import SpielLäuft, SpielLäuftNicht
 from .schockenrunde import SchockenRunde
+from discord.utils import get
 
 class SchockenBot:
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
+        # bot will never run on any other server than Café A
+        self.guild = client.guilds[0]
         self.schock_channel_name = "programmierbereich"
         self.valid_guild_name = "Café A"
         self.game_running = False
         self._start_game_cmd = "schocken"
         self._end_game_cmd = "beenden"
 
-    def init_emojis(self, guild):
-        self.emojis = guild.emojis
-
     def emoji_by_name(self, name):
-        return [em for em in self.emojis if em.name==name][0]
+        emoji = get(message.guild.emojis, name = name)
+        return str(emoji)
 
     async def parse_input(self, message):
         # all messages from channels with read permissions are read
