@@ -4,8 +4,8 @@ import discord
 from discord.utils import get
 from dotenv import load_dotenv
 
-from exceptions import FalscherServer
-from schocken_bot import SchockenBot
+from schocken.exceptions import FalscherServer
+from schocken.schocken_bot import SchockenBot
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -27,9 +27,7 @@ async def on_ready():
 # when a message is read by the bot
 @client.event
 async def on_message(message):
-    channel = message.channel
-    if bot.correct_channel(channel.name):
-        await bot.parse_input(message)
+    await bot.parse_input(message)
 
     return
 
