@@ -2,11 +2,7 @@ from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
 from .deckel_management import DeckelManagement, FalscherSpieler
-
-
-class FalscheAktion(ValueError):
-    pass
-
+from .exceptions import FalscheAktion
 
 class SchockenRunde:
     def __init__(self):
@@ -19,6 +15,8 @@ class SchockenRunde:
         }
         self.spieler_liste = []
         self.aktiver_spieler = 0
+        self._wuerfeln_possible = False
+        self._stechen_possible = False
 
     def run(self):
         if self.state == "Einwerfen":
@@ -39,6 +37,7 @@ class SchockenRunde:
             # einwurf = werfen(1)[0]
             einwurf = 1
             spieler.einwurf = einwurf
+            spieler.msg_author = self.message.author
             self.spieler_liste.append(spieler)
             # find smallest roll
             roll_list = [sp.einwurf for sp in self.spieler_liste]
@@ -83,26 +82,37 @@ class SchockenRunde:
             if self.message.author.name != first_player_name:
                 raise FalscherSpieler
 
+            raise NotImplementedError
+
         elif command == "stechen":
             if not self._stechen_possible:
                 raise FalscheAktion
             stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
             if stecher not in self._stecher_liste:
                 raise FalscherSpieler
-            self._schon_gestochen = []
+            self._gestochen_liste= []
             self.state = "Stechen"
             self.stechen()
 
     def stechen(self):
-        pass
-        # stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
-        # self._schon_gestochen.append(self._stecher)
-        # noch_nicht_gestochen = [st for st in self._stecher_liste if st not in self._schon_gestochen]
-        # print(noch_nicht_gestochen)
-        # print(self._schon_gestochen)
-        # if len(self._schon_gestochen) == 1:
-            # if 
-            # out_str = f"{stecher} hat gestochen
+        stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
+        # check if already gestochen
+        if stecher in self._gestochen_liste:
+            raise FalscherSpieler
+        # check if eligible
+        if stecher not in self._stecher_liste:
+            raise FalscherSpieler
+
+        stich = werfen(1)[0]
+        stecher.stich = stich
+        self._gestochen_liste.append(stecher)
+        self._stecher_liste = [st for st in self._stecher_liste if st not in self._gestochen_liste]
+        # check if all stechers
+    
+        
+        if len(self._schon_gestochen) == 1:
+            if 
+            out_str = f"{stecher} hat mit  gestochen"
 
     def wuerfeln(self):
         RDM = RundenDeckelManagement(15, self.spieler_liste)

@@ -1,0 +1,2 @@
+class FalscheAktion(ValueError):
+    pass
