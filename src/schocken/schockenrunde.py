@@ -2,7 +2,7 @@ from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
 from .deckel_management import DeckelManagement, FalscherSpieler
-from .exceptions import FalscheAktion
+from .exceptions import FalscheAktion, FalscherBefehl
 
 class SchockenRunde:
     def __init__(self):
@@ -11,7 +11,6 @@ class SchockenRunde:
             "Einwerfen": ["einwerfen", "würfeln", "stechen"],
             "Runde": ["würfeln"],
             "Stechen": ["stechen"],
-
         }
         self.spieler_liste = []
         self.aktiver_spieler = 0
@@ -28,6 +27,7 @@ class SchockenRunde:
             return self.stechen()
 
     def einwerfen(self):
+        raise NotImplementedError
         command = self.message.content.split("!")[-1]
         if command == "einwerfen":
             name = self.message.author.name

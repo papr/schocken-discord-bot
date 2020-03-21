@@ -1,4 +1,4 @@
-from .exceptions import SpielLäuft, SpielLäuftNicht
+from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherBefehl
 from .schockenrunde import SchockenRunde
 from discord.utils import get
 
@@ -33,13 +33,13 @@ class SchockenBot:
                         else:
                             self.game_running = True
                             self.game = SchockenRunde()
-                            msg = f"{message.author.name} will Schocken. `!einwerfen` zum mitmachen"
+                            msg = f"{message.author.mention} will Schocken. `!einwerfen` zum mitmachen"
                             await self.print_to_channel(channel, msg)
 
                     elif command == self._end_game_cmd:
                         if self.game_running:
-                            msg = f"{message.author.name} hat das Spiel beendet"
-                            self.game_running = False()
+                            msg = f"{message.author.mention} hat das Spiel beendet"
+                            self.game_running = False
                             await self.print_to_channel(channel, msg)
                         else:
                             raise SpielLäuftNicht 
@@ -48,6 +48,8 @@ class SchockenBot:
                             raise SpielLäuftNicht
                         #actual game
                         #TODO Fix Logic
+                        if command not in self.game.zulaessige_befehle[self.game.state]:
+                            raise FalscherSpielBefehl
                         output = self.game.parse_input(message)
                         await self.print_to_channel(channel,output)
 
@@ -58,6 +60,11 @@ class SchockenBot:
                 except SpielLäuftNicht:
                     msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
                     await self.print_to_channel(channel,msg)
+
+                except FalscherSpielBefehl:
+                    zulaessig = self.game.zulaessige_befehle[self.game.state]
+                    msg = "`Das geht leider nicht. Zulässig sind\n"
+                    msg+= "\n".join(["`"+bef+"`" for bef in zulaessig])
             else:
                 pass
 

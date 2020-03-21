@@ -4,6 +4,9 @@ class FalscheAktion(ValueError):
 class FalscherServer(ValueError):
     pass
 
+class FalscherSpielBefehl(ValueError):
+    pass
+
 class SpielLäuft(ValueError):
     pass
 
