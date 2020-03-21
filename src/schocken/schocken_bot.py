@@ -1,4 +1,4 @@
-from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherBefehl
+from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherSpielBefehl
 from .schockenrunde import SchockenRunde
 from discord.utils import get
 
@@ -7,7 +7,7 @@ class SchockenBot:
         self.client = client
         # bot will never run on any other server than Café A
         self.guild = client.guilds[0]
-        self.schock_channel_name = "programmierbereich"
+        self.schock_channel_name = "schocktresen"
         self.valid_guild_name = "Café A"
         self.game_running = False
         self._start_game_cmd = "schocken"

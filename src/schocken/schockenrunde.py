@@ -2,7 +2,7 @@ from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
 from .deckel_management import DeckelManagement, FalscherSpieler
-from .exceptions import FalscheAktion, FalscherBefehl
+from .exceptions import FalscheAktion, FalscherSpielBefehl
 
 class SchockenRunde:
     def __init__(self):
