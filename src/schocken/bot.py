@@ -57,8 +57,12 @@ class SchockenBot:
                     else:
                         game = SchockenRunde()
                 else:
-                    output = game.parse_input(message)
-                    await self.print_to_channel(output)
+                    try:
+                        output = game.parse_input(message)
+                        await self.print_to_channel(output)
+                    except NotImplementedError:
+                        msg = "Das geht leider noch nicht."
+                        await self.print_to_channel(msg)
         else:
             pass
 
