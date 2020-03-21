@@ -1,17 +1,3 @@
-import os
-
-import discord
-from discord.utils import get
-from dotenv import load_dotenv
-
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD = os.getenv("DISCORD_GUILD")
-
-
-class FalscherServer(ValueError):
-    pass
-
 class SchockenBot:
     def __init__(self):
         self.valid_commands = [
@@ -68,30 +54,3 @@ class SchockenBot:
 
     async def print_to_channel(self, channel, text):
         return await channel.send(text)
-
-
-client = discord.Client()
-bot = SchockenBot()
-
-# when connecting
-@client.event
-async def on_ready():
-    #check if server is correct:
-    for guild in client.guilds:
-        if guild.name != bot.valid_guild_name:
-            raise FalscherServer("Dieser Bot darf nur ins Café A")
-    print("Success")
-    #read emojis from server
-    bot.init_emojis(client.guilds[0])
-
-# when a message is read by the bot
-@client.event
-async def on_message(message):
-    channel = message.channel
-    if bot.correct_channel(channel.name):
-        await bot.parse_input(message)
-
-    return
-
-
-client.run(TOKEN)
