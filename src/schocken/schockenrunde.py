@@ -18,6 +18,7 @@ class SchockenRunde:
         self._wuerfeln_possible = False
         self._stechen_possible = False
 
+
     def run(self):
         if self.state == "Einwerfen":
             return self.einwerfen()
@@ -55,7 +56,7 @@ class SchockenRunde:
             count = len(min_roll_players)
 
             # output
-            out_str = f"{spieler.name} hat mit einer {einwurf} eingeworfen.\n"
+            out_str = f"{spieler.name} hat mit einer {self.emoji_names[einwurf]} eingeworfen.\n"
             if len(self.spieler_liste) == 1:
                 return out_str.rstrip("\n")
             elif count == 1:
@@ -95,6 +96,10 @@ class SchockenRunde:
             self.stechen()
 
     def stechen(self):
+        # no stiche yet, init how many stiche are expected:
+        if len(self._gestochen_liste) == 0:
+            self._init_stecher_count = len(self._stecher_liste)
+
         stecher = [pl for pl in self.spieler_liste if pl.name == self.message.author.name][0]
         # check if already gestochen
         if stecher in self._gestochen_liste:
@@ -107,12 +112,24 @@ class SchockenRunde:
         stecher.stich = stich
         self._gestochen_liste.append(stecher)
         self._stecher_liste = [st for st in self._stecher_liste if st not in self._gestochen_liste]
-        # check if all stechers
+
+        out_str = f"{stecher.name} hat "
+        # if all stiche done, determine starting player or stech again
+        if len(self._gestochen_liste) == self._init_stecher_count:
+            stich_list = [st.stich for st in self._gestochen_liste]
+            min_stich = min(stich_list)
+            self._stecher_liste = [
+                sp for sp in self._gestochen_liste if sp.stich == min_stich
+            ]
+
+            min_index = stich_list.index(min_stich)
+            #sort stecher by stich
+            
     
         
-        if len(self._schon_gestochen) == 1:
-            if 
-            out_str = f"{stecher} hat mit  gestochen"
+        # if len(self._schon_gestochen) == 1:
+            # if 
+            # out_str = f"{stecher} hat mit  gestochen"
 
     def wuerfeln(self):
         RDM = RundenDeckelManagement(15, self.spieler_liste)
