@@ -1,4 +1,5 @@
-from .exceptions import SpielLäuft
+from .exceptions import SpielLäuft, SpielLäuftNicht
+from .schockenrunde import SchockenRunde
 
 class SchockenBot:
     def __init__(self):
@@ -19,35 +20,42 @@ class SchockenBot:
         msg_text = message.content
         channel = message.channel
         # check if message is in the correct channel
-        if channel_name == self.schock_channel_name:
+        if channel.name == self.schock_channel_name:
             # check if message is a command
             if msg_text.startswith("!"):
-                command = msg_text.split("!")[-1]
-                if command == self._start_game_cmd: 
-                    if self.game_running:
-                        raise SpielLäuft
-                    else:
-                        self.game_running = True()
-                        game = SchockenRunde()
-                        msg = f"{message.author.name} will Schocken. `!einwerfen` zum mitmachen"
-                        await self.print_to_channel(msg)
+                try:
+                    command = msg_text.split("!")[-1]
+                    if command == self._start_game_cmd: 
+                        if self.game_running:
+                            raise SpielLäuft
+                        else:
+                            self.game_running = True
+                            self.game = SchockenRunde()
+                            msg = f"{message.author.name} will Schocken. `!einwerfen` zum mitmachen"
+                            await self.print_to_channel(channel, msg)
 
-                elif command == self._end_game_cmd:
-                    if self.game_running:
-                        msg = f"{message.author.name} hat das Spiel beendet"
-                        self.game_running = False()
-                        await self.print_to_channel(msg)
+                    elif command == self._end_game_cmd:
+                        if self.game_running:
+                            msg = f"{message.author.name} hat das Spiel beendet"
+                            self.game_running = False()
+                            await self.print_to_channel(channel, msg)
+                        else:
+                            raise SpielLäuftNicht 
                     else:
-                        raise FalscheAktion
-                else:
-                    #actual game
-                    #TODO Fix Logic
-                    try:
-                        output = game.parse_input(message)
-                        await self.print_to_channel(output)
-                    except NotImplementedError:
-                        msg = "Das geht leider noch nicht."
-                        await self.print_to_channel(msg)
+                        if not self.game_running:
+                            raise SpielLäuftNicht
+                        #actual game
+                        #TODO Fix Logic
+                        output = self.game.parse_input(message)
+                        await self.print_to_channel(channel,output)
+
+                except NotImplementedError:
+                    msg = "Das geht leider noch nicht."
+                    await self.print_to_channel(channel,msg)
+
+                except SpielLäuftNicht:
+                    msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
+                    await self.print_to_channel(channel,msg)
             else:
                 pass
 
