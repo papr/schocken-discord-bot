@@ -41,8 +41,8 @@ class SchockenRunde:
             if name in schon_eingeworfen:
                 raise FalscherSpieler
             spieler = Spieler(name)
-            # einwurf = werfen(1)[0]
-            einwurf = 1  # placeholder
+            einwurf = werfen(1)[0]
+            # einwurf = 1  # placeholder
             spieler.augen = einwurf
             self.spieler_liste.append(spieler)
             # find smallest roll

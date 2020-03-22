@@ -92,7 +92,7 @@ class SchockenBot:
                                     and len(self.game.stecher_liste) == 1
                                 ):
                                     out_str += f"\n{self.name_to_member(self.game.aktiver_spieler.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[self.game.aktiver_spieler.augen])} den niedrigsten Wurf."
-                                    out_str += "\n`!würfeln` um das Spiel zu beginnen."
+                                    out_str += "\n`!würfeln` um das Spiel zu beginnen oder weiter einwerfen."
 
                                 await self.print_to_channel(channel, out_str)
 
