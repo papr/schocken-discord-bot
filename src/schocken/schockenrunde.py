@@ -76,14 +76,13 @@ class SchockenRunde:
                     self._stechen_possible = True
 
         elif command == "würfeln":
-            out_str = ""
             if not self._wuerfeln_possible:
                 raise FalscheAktion
             first_player_name = self.spieler_liste[0].name
             if player != first_player_name:
                 raise FalscherSpieler
-
-            raise NotImplementedError
+            self.state = "Runde"
+            self.wuerfeln(player,command)
 
         elif command == "stechen":
             # if not self._stechen_possible:
