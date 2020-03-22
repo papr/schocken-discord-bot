@@ -35,7 +35,6 @@ class SchockenRunde:
 
     def einwerfen(self, player, command):
         if command == "einwerfen":
-            self.zulaessige_befehle = ["einwerfen"]
             name = player
             schon_eingeworfen = [sp.name for sp in self.spieler_liste]
             if name in schon_eingeworfen:
