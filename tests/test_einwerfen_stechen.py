@@ -9,10 +9,16 @@ async def main():
     chris = FakeMember("Chris")
 
     start = FakeMessage(jasmin, "!schocken")
-    einwurf_j = FakeMessage(jasmin, "!einwerfen")
-    
     await bot.parse_input(start)
+
+    einwurf_j = FakeMessage(jasmin, "!einwerfen")
     await bot.parse_input(einwurf_j)
+
+    einwurf_c = FakeMessage(chris, "!einwerfen")
+    await bot.parse_input(einwurf_c)
+
+    stechen_j = FakeMessage(jasmin, "!stechen")
+    await bot.parse_input(stechen_j)
 
 if __name__ == "__main__":
     import asyncio

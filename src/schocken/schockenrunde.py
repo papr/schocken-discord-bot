@@ -7,11 +7,7 @@ from .exceptions import FalscheAktion, FalscherSpielBefehl
 class SchockenRunde:
     def __init__(self):
         self.state = "Einwerfen"
-        self.zulaessige_befehle = {
-            "Einwerfen": ["einwerfen", "würfeln", "stechen"],
-            "Runde": ["würfeln"],
-            "Stechen": ["stechen"],
-        }
+        self.zulaessige_befehle = ["einwerfen"]
         self.spieler_liste = []
         self.aktiver_spieler = 0
         self._wuerfeln_possible = False
@@ -19,22 +15,22 @@ class SchockenRunde:
 
     def _spieler_from_name(self, name):
         # TODO hier weiter
-        for sp in self.spieler_liste:
-            print(sp.name)
-            print(name)
-            print(sp.name == name)
+        print("_spieler_from_name called")
+        print("liste: ",self.spieler_liste)
         return [sp for sp in self.spieler_liste if sp.name == name][0]
 
     def perform_action(self, player, command):
+        print(f"perform_action called with args {player}, {command} with state={self.state}")
         if self.state == "Einwerfen":
             return self.einwerfen(player, command)
-        elif self.state == "Runde":
-            return self.wuerfeln()
         elif self.state == "Stechen":
             return self.stechen(player, command)
+        elif self.state == "Runde":
+            return self.wuerfeln()
 
     def einwerfen(self, player, command):
         if command == "einwerfen":
+            self.zulaessige_befehle = ["einwerfen"]
             name = player
             schon_eingeworfen = [sp.name for sp in self.spieler_liste]
             if name in schon_eingeworfen:
@@ -57,6 +53,7 @@ class SchockenRunde:
                 sp for sp in self.spieler_liste if sp.einwurf == min_roll
             ]
             stecher_count = len(self.stecher_liste)
+            self._gestochen_liste = []
 
             # output
             self.last_roll = einwurf
@@ -68,6 +65,7 @@ class SchockenRunde:
                     self._stechen_possible = False
 
                 elif stecher_count > 1:
+                    self.zulaessige_befehle = ["einwerfen", "stechen"]
                     self._wuerfeln_possible = False
                     self._stechen_possible = True
 
@@ -82,14 +80,13 @@ class SchockenRunde:
             raise NotImplementedError
 
         elif command == "stechen":
-            if not self._stechen_possible:
-                raise FalscheAktion
-            if player not in [st.name for st in self.stecher_liste]:
-                raise FalscherSpieler
-            self._gestochen_liste= []
+            # if not self._stechen_possible:
+                # raise FalscheAktion
+            self.state = "Stechen"
             self.stechen(player, command)
 
     def stechen(self, player, command):
+        self.zulaessige_befehle = ["stechen"]
         # no stiche yet, init how many stiche are expected:
         if len(self._gestochen_liste) == 0:
             self._init_stecher_count = len(self.stecher_liste)
@@ -105,7 +102,7 @@ class SchockenRunde:
         stecher = self._spieler_from_name(player)
         stecher.stich = stich
 
-        self._gestochen_liste.append(self._spieler_from_name(stecher))
+        self._gestochen_liste.append(stecher)
         self.stecher_liste = [st for st in self.stecher_liste if st not in self._gestochen_liste]
 
         # if all stiche done, determine starting player or stech again
@@ -118,8 +115,8 @@ class SchockenRunde:
 
             min_index = stich_list.index(min_stich)
             #sort stecher by stich
-            
-    
+        elif len(self._gestochen_liste) < self._init_stecher_count:
+            pass 
         
         # if len(self._schon_gestochen) == 1:
             # if 

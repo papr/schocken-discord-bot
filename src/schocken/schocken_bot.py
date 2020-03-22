@@ -67,7 +67,7 @@ class SchockenBot:
                         # actual game
                         # old state of the game
                         state_0 = self.game.state
-                        if command in self.game.zulaessige_befehle[state_0]:
+                        if command in self.game.zulaessige_befehle:
                             player = msg_author.name
                             if state_0 == "Einwerfen":
                                 self.game.perform_action(player, command)
@@ -91,10 +91,10 @@ class SchockenBot:
                                     out_str += f"\n{self.name_to_member(spieler_liste[0].name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].einwurf])} den niedrigsten Wurf."
                                     out_str += "\n`!würfeln` um das Spiel zu beginnen."
 
+
                                 await self.print_to_channel(channel, out_str)
 
                             elif state_0 == "Stechen":
-                                print("Bot: ",stecher_liste)
                                 if len(stecher_liste) > 1:
                                     self.game.perform_action(player,command)
                                     stecher_liste = self.game.stecher_liste
@@ -119,7 +119,7 @@ class SchockenBot:
                     await self.print_to_channel(channel, msg)
 
                 except FalscherSpielBefehl:
-                    zulaessig = self.game.zulaessige_befehle[self.game.state]
+                    zulaessig = self.game.zulaessige_befehle
                     msg = "Das geht leider nicht. Zulässig sind:\n"
                     msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
                     await self.print_to_channel(channel, msg)
