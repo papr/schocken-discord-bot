@@ -23,15 +23,16 @@ class SchockenRunde:
         return [sp for sp in self.spieler_liste if sp.name == name][0]
 
     def perform_action(self, player, command):
-        print(
-            f"perform_action called with args {player}, {command} with state={self.state}"
-        )
-        if self.state == "Einwerfen":
-            return self.einwerfen(player, command)
-        elif self.state == "Stechen":
+        state_0 = self.state
+        if state_0 == "Einwerfen":
+            self.einwerfen(player,command)
+        elif state_0  == "Stechen":
             return self.stechen(player, command)
-        elif self.state == "Runde":
+        elif state_0  == "Runde":
             return self.wuerfeln(player, command)
+
+        if self.state != state_0:
+            self.perform_action(player, command)
 
     def einwerfen(self, player, command):
         if command == "einwerfen":
@@ -84,7 +85,7 @@ class SchockenRunde:
             if player != first_player_name:
                 raise FalscherSpieler
             self.state = "Runde"
-            self.wuerfeln(player, command)
+            # self.wuerfeln(player, command)
 
         elif command == "stechen":
             # if not self._stechen_possible:
