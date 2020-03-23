@@ -74,6 +74,8 @@ class SchockenRunde:
                     self.zulaessige_befehle = ["einwerfen", "stechen"]
                     self._wuerfeln_possible = False
                     self._stechen_possible = True
+            # else:
+            #     raise NichtGenugSpieler
 
         elif command == "würfeln":
             if not self._wuerfeln_possible:
@@ -82,7 +84,7 @@ class SchockenRunde:
             if player != first_player_name:
                 raise FalscherSpieler
             self.state = "Runde"
-            self.wuerfeln(player,command)
+            self.wuerfeln(player, command)
 
         elif command == "stechen":
             # if not self._stechen_possible:
@@ -107,7 +109,6 @@ class SchockenRunde:
         self.letzter_wurf = stich
         stecher = self._spieler_from_name(player)
         stecher.augen = stich
-        print("STICH: " + str(stich))
 
         self._gestochen_liste.append(stecher)
         self.stecher_liste = [
