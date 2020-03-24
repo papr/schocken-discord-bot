@@ -1,6 +1,13 @@
 import typing as T
 from .wurf import welcher_wurf, Wurf
 from .spieler import Spieler
+from .exceptions import (
+    ZuWenigSpieler,
+    ZuOftGeworfen,
+    FalscherSpieler,
+    KeineWürfeVorhanden,
+    UnbekannterSpieler,
+)
 
 NUM_MAX_DECKEL = 15
 
@@ -10,26 +17,6 @@ class WurfEvaluierung(T.NamedTuple):
     wurf_anzahl: int
     reihenfolge: int
     spieler: Spieler
-
-
-class ZuWenigSpieler(ValueError):
-    pass
-
-
-class FalscherSpieler(ValueError):
-    pass
-
-
-class ZuOftGeworfen(ValueError):
-    pass
-
-
-class UnbekannterSpieler(ValueError):
-    pass
-
-
-class KeineWürfeVorhanden(ValueError):
-    pass
 
 
 class DeckelManagement:
