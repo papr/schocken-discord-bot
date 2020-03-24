@@ -3,6 +3,7 @@ from .wurf import welcher_wurf, Wurf, priorität
 from .spieler import Spieler
 from .exceptions import (
     ZuWenigSpieler,
+    NochNichtGeworfen,
     ZuOftGeworfen,
     FalscherSpieler,
     KeineWürfeVorhanden,
@@ -44,6 +45,9 @@ class RundenDeckelManagement:
         self._würfe = {S.name: [] for S in self._spieler}
 
     def weiter(self) -> int:
+        aktueller_spieler = self._spieler_namen[self._aktueller_spieler_idx]
+        if not self._würfe[aktueller_spieler]:
+            raise NochNichtGeworfen
         if self._aktueller_spieler_idx + 1 >= len(self._spieler):
             raise ValueError("Runde ist bereits vorbei!")
         self._aktueller_spieler_idx += 1
