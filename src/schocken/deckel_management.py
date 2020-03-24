@@ -13,7 +13,7 @@ NUM_MAX_DECKEL = 15
 
 
 class WurfEvaluierung(T.NamedTuple):
-    priorität: int
+    priorität: float
     wurf_anzahl: int
     reihenfolge: int
     spieler: Spieler
