@@ -9,6 +9,7 @@ python = "^3.6"
 
 # Requirements
 [dependencies]
+python-dotenv = ""
 python-statemachine = ""
 "discord.py" = ""
 
