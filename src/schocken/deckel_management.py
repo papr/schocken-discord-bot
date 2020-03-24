@@ -66,7 +66,7 @@ class RundenDeckelManagement:
         spieler_name: str,
         augen: T.Tuple[int, int, int],
         aus_der_hand: bool = True,
-    ) -> Wurf:
+    ) -> WurfEvaluierung:
         try:
             spieler_idx = self._spieler_namen.index(spieler_name)
         except ValueError as err:
@@ -84,7 +84,14 @@ class RundenDeckelManagement:
 
         wurf = welcher_wurf(augen, aus_der_hand)
         bestehende_würfe.append(wurf)
-        return wurf
+
+        return WurfEvaluierung(
+            priorität(wurf),
+            wurf_anzahl=len(bestehende_würfe),
+            reihenfolge=spieler_idx,
+            spieler=self._spieler[spieler_idx],
+            wurf=wurf,
+        )
 
     def hoch_und_tief(self) -> T.Tuple[WurfEvaluierung, WurfEvaluierung]:
         erster_spieler = self._spieler_namen[0]
