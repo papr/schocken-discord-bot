@@ -71,37 +71,37 @@ class SchockenBot:
                             player = msg_author.name
                             if state_0 == "Einwerfen":
                                 self.game.perform_action(player, command)
-                                if self.game.state != "Runde":
-                                    out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.letzter_wurf])} gewürfelt."
-                                    spieler_liste = self.game.spieler_liste
-                                    stecher_liste = self.game.stecher_liste
+                                if state_0 != self.game.state:
+                                    return await self.parse_input(message)
+                                out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.letzter_wurf])} gewürfelt."
+                                spieler_liste = self.game.spieler_liste
+                                stecher_liste = self.game.stecher_liste
 
-                                    if len(stecher_liste) > 1:
-                                        out_str += "\n" + (
-                                            ", ".join(
-                                                [
-                                                    self.name_to_member(pl.name).mention
-                                                    for pl in stecher_liste
-                                                ]
-                                            )
-                                            + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].augen])} geworfen.\n"
+                                if len(stecher_liste) > 1:
+                                    out_str += "\n" + (
+                                        ", ".join(
+                                            [
+                                                self.name_to_member(pl.name).mention
+                                                for pl in stecher_liste
+                                            ]
                                         )
-                                        out_str += "`!stechen` um zu stechen."
+                                        + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].augen])} geworfen.\n"
+                                    )
+                                    out_str += "`!stechen` um zu stechen."
 
-                                    if (
-                                        len(self.game.spieler_liste) > 1
-                                        and len(self.game.stecher_liste) == 1
-                                    ):
-                                        out_str += f"\n{self.name_to_member(self.game.aktiver_spieler.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[self.game.aktiver_spieler.augen])} den niedrigsten Wurf."
-                                        out_str += "\n`!würfeln` um das Spiel zu beginnen oder weiter `!einwerfen`."
+                                if (
+                                    len(self.game.spieler_liste) > 1
+                                    and len(self.game.stecher_liste) == 1
+                                ):
+                                    out_str += f"\n{self.name_to_member(self.game.aktiver_spieler.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[self.game.aktiver_spieler.augen])} den niedrigsten Wurf."
+                                    out_str += "\n`!würfeln` um das Spiel zu beginnen oder weiter `!einwerfen`."
 
-                                    await self.print_to_channel(channel, out_str)
+                                await self.print_to_channel(channel, out_str)
 
                             if state_0 == "Runde":
                                 print("RUNDE BEGINNT")
                                 self.game.perform_action(player, command)
                                 print(self.game.letzter_wurf)
-                                out_str = ""
 
                         else:
                             raise FalscherSpielBefehl

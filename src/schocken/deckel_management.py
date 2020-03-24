@@ -54,6 +54,7 @@ class RundenDeckelManagement:
         if self._aktueller_spieler_idx + 1 >= len(self._spieler):
             raise ValueError("Runde ist bereits vorbei!")
         self._aktueller_spieler_idx += 1
+        return self._aktueller_spieler_idx
 
     def wurf(
         self,

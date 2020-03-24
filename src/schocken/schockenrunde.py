@@ -1,13 +1,19 @@
 from random import randrange
 from .wuerfel import werfen
 from .spieler import Spieler
-from .deckel_management import RundenDeckelManagement, DeckelManagement, FalscherSpieler
+from .deckel_management import (
+    RundenDeckelManagement,
+    DeckelManagement,
+    FalscherSpieler,
+    ZuOftGeworfen,
+)
 from .exceptions import FalscheAktion, FalscherSpielBefehl
 
 
 class SchockenRunde:
     def __init__(self):
         self.state = "Einwerfen"
+        self.change = None
         self.zulaessige_befehle = ["einwerfen"]
         self.spieler_liste = []
         self.aktiver_spieler = None
@@ -25,14 +31,11 @@ class SchockenRunde:
     def perform_action(self, player, command):
         state_0 = self.state
         if state_0 == "Einwerfen":
-            self.einwerfen(player,command)
-        elif state_0  == "Stechen":
-            return self.stechen(player, command)
-        elif state_0  == "Runde":
-            return self.wuerfeln(player, command)
-
-        if self.state != state_0:
-            self.perform_action(player, command)
+            self.einwerfen(player, command)
+        elif state_0 == "Stechen":
+            self.stechen(player, command)
+        elif state_0 == "Runde":
+            self.wuerfeln(player, command)
 
     def einwerfen(self, player, command):
         if command == "einwerfen":
@@ -136,16 +139,29 @@ class SchockenRunde:
         # out_str = f"{stecher} hat mit  gestochen"
 
     def wuerfeln(self, player, command):
+        debug = f"{player} würfelt"
+        print(debug)
         RDM = RundenDeckelManagement(15, self.spieler_liste)
+        self.aktiver_spieler.anzahl_wuerfe += 1
+
         # erster Wurf (immer 3 Würfel)
-        if self.aktiver_spieler.anzahl_wuerfe == 0:
+        if self.aktiver_spieler.anzahl_wuerfe == 1:
             self.letzter_wurf = werfen(3)
             RDM.wurf(self.aktiver_spieler.name, self.letzter_wurf, aus_der_hand=True)
-            self.aktiver_spieler.anzahl_wuerfe += 1
+        # anzahl würfel je nachdem ob zurückgelegt wurde
+        elif RDM.num_maximale_würfe + 1 >= self.aktiver_spieler.anzahl_wuerfe:
+            self.letzter_wurf = werfen(3)
+            RDM.wurf(self.aktiver_spieler.name, self.letzter_wurf, aus_der_hand=True)
         else:
             raise ZuOftGeworfen(
                 f"Maximal 3 Würfe sind erlaubt, {self.aktiver_spieler.name}!"
             )
+
+        if (
+            command == "weiter"
+            or RDM.num_maximale_würfe == self.aktiver_spieler.anzahl_wuerfe
+        ):
+            self.aktiver_spieler = self.spieler_liste[RDM.weiter()]
 
     # def parse_input(self, message):
     # command = message.content.split("!")[-1]
