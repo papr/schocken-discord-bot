@@ -1,13 +1,13 @@
 from schocken import wurf
 from schocken.spieler import Spieler
-from schocken.deckel_management import RundenDeckelManagement, RundenStatus
+from schocken.deckel_management import RundenDeckelManagement, SpielzeitStatus
 
 
 def test_simulate_game():
     A = Spieler("A")
     B = Spieler("B")
 
-    spielzeit_status = RundenStatus(15, [A, B])
+    spielzeit_status = SpielzeitStatus(15, [A, B])
     while len(spielzeit_status.spieler) > 1:
         print(f"Status bei Rundenbeginn: {spielzeit_status}")
         spielzeit_status = _runde_spielen(spielzeit_status)
@@ -15,7 +15,7 @@ def test_simulate_game():
     print(f"{spielzeit_status.spieler[0]} hat verloren!")
 
 
-def _runde_spielen(status: RundenStatus) -> RundenStatus:
+def _runde_spielen(status: RSpielzeitStatusundenStatus) -> RSpielzeitStatusundenStatus:
     jules_augen = wurf.SonderWurf.Jule._value_
     rdm = RundenDeckelManagement(status)
 

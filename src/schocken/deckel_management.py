@@ -21,20 +21,13 @@ class WurfEvaluierung(T.NamedTuple):
     wurf: Wurf
 
 
-class RundenStatus(T.NamedTuple):
+class SpielzeitStatus(T.NamedTuple):
     deckel_in_topf: int
     spieler: T.List[Spieler]
 
 
-class DeckelManagement:
-    def __init__(
-        self, spieler_reihenfolge: T.List[Spieler], deckel_in_topf=NUM_MAX_DECKEL
-    ):
-        pass
-
-
 class RundenDeckelManagement:
-    def __init__(self, runden_status: RundenStatus):
+    def __init__(self, runden_status: SpielzeitStatus):
         if len(runden_status.spieler) < 2:
             raise ZuWenigSpieler
 
@@ -53,7 +46,7 @@ class RundenDeckelManagement:
         self._aktueller_spieler_idx += 1
         return self._aktueller_spieler_idx
 
-    def deckel_verteilen(self,) -> RundenStatus:
+    def deckel_verteilen(self,) -> SpielzeitStatus:
         hoch, tief = self.hoch_und_tief()
         anzahl_deckel = hoch.wurf.deckel_wert
         if self._topf:
@@ -66,7 +59,7 @@ class RundenDeckelManagement:
             tief.spieler.deckel += anzahl_deckel
 
         restliche_spieler = [s for s in self._spieler if self._topf or s.deckel]
-        return RundenStatus(self._topf, restliche_spieler)
+        return SpielzeitStatus(self._topf, restliche_spieler)
 
     def wurf(
         self,
