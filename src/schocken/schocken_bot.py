@@ -71,7 +71,9 @@ class SchockenBot:
                             player = msg_author.name
                             if state_0 == "Einwerfen":
                                 self.game.perform_action(player, command)
-                                out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.last_roll])} gewürfelt."
+                                if state_0 != self.game.state:
+                                    return await self.parse_input(message)
+                                out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.letzter_wurf])} gewürfelt."
                                 spieler_liste = self.game.spieler_liste
                                 stecher_liste = self.game.stecher_liste
 
@@ -83,27 +85,24 @@ class SchockenBot:
                                                 for pl in stecher_liste
                                             ]
                                         )
-                                        + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].einwurf])} geworfen.\n"
+                                        + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].augen])} geworfen.\n"
                                     )
                                     out_str += "`!stechen` um zu stechen."
 
-                                elif len(stecher_liste) == 1 and len(spieler_liste) > 1:
-                                    out_str += f"\n{self.name_to_member(spieler_liste[0].name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].einwurf])} den niedrigsten Wurf."
-                                    out_str += "\n`!würfeln` um das Spiel zu beginnen."
-
+                                if (
+                                    len(self.game.spieler_liste) > 1
+                                    and len(self.game.stecher_liste) == 1
+                                ):
+                                    out_str += f"\n{self.name_to_member(self.game.aktiver_spieler.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[self.game.aktiver_spieler.augen])} den niedrigsten Wurf."
+                                    out_str += "\n`!würfeln` um das Spiel zu beginnen oder weiter `!einwerfen`."
 
                                 await self.print_to_channel(channel, out_str)
 
-                            elif state_0 == "Stechen":
-                                if len(stecher_liste) > 1:
-                                    self.game.perform_action(player,command)
-                                    stecher_liste = self.game.stecher_liste
-                                    out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.last_roll])} gestochen."
-                                    out_str+= f"\n" +(
-                                                      ", ".join([self.name_to_member(pl.name).mention for pl in stecher_liste]) + " müssen noch `!stechen`")
+                            if state_0 == "Runde":
+                                print("RUNDE BEGINNT")
+                                self.game.perform_action(player, command)
+                                print(self.game.letzter_wurf)
 
-                                else:
-                                    raise NotImplementedError
                         else:
                             raise FalscherSpielBefehl
 
@@ -131,8 +130,6 @@ class SchockenBot:
                 except FalscheAktion:
                     msg = "Das darfst du gerade nicht."
                     await self.print_to_channel(channel, msg)
-
-
 
             else:
                 pass

@@ -1,5 +1,5 @@
 import typing as T
-from enum import Enum, auto
+from enum import Enum
 
 _ZAHL = {1: "eins", 2: "zwei", 3: "drei", 4: "vier", 5: "fünf", 6: "sechs"}
 
@@ -77,4 +77,4 @@ def priorität(wurf):
         prio = 2 + wurf._value_[0] / 10
     else:
         raise ValueError(f"Unhandled wurf {wurf}")
-    return prio
+    return -prio

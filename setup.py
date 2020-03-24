@@ -1,17 +1,12 @@
+import toml
 from setuptools import setup, find_namespace_packages
 
 package_dir = "src"
+pyproject = toml.load("pyproject.toml")
 
 setup(
-    name="schocken",
-    version="0.1",
-    description="Schocken - The game",
-    author="Pablo Prietz",
-    author_email="pablo@prietz.org",
-    license="MIT",
+    **pyproject["project"],
+    install_requires=pyproject["dependencies"].keys(),
     package_dir={"": package_dir},
     packages=find_namespace_packages(where=package_dir),
-    zip_safe=False,
-    install_requires=["python-statemachine",
-                      "discord.py"],
 )

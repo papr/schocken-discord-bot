@@ -26,6 +26,10 @@ class FalscherSpieler(ValueError):
     pass
 
 
+class NochNichtGeworfen(ValueError):
+    pass
+
+
 class ZuOftGeworfen(ValueError):
     pass
 
