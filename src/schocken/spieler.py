@@ -7,7 +7,7 @@ class Spieler:
         self.anzahl_wuerfe = 0
 
     def __str__(self):
-        return f"<Spieler {self.name}, Deckel: {self.deckel}>"
+        return f"Spieler {self.name}\n\tDeckel: {self.deckel}\n\tAugen: {self.augen}\n"
 
     def __repr__(self):
         return self.__str__()
