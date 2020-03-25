@@ -3,6 +3,7 @@ from .spieler import Spieler
 from . import wuerfel
 from .exceptions import FalscheAktion, FalscherSpieler
 
+
 class Einwerfen(object):
     def __init__(self):
         self.sm = self.init_sm()
@@ -16,46 +17,55 @@ class Einwerfen(object):
         idle = State("einwerfen")
         stechen = State("stechen")
         fertig = State("einwerfen_fertig")
-        
-        sm.add_state(idle, initial = True)
+
+        sm.add_state(idle, initial=True)
         sm.add_state(stechen)
         sm.add_state(fertig)
 
         idle.handlers = {
-                'exit' : self.idle_on_exit,
-                'einwerfen': self.einwurf_handler,
-                'wuerfeln': self.wuerfeln_handler,
-                              }
+            "exit": self.idle_on_exit,
+            "einwerfen": self.einwurf_handler,
+            "wuerfeln": self.wuerfeln_handler,
+        }
 
         stechen.handlers = {
-                'stechen': self.stechen_handler,
-                'einwerfen': self.raise_falsche_aktion,
-                'wuerfeln': self.wuerfeln_handler
-                           }
+            "stechen": self.stechen_handler,
+            "einwerfen": self.raise_falsche_aktion,
+            "wuerfeln": self.wuerfeln_handler,
+        }
 
-        sm.add_transition(idle, stechen, 
-                                 events=['stechen'],
-                                 action=None,
-                                 condition=self.stechen_possible,
-                                 before=None,
-                                 after=self.stechen_handler)
+        sm.add_transition(
+            idle,
+            stechen,
+            events=["stechen"],
+            action=None,
+            condition=self.stechen_possible,
+            before=None,
+            after=self.stechen_handler,
+        )
 
-        sm.add_transition(idle, fertig, 
-                                 events=['wuerfeln'],
-                                 action=None,
-                                 condition=self.wuerfeln_possible,
-                                 before=None,
-                                 after=None)
+        sm.add_transition(
+            idle,
+            fertig,
+            events=["wuerfeln"],
+            action=None,
+            condition=self.wuerfeln_possible,
+            before=None,
+            after=None,
+        )
 
-        sm.add_transition(stechen, fertig,
-                                 events=['wuerfeln'],
-                                 action=None,
-                                 condition=self.wuerfeln_possible,
-                                 before=None,
-                                 after=None)
+        sm.add_transition(
+            stechen,
+            fertig,
+            events=["wuerfeln"],
+            action=None,
+            condition=self.wuerfeln_possible,
+            before=None,
+            after=None,
+        )
 
         sm.initialize()
-        return sm 
+        return sm
 
     def einwurf_handler(self, state, event):
         """Called when event "einwerfen" is dispatched"""
@@ -76,9 +86,7 @@ class Einwerfen(object):
             self.spieler_liste[min_index:] + self.spieler_liste[:min_index]
         )
         # check if lowest roll only occurs once
-        self.stecher_liste = [
-            sp for sp in self.spieler_liste if sp.augen == min_roll
-        ]
+        self.stecher_liste = [sp for sp in self.spieler_liste if sp.augen == min_roll]
         self.stecher_count = len(self.stecher_liste)
         # print(f"Spieler {spieler_name} wirft mit {spieler.augen} ein.")
 
@@ -128,36 +136,35 @@ class Einwerfen(object):
 
     def idle_on_exit(self, state, event):
         pass
-    
+
     def stechen_possible(self, state, event):
         return len(self.spieler_liste) > 1 and self.stecher_count > 1
 
     def wuerfeln_possible(self, state, event):
         return len(self.spieler_liste) > 1 and self.stecher_count == 1
-    
+
     @property
     def state(self):
         return self.sm.leaf_state.name
 
-class HalbZeit(object):
-    def __init__(self):
-        self.sm = self.init_sm()
-        self.spieler_liste = []
-        self.stecher_count = 0
-        self.stecher_liste = []
-        self._gestochen_liste = []
 
-    def init_sm(self):
-        sm = StateMachine("Halbzeit")
-        idle = State("einwerfen")
-        stechen = State("stechen")
-        fertig = State("einwerfen_fertig")
-        
-        sm.add_state(idle, initial = True)
-        sm.add_state(stechen)
-        sm.add_state(fertig)
+# class HalbZeit(object):
+# def __init__(self):
+# self.sm = self.init_sm()
+# self.spieler_liste = []
+# self.stecher_count = 0
+# self.stecher_liste = []
+# self._gestochen_liste = []
 
-        idle.handlers = {
+# def init_sm(self):
+# sm = StateMachine("Halbzeit")
+# idle = State("einwerfen")
+# stechen = State("stechen")
+# fertig = State("einwerfen_fertig")
+
+# sm.add_state(idle, initial = True)
+# sm.add_state(stechen)
+# sm.add_state(fertig)
 
 
 class SchockenRunde(object):
@@ -167,11 +174,11 @@ class SchockenRunde(object):
 
     def _init_sm(self):
         sm = StateMachine("SchockenRunde")
-        
+
         self.einwerfen = Einwerfen()
 
         # add states to machine
-        sm.add_state(self.einwerfen.sm, initial = True)
+        sm.add_state(self.einwerfen.sm, initial=True)
 
         sm.initialize()
         return sm
