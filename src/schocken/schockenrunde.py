@@ -2,6 +2,7 @@ from pysm import StateMachine, State, Event
 from .spieler import Spieler
 from . import wuerfel
 from .exceptions import FalscheAktion, FalscherSpieler
+from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 
 
 class Einwerfen(object):
@@ -148,23 +149,37 @@ class Einwerfen(object):
         return self.sm.leaf_state.name
 
 
-# class HalbZeit(object):
-# def __init__(self):
-# self.sm = self.init_sm()
-# self.spieler_liste = []
-# self.stecher_count = 0
-# self.stecher_liste = []
-# self._gestochen_liste = []
+class Halbzeit(object):
+    def __init__(self, spieler_liste):
+        self.sm = self.init_sm()
+        self.spieler_liste = spieler_liste
+        self.aktiver_spieler = None
+        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
+        self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
-# def init_sm(self):
-# sm = StateMachine("Halbzeit")
-# idle = State("einwerfen")
-# stechen = State("stechen")
-# fertig = State("einwerfen_fertig")
+    def init_sm(self):
+        sm = StateMachine("Halbzeit")
+        wuerfeln = State("wuerfeln")
+        fertig = State("halbzeit_fertig")
 
-# sm.add_state(idle, initial = True)
-# sm.add_state(stechen)
-# sm.add_state(fertig)
+        sm.add_state(wuerfeln, initial=True)
+        sm.add_state(fertig)
+
+        wuerfeln.handlers = {
+            "wuerfeln": self.wuerfeln_handler,
+            "beiseite_legen": self.beiseite_legen_handler,
+            "nachster_spieler": self.naechster_spieler_handler,
+        }
+
+        sm.add_transition(
+            wuerfeln,
+            fertig,
+            events=[],
+            action=None,
+            condition=self.verlierer,
+            before=None,
+            after=None,
+        )
 
 
 class SchockenRunde(object):
