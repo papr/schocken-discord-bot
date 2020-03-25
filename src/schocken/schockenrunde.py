@@ -139,6 +139,26 @@ class Einwerfen(object):
     def state(self):
         return self.sm.leaf_state.name
 
+class HalbZeit(object):
+    def __init__(self):
+        self.sm = self.init_sm()
+        self.spieler_liste = []
+        self.stecher_count = 0
+        self.stecher_liste = []
+        self._gestochen_liste = []
+
+    def init_sm(self):
+        sm = StateMachine("Halbzeit")
+        idle = State("einwerfen")
+        stechen = State("stechen")
+        fertig = State("einwerfen_fertig")
+        
+        sm.add_state(idle, initial = True)
+        sm.add_state(stechen)
+        sm.add_state(fertig)
+
+        idle.handlers = {
+
 
 class SchockenRunde(object):
     def __init__(self):
@@ -170,9 +190,3 @@ class SchockenRunde(object):
     @property
     def state(self):
         return self.sm.leaf_state.name
-
-    
-    
-if __name__ == "__main__":
-    sr = SchockenRunde()
-
