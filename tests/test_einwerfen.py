@@ -15,10 +15,11 @@ spieler_3 = Spieler("spieler_3")
 spieler_4 = Spieler("spieler_4")
 
 #FALL: Zwei Spieler werfen dasselbe ein, einer versucht zu starten
+wuerfel.werfen = lambda n: (1,)*n
+runde.command_to_event(spieler_1.name, "einwerfen")
+runde.command_to_event(spieler_2.name, "einwerfen") 
+
 with pytest.raises(FalscheAktion):
-    wuerfel.werfen = lambda n: (1,)*n
-    runde.command_to_event(spieler_1.name, "einwerfen")
-    runde.command_to_event(spieler_2.name, "einwerfen") 
     runde.command_to_event(spieler_1.name, "wuerfeln")
 
 #FALL: spieler 2 würfelt eindeutig das niedrigste
@@ -95,3 +96,19 @@ with pytest.raises(FalscherSpieler):
 runde.command_to_event(spieler_1.name, "wuerfeln")
 assert runde.state == "einwerfen_fertig"
 assert runde.einwerfen.spieler_liste[0].name == spieler_1.name
+
+#FALL einwerfen wenn stechen im gange ist
+runde = SchockenRunde()
+
+wuerfel.werfen = lambda n: (1,)*n
+runde.command_to_event(spieler_1.name, "einwerfen")
+runde.command_to_event(spieler_2.name, "einwerfen") 
+
+# spieler 2 will nochmal einwerfen
+with pytest.raises(FalscherSpieler):
+    runde.command_to_event(spieler_2.name, "einwerfen") 
+
+runde.command_to_event(spieler_1.name, "stechen")
+# weiterer spieler will noch einwerfen, obwohl gestochen wird
+with pytest.raises(FalscheAktion):
+    runde.command_to_event(spieler_3.name, "einwerfen")
