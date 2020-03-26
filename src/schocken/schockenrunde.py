@@ -17,11 +17,9 @@ class Einwerfen(object):
         sm = StateMachine("Einwerfen")
         idle = State("einwerfen")
         stechen = State("stechen")
-        fertig = State("einwerfen_fertig")
 
         sm.add_state(idle, initial=True)
         sm.add_state(stechen)
-        sm.add_state(fertig)
 
         idle.handlers = {
             "exit": self.idle_on_exit,
@@ -43,26 +41,6 @@ class Einwerfen(object):
             condition=self.stechen_possible,
             before=None,
             after=self.stechen_handler,
-        )
-
-        sm.add_transition(
-            idle,
-            fertig,
-            events=["wuerfeln"],
-            action=None,
-            condition=self.wuerfeln_possible,
-            before=None,
-            after=None,
-        )
-
-        sm.add_transition(
-            stechen,
-            fertig,
-            events=["wuerfeln"],
-            action=None,
-            condition=self.wuerfeln_possible,
-            before=None,
-            after=None,
         )
 
         sm.initialize()
@@ -194,7 +172,7 @@ class Halbzeit(object):
         pass
 
     def beendet(self):
-        return len(self.spieler_liste == 1)
+        return len(self.spieler_liste) == 1
 
     @property
     def state(self):
@@ -221,17 +199,16 @@ class SchockenRunde(object):
             self.einwerfen.sm,
             wuerfeln,
             events=["wuerfeln"],
-            action=None,
+            action=self.action_spieler_liste,
             condition=self.einwerfen.wuerfeln_possible,
             before=None,
-            after=self.action_spieler_liste,
+            after=None,
         )
 
         sm.initialize()
         return sm
 
     def action_spieler_liste(self, state, event):
-        print("entering")
         self.spieler_liste = self.einwerfen.spieler_liste
 
     def command_to_event(self, spieler_name, command):

@@ -32,10 +32,6 @@ runde.command_to_event(spieler_2.name, "einwerfen")
 wuerfel.werfen = lambda n: (3,) * n
 runde.command_to_event(spieler_3.name, "einwerfen")
 
-print(runde.spieler_liste)
-print(runde.einwerfen.spieler_liste)
-runde.command_to_event(spieler_2.name, "wuerfeln")
-
 # Ist Spieler_2 erster?
 spieler_liste = runde.einwerfen.spieler_liste
 assert spieler_liste[0].name == "spieler_2"
@@ -49,7 +45,7 @@ assert runde.state == "einwerfen"
 
 # spieler_2 wuerfelt, danach muss einwerfen fertig sein
 runde.command_to_event(spieler_2.name, "wuerfeln")
-assert runde.state == "einwerfen_fertig"
+assert runde.state == "wuerfeln"
 
 
 # FALL mehrfaches stechen, erst 4, dann 3, dann 2 spieler, dann beginn
@@ -99,7 +95,7 @@ with pytest.raises(FalscherSpieler):
 
 # spieler 1 faengt an
 runde.command_to_event(spieler_1.name, "wuerfeln")
-assert runde.state == "einwerfen_fertig"
+assert runde.state == "wuerfeln"
 assert runde.einwerfen.spieler_liste[0].name == spieler_1.name
 
 # FALL einwerfen wenn stechen im gange ist
