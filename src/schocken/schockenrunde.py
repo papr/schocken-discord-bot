@@ -168,18 +168,37 @@ class Halbzeit(object):
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
             "beiseite_legen": self.beiseite_legen_handler,
-            "nachster_spieler": self.naechster_spieler_handler,
+            "weiter": self.naechster_spieler_handler,
         }
 
         sm.add_transition(
             wuerfeln,
             fertig,
-            events=[],
+            events=["würfeln"],
             action=None,
-            condition=self.verlierer,
+            condition=self.beendet,
             before=None,
             after=None,
         )
+
+        sm.initialize()
+        return sm
+
+    def wuerfeln_handler(self, state, event):
+        print(self.spieler_liste)
+
+    def beiseite_legen_handler(self):
+        pass
+
+    def naechster_spieler_handler(self):
+        pass
+
+    def beendet(self):
+        return len(self.spieler_liste == 1)
+
+    @property
+    def state(self):
+        return self.sm.leaf_state.name
 
 
 class SchockenRunde(object):
@@ -192,11 +211,28 @@ class SchockenRunde(object):
 
         self.einwerfen = Einwerfen()
 
+        wuerfeln = State("wuerfeln")
+
         # add states to machine
         sm.add_state(self.einwerfen.sm, initial=True)
+        sm.add_state(wuerfeln)
+
+        sm.add_transition(
+            self.einwerfen.sm,
+            wuerfeln,
+            events=["wuerfeln"],
+            action=None,
+            condition=self.einwerfen.wuerfeln_possible,
+            before=None,
+            after=self.action_spieler_liste,
+        )
 
         sm.initialize()
         return sm
+
+    def action_spieler_liste(self, state, event):
+        print("entering")
+        self.spieler_liste = self.einwerfen.spieler_liste
 
     def command_to_event(self, spieler_name, command):
         if command == "einwerfen":
