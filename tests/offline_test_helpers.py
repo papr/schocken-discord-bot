@@ -38,4 +38,4 @@ class TestBot(SchockenBot):
 
     async def print_to_channel(self, channel, text):
         msg = channel.send(text)
-        print(msg)
+        print(msg+"\n"+"-"*72)

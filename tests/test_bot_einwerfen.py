@@ -1,24 +1,30 @@
 from offline_test_helpers import TestBot, FakeClient, FakeMember, FakeMessage
+from schocken.exceptions import SpielLäuft
+import pytest
 
 async def main():
     client = FakeClient()
     bot = TestBot(client)
 
-    jasmin = FakeMember("Jasmin")
-    pablo = FakeMember("Pablo")
-    chris = FakeMember("Chris")
+    spieler_1 = FakeMember("spieler_1")
+    spieler_2 = FakeMember("spieler_2")
+    spieler_3 = FakeMember("spieler_3")
+    spieler_4 = FakeMember("spieler_4")
 
-    # start = FakeMessage(jasmin, "!schocken")
-    # await bot.parse_input(start)
+    # spieler_1 starts game 
+    await bot.parse_input(FakeMessage(spieler_1, "!schocken"))
+    # another player also wants to start
+    await bot.parse_input(FakeMessage(spieler_2, "!schocken"))
 
-    # einwurf_j = FakeMessage(jasmin, "!einwerfen")
-    # await bot.parse_input(einwurf_j)
+    # einwerfen
+    await bot.parse_input(FakeMessage(spieler_1, "!einwerfen"))
+    await bot.parse_input(FakeMessage(spieler_2, "!einwerfen"))
+    await bot.parse_input(FakeMessage(spieler_3, "!einwerfen"))
 
-    # einwurf_c = FakeMessage(chris, "!einwerfen")
-    # await bot.parse_input(einwurf_c)
+    # stechen?
+    await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
 
-    # stechen_j = FakeMessage(jasmin, "!stechen")
-    # await bot.parse_input(stechen_j)
+    # Correct exception, 
 
 if __name__ == "__main__":
     import asyncio
