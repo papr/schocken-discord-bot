@@ -132,36 +132,24 @@ class Einwerfen(object):
 
 
 class Halbzeit(object):
-    def __init__(self, spieler_liste):
+    def __init__(self):
         self.sm = self.init_sm()
-        self.spieler_liste = spieler_liste
+        self.spieler_liste = []
         self.aktiver_spieler = None
-        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
-        self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        self.spielzeit_status = None
+        self.rdm = None
 
     def init_sm(self):
         sm = StateMachine("Halbzeit")
         wuerfeln = State("wuerfeln")
-        fertig = State("halbzeit_fertig")
 
         sm.add_state(wuerfeln, initial=True)
-        sm.add_state(fertig)
 
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
             "beiseite_legen": self.beiseite_legen_handler,
             "weiter": self.naechster_spieler_handler,
         }
-
-        sm.add_transition(
-            wuerfeln,
-            fertig,
-            events=["würfeln"],
-            action=None,
-            condition=self.beendet,
-            before=None,
-            after=None,
-        )
 
         sm.initialize()
         return sm
@@ -192,21 +180,20 @@ class SchockenRunde(object):
         sm = StateMachine("SchockenRunde")
 
         self.einwerfen = Einwerfen()
-
-        wuerfeln = State("wuerfeln")
+        self.halbzeit = Halbzeit()
 
         # add states to machine
         sm.add_state(self.einwerfen.sm, initial=True)
-        sm.add_state(wuerfeln)
+        sm.add_state(self.halbzeit.sm)
 
         sm.add_transition(
             self.einwerfen.sm,
-            wuerfeln,
+            self.halbzeit.sm,
             events=["wuerfeln"],
             action=self.action_spieler_liste,
             condition=self.einwerfen.wuerfeln_possible,
             before=None,
-            after=None,
+            after=self.start_halbzeit,
         )
 
         sm.initialize()
@@ -214,6 +201,12 @@ class SchockenRunde(object):
 
     def action_spieler_liste(self, state, event):
         self.spieler_liste = self.einwerfen.spieler_liste
+
+    def start_halbzeit(self, state, event):
+        self.halbzeit.spieler_liste = self.spieler_liste
+        self.halbzeit.aktiver_spieler = self.einwerfen.aktiver_spieler
+        self.halbzeit.spielzeit_status = SpielzeitStatus(15, self.spieler_liste)
+        self.halbzeit.rdm = RundenDeckelManagement(self.halbzeit.spielzeit_status)
 
     def command_to_event(self, spieler_name, command):
         if command == "einwerfen":
