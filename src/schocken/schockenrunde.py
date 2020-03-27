@@ -157,10 +157,10 @@ class Halbzeit(object):
     def wuerfeln_handler(self, state, event):
         print(self.spieler_liste)
 
-    def beiseite_legen_handler(self):
+    def beiseite_legen_handler(self, state, event):
         pass
 
-    def naechster_spieler_handler(self):
+    def naechster_spieler_handler(self, state, event):
         pass
 
     def beendet(self):
@@ -190,10 +190,10 @@ class SchockenRunde(object):
             self.einwerfen.sm,
             self.halbzeit.sm,
             events=["wuerfeln"],
-            action=self.action_spieler_liste,
+            action=self.start_halbzeit,
             condition=self.einwerfen.wuerfeln_possible,
-            before=None,
-            after=self.start_halbzeit,
+            before=self.action_spieler_liste,
+            after=self.halbzeit.wuerfeln_handler,
         )
 
         sm.initialize()
@@ -204,7 +204,6 @@ class SchockenRunde(object):
 
     def start_halbzeit(self, state, event):
         self.halbzeit.spieler_liste = self.spieler_liste
-        self.halbzeit.aktiver_spieler = self.einwerfen.aktiver_spieler
         self.halbzeit.spielzeit_status = SpielzeitStatus(15, self.spieler_liste)
         self.halbzeit.rdm = RundenDeckelManagement(self.halbzeit.spielzeit_status)
 
