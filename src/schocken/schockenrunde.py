@@ -11,7 +11,7 @@ class Einwerfen(object):
         self.spieler_liste = []
         self.stecher_count = 0
         self.stecher_liste = []
-        self._gestochen_liste = []
+        self.gestochen_liste = []
 
     def init_sm(self):
         sm = StateMachine("Einwerfen")
@@ -57,26 +57,21 @@ class Einwerfen(object):
 
         spieler.augen = einwurf
         self.spieler_liste.append(spieler)
-        # find smallest roll
+
         roll_list = [sp.augen for sp in self.spieler_liste]
-        min_roll = min(roll_list)
-        min_index = roll_list.index(min_roll)
-        # rotate list such that lowest roll is first element
-        self.spieler_liste = (
-            self.spieler_liste[min_index:] + self.spieler_liste[:min_index]
-        )
-        # check if lowest roll only occurs once
-        self.stecher_liste = [sp for sp in self.spieler_liste if sp.augen == min_roll]
+
+        self.stecher_liste = [
+            sp for sp in self.spieler_liste if sp.augen == min(roll_list)
+        ]
         self.stecher_count = len(self.stecher_liste)
-        # print(f"Spieler {spieler_name} wirft mit {spieler.augen} ein.")
 
     def stechen_handler(self, state, event):
         spieler_name = event.cargo["spieler_name"]
-        if len(self._gestochen_liste) == 0:
+        if len(self.gestochen_liste) == 0:
             self._init_stecher_count = len(self.stecher_liste)
 
         # check if already gestochen
-        if spieler_name in [pl.name for pl in self._gestochen_liste]:
+        if spieler_name in [pl.name for pl in self.gestochen_liste]:
             raise FalscherSpieler
 
         # check if eligible
@@ -87,19 +82,16 @@ class Einwerfen(object):
         stecher = [sp for sp in self.spieler_liste if sp.name == spieler_name][0]
         stecher.augen = stich
 
-        self._gestochen_liste.append(stecher)
+        self.gestochen_liste.append(stecher)
         # if all stiche done, determine starting player or stech again
-        if len(self._gestochen_liste) == self._init_stecher_count:
-            stich_list = [st.augen for st in self._gestochen_liste]
-            min_stich = min(stich_list)
+        if len(self.gestochen_liste) == self._init_stecher_count:
+            stich_list = [st.augen for st in self.gestochen_liste]
             self.stecher_liste = [
-                sp for sp in self._gestochen_liste if sp.augen == min_stich
+                sp for sp in self.gestochen_liste if sp.augen == min(stich_list)
             ]
-            min_index = stich_list.index(min_stich)
-            self.aktiver_spieler = self.spieler_liste[min_index]
-            self._gestochen_liste = []
+            self.gestochen_liste = []
             # sort stecher by stich
-        elif len(self._gestochen_liste) < self._init_stecher_count:
+        elif len(self.gestochen_liste) < self._init_stecher_count:
             pass
 
         self.stecher_count = len(self.stecher_liste)
@@ -124,6 +116,19 @@ class Einwerfen(object):
             raise FalscheAktion
 
     def wuerfeln_possible(self, state, event):
+        if self.state == "stechen":
+            # rotate spieler_liste according to lowest stecher
+            spieler = self.stecher_liste[0]
+            idx = self.spieler_liste.index(spieler)
+            self.spieler_liste = self.spieler_liste[idx:] + self.spieler_liste[:idx]
+        else:
+            # rotate spieler_liste such that lowest roll is first element
+            roll_list = [sp.augen for sp in self.spieler_liste]
+            min_roll = min(roll_list)
+            min_index = roll_list.index(min_roll)
+            self.spieler_liste = (
+                self.spieler_liste[min_index:] + self.spieler_liste[:min_index]
+            )
         return len(self.spieler_liste) > 1 and self.stecher_count == 1
 
     @property
@@ -155,7 +160,7 @@ class Halbzeit(object):
         return sm
 
     def wuerfeln_handler(self, state, event):
-        print(self.spieler_liste)
+        pass
 
     def beiseite_legen_handler(self, state, event):
         pass
