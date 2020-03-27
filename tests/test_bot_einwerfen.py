@@ -35,6 +35,7 @@ async def main():
     await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
 
     # Einwerfen vorbei, jetzt würfeln.
+    await bot.parse_input(FakeMessage(spieler_3, "!wuerfeln"))
 
     
 if __name__ == "__main__":

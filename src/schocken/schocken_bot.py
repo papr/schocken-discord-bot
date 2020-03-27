@@ -61,7 +61,7 @@ class SchockenBot:
                         else:
                             self.game_running = True
                             self.game = SchockenRunde()
-                            msg = f"{message.author.mention} will Schocken. `!einwerfen` zum mitmachen"
+                            msg = f"{message.author.mention} will schocken. `!einwerfen` zum mitmachen"
                             await self.print_to_channel(channel, msg)
 
                     elif command == self._end_game_cmd:
@@ -80,7 +80,10 @@ class SchockenBot:
 
                 except NotImplementedError:
                     msg = "Das geht leider noch nicht. (Nicht implementiert)"
+                    msg += "\n Spiel wird beendet."
                     await self.print_to_channel(channel, msg)
+                    self.game_running = False
+                    del self.game
 
                 except SpielLäuftNicht:
                     msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
@@ -123,57 +126,85 @@ class SchockenBot:
         state_changed = old_state != new_state
         if new_state == "einwerfen":
             # einwerfen is the initial state, no need to check for changes
-            spieler = [
+            spieler = next(
                 sp
                 for sp in self.game.einwerfen.spieler_liste
                 if sp.name == spieler_name
-            ][0]
-            if command == "einwerfen":
-                out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])} gewürfelt."
-                # stechen oder nicht?
-                if self.game.einwerfen.stecher_count > 1:
-                    out_str += "\n" + (
-                        ", ".join(
-                            [
-                                self.name_to_member(pl.name).mention
-                                for pl in self.game.einwerfen.stecher_liste
-                            ]
-                        )
-                        + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.einwerfen.spieler_liste[0].augen])} geworfen.\n"
-                    )
-                    out_str += (
-                        "`!stechen` um zu stechen oder auf weiteres `!einwerfen` warten"
-                    )
-                else:
-                    if len(self.game.einwerfen.spieler_liste) > 1:
-                        anfaenger = self.game.einwerfen.spieler_liste[0]
-                        out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
-                        out_str += "\n`!würfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
-                await self.print_to_channel(channel, out_str)
-
-        elif new_state == "stechen":
-            spieler = [
-                sp
-                for sp in self.game.einwerfen.spieler_liste
-                if sp.name == spieler_name
-            ][0]
-            noch_stechen = [sp for sp in self.game.einwerfen.stecher_liste if sp not in self.game.einwerfen._gestochen_liste]
-            out_str = f"{message.author.mention} sticht mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])}."
-            if len(noch_stechen)>1:
+            )
+            out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])} geworfen."
+            # stechen oder nicht?
+            if self.game.einwerfen.stecher_count > 1:
                 out_str += "\n" + (
                     ", ".join(
                         [
                             self.name_to_member(pl.name).mention
-                            for pl in noch_stechen
+                            for pl in self.game.einwerfen.stecher_liste
                         ]
+                    )
+                    + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.einwerfen.spieler_liste[0].augen])} geworfen.\n"
+                )
+                out_str += (
+                    "`!stechen` um zu stechen oder auf weiteres `!einwerfen` warten"
+                )
+            else:
+                if len(self.game.einwerfen.spieler_liste) > 1:
+                    anfaenger = self.game.einwerfen.spieler_liste[0]
+                    out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
+                    out_str += "\n`!wuerfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
+            await self.print_to_channel(channel, out_str)
+
+        elif new_state == "stechen":
+            spieler = next(
+                sp
+                for sp in self.game.einwerfen.spieler_liste
+                if sp.name == spieler_name
+            )
+            noch_stechen = [
+                sp
+                for sp in self.game.einwerfen.stecher_liste
+                if sp not in self.game.einwerfen._gestochen_liste
+            ]
+            out_str = f"{message.author.mention} sticht mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])}."
+            if len(noch_stechen) > 1:
+                out_str += "\n" + (
+                    ", ".join(
+                        [self.name_to_member(pl.name).mention for pl in noch_stechen]
                     )
                     + f" müssen `!stechen`."
                 )
-            elif len(noch_stechen) == 1 and len(self.game.einwerfen.stecher_liste) >1:
+            elif len(noch_stechen) == 1 and len(self.game.einwerfen.stecher_liste) > 1:
                 out_str += f"\n {self.name_to_member(noch_stechen[0].name).mention} muss noch `!stechen`."
             else:
                 anfaenger = self.game.einwerfen.spieler_liste[0]
                 out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
-                out_str += "\n`!würfeln` um das Spiel zu beginnen."
+                out_str += "\n`!wuerfeln` um das Spiel zu beginnen."
 
             await self.print_to_channel(channel, out_str)
+
+        elif new_state == "wuerfeln":
+            spieler = next(
+                sp
+                for sp in self.game.halbzeit.spieler_liste
+                if sp.name == spieler_name
+            )
+            new_spieler_liste = self.game.halbzeit.spieler_liste
+            old_spieler_liste = new_spieler_liste[:1]+new_spieler_liste[1:]
+            # Halbzeit
+            if old_state in ["einwerfen", "stechen"]:
+                # Erster wurf nach einwerfen. Print reihenfolge
+                out_str0 = f"Das Spiel beginnt. Die Reihenfolge ist:\n"
+                out_str0 += ", ".join(
+                    [
+                        self.name_to_member(pl.name).mention
+                        for pl in old_spieler_liste
+                    ]
+                )
+                await self.print_to_channel(channel, out_str0)
+            # handle wuerfeln
+            raise NotImplementedError
+            wuerfe = spieler.augen
+            wurf_emoji = "".join([self.enmoji_by_name(self._wuerfel_emoji_names[wurf]) for wurf in wuerfe])
+            out_str = f"{message.author.mention} wirft:"
+            out_str+= wurf_emoji+"."
+            await self.print_to_channel(channel, out_str)
+
