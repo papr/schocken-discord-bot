@@ -72,6 +72,12 @@ class SchockenBot:
                         else:
                             raise SpielLäuftNicht
 
+                    elif command == "ICH WILL UNREAL TOURNAMENT SPIELEN":
+                        msg = "Dann geh doch"
+                        await self.print_to_channel(channel,msg)
+                        link = "https://tenor.com/view/unreal-tournament-kid-unreal-unreal-kid-rage-gif-16110833"
+                        await self.print_to_channel(channel,link)
+
                     else:
                         if not self.game_running:
                             raise SpielLäuftNicht
