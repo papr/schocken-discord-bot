@@ -51,6 +51,7 @@ class Einwerfen(object):
         spieler_name = event.cargo["spieler_name"]
         if spieler_name in [sp.name for sp in self.spieler_liste]:
             raise FalscherSpieler
+
         spieler = Spieler(spieler_name)
         einwurf = wuerfel.werfen(1)[0]
 
@@ -117,7 +118,10 @@ class Einwerfen(object):
         pass
 
     def stechen_possible(self, state, event):
-        return len(self.spieler_liste) > 1 and self.stecher_count > 1
+        if len(self.spieler_liste) > 1 and self.stecher_count > 1:
+            return True
+        else:
+            raise FalscheAktion
 
     def wuerfeln_possible(self, state, event):
         return len(self.spieler_liste) > 1 and self.stecher_count == 1

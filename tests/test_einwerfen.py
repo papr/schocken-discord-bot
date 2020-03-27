@@ -40,6 +40,10 @@ assert spieler_liste[0].name == "spieler_2"
 with pytest.raises(FalscherSpieler):
     runde.command_to_event(spieler_1.name, "wuerfeln")
 
+# Richtige exception, wenn jemand stechen will.
+with pytest.raises(FalscheAktion):
+    runde.command_to_event(spieler_2.name, "stechen")
+
 # momentaner state ist einwerfen
 assert runde.state == "einwerfen"
 
