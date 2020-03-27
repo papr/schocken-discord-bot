@@ -51,6 +51,7 @@ class Einwerfen(object):
         spieler_name = event.cargo["spieler_name"]
         if spieler_name in [sp.name for sp in self.spieler_liste]:
             raise FalscherSpieler
+
         spieler = Spieler(spieler_name)
         einwurf = wuerfel.werfen(1)[0]
 
@@ -117,7 +118,10 @@ class Einwerfen(object):
         pass
 
     def stechen_possible(self, state, event):
-        return len(self.spieler_liste) > 1 and self.stecher_count > 1
+        if len(self.spieler_liste) > 1 and self.stecher_count > 1:
+            return True
+        else:
+            raise FalscheAktion
 
     def wuerfeln_possible(self, state, event):
         return len(self.spieler_liste) > 1 and self.stecher_count == 1
@@ -128,20 +132,18 @@ class Einwerfen(object):
 
 
 class Halbzeit(object):
-    def __init__(self, spieler_liste):
+    def __init__(self):
         self.sm = self.init_sm()
-        self.spieler_liste = spieler_liste
+        self.spieler_liste = []
         self.aktiver_spieler = None
-        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
-        self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        self.spielzeit_status = None
+        self.rdm = None
 
     def init_sm(self):
         sm = StateMachine("Halbzeit")
         wuerfeln = State("wuerfeln")
-        fertig = State("halbzeit_fertig")
 
         sm.add_state(wuerfeln, initial=True)
-        sm.add_state(fertig)
 
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
@@ -149,26 +151,16 @@ class Halbzeit(object):
             "weiter": self.naechster_spieler_handler,
         }
 
-        sm.add_transition(
-            wuerfeln,
-            fertig,
-            events=["würfeln"],
-            action=None,
-            condition=self.beendet,
-            before=None,
-            after=None,
-        )
-
         sm.initialize()
         return sm
 
     def wuerfeln_handler(self, state, event):
         print(self.spieler_liste)
 
-    def beiseite_legen_handler(self):
+    def beiseite_legen_handler(self, state, event):
         pass
 
-    def naechster_spieler_handler(self):
+    def naechster_spieler_handler(self, state, event):
         pass
 
     def beendet(self):
@@ -188,21 +180,20 @@ class SchockenRunde(object):
         sm = StateMachine("SchockenRunde")
 
         self.einwerfen = Einwerfen()
-
-        wuerfeln = State("wuerfeln")
+        self.halbzeit = Halbzeit()
 
         # add states to machine
         sm.add_state(self.einwerfen.sm, initial=True)
-        sm.add_state(wuerfeln)
+        sm.add_state(self.halbzeit.sm)
 
         sm.add_transition(
             self.einwerfen.sm,
-            wuerfeln,
+            self.halbzeit.sm,
             events=["wuerfeln"],
-            action=self.action_spieler_liste,
+            action=self.start_halbzeit,
             condition=self.einwerfen.wuerfeln_possible,
-            before=None,
-            after=None,
+            before=self.action_spieler_liste,
+            after=self.halbzeit.wuerfeln_handler,
         )
 
         sm.initialize()
@@ -210,6 +201,11 @@ class SchockenRunde(object):
 
     def action_spieler_liste(self, state, event):
         self.spieler_liste = self.einwerfen.spieler_liste
+
+    def start_halbzeit(self, state, event):
+        self.halbzeit.spieler_liste = self.spieler_liste
+        self.halbzeit.spielzeit_status = SpielzeitStatus(15, self.spieler_liste)
+        self.halbzeit.rdm = RundenDeckelManagement(self.halbzeit.spielzeit_status)
 
     def command_to_event(self, spieler_name, command):
         if command == "einwerfen":
