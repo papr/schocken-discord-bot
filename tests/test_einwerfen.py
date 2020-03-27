@@ -32,10 +32,6 @@ runde.command_to_event(spieler_2.name, "einwerfen")
 wuerfel.werfen = lambda n: (3,) * n
 runde.command_to_event(spieler_3.name, "einwerfen")
 
-# Ist Spieler_2 erster?
-spieler_liste = runde.einwerfen.spieler_liste
-assert spieler_liste[0].name == "spieler_2"
-
 # Richtige exception, wenn jemand anders anfangen will?
 with pytest.raises(FalscherSpieler):
     runde.command_to_event(spieler_1.name, "wuerfeln")
@@ -117,3 +113,25 @@ runde.command_to_event(spieler_1.name, "stechen")
 # weiterer spieler will noch einwerfen, obwohl gestochen wird
 with pytest.raises(FalscheAktion):
     runde.command_to_event(spieler_3.name, "einwerfen")
+
+# FALL Stiche sind größer als nächstkleinere Einwurf Augenzahlen
+runde = SchockenRunde()
+
+assert runde.state == "einwerfen"
+wuerfel.werfen = lambda n: (2,) * n
+runde.command_to_event(spieler_1.name, "einwerfen")
+wuerfel.werfen = lambda n: (3,) * n
+runde.command_to_event(spieler_2.name, "einwerfen")
+wuerfel.werfen = lambda n: (2,) * n
+runde.command_to_event(spieler_3.name, "einwerfen")
+
+wuerfel.werfen = lambda n: (6,) * n
+runde.command_to_event(spieler_1.name, "stechen")
+
+wuerfel.werfen = lambda n: (5,) * n
+runde.command_to_event(spieler_3.name, "stechen")
+
+# spieler 3 muss anfangen zu würfeln
+with pytest.raises(FalscherSpieler):
+    runde.command_to_event(spieler_1.name, "wuerfeln")
+    runde.command_to_event(spieler_2.name, "wuerfeln")
