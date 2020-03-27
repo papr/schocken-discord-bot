@@ -122,6 +122,7 @@ class SchockenBot:
 
         state_changed = old_state != new_state
         if new_state == "einwerfen":
+            # einwerfen is the initial state, no need to check for changes
             spieler = [
                 sp
                 for sp in self.game.einwerfen.spieler_liste
@@ -146,44 +147,33 @@ class SchockenBot:
                 else:
                     if len(self.game.einwerfen.spieler_liste) > 1:
                         anfaenger = self.game.einwerfen.spieler_liste[0]
-                        out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf."
+                        out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
                         out_str += "\n`!würfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
                 await self.print_to_channel(channel, out_str)
-            elif new_state == "stechen":
 
-                await self.print_to_channel(channel, out_str)
-            # einwerfen is the initial state, no need to check for changes
+        elif new_state == "stechen":
+            spieler = [
+                sp
+                for sp in self.game.einwerfen.spieler_liste
+                if sp.name == spieler_name
+            ][0]
+            noch_stechen = [sp for sp in self.game.einwerfen.stecher_liste if sp not in self.game.einwerfen._gestochen_liste]
+            out_str = f"{message.author.mention} sticht mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])}."
+            if len(noch_stechen)>1:
+                out_str += "\n" + (
+                    ", ".join(
+                        [
+                            self.name_to_member(pl.name).mention
+                            for pl in noch_stechen
+                        ]
+                    )
+                    + f" müssen `!stechen`."
+                )
+            elif len(noch_stechen) == 1 and len(self.game.einwerfen.stecher_liste) >1:
+                out_str += f"\n {self.name_to_member(noch_stechen[0].name).mention} muss noch `!stechen`."
+            else:
+                anfaenger = self.game.einwerfen.spieler_liste[0]
+                out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
+                out_str += "\n`!würfeln` um das Spiel zu beginnen."
 
-            # if state_0 == "Einwerfen":
-            # self.game.perform_action(player, command)
-            # if state_0 != self.game.state:
-            # return await self.parse_input(message)
-            # out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.letzter_wurf])} gewürfelt."
-            # spieler_liste = self.game.spieler_liste
-            # stecher_liste = self.game.stecher_liste
-
-            # if len(stecher_liste) > 1:
-            # out_str += "\n" + (
-            # ", ".join(
-            # [
-            # self.name_to_member(pl.name).mention
-            # for pl in stecher_liste
-            # ]
-            # )
-            # + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler_liste[0].augen])} geworfen.\n"
-            # )
-            # out_str += "`!stechen` um zu stechen."
-
-            # if (
-            # len(self.game.spieler_liste) > 1
-            # and len(self.game.stecher_liste) == 1
-            # ):
-            # out_str += f"\n{self.name_to_member(self.game.aktiver_spieler.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[self.game.aktiver_spieler.augen])} den niedrigsten Wurf."
-            # out_str += "\n`!würfeln` um das Spiel zu beginnen oder weiter `!einwerfen`."
-
-            # await self.print_to_channel(channel, out_str)
-
-            # if state_0 == "Runde":
-            # print("RUNDE BEGINNT")
-            # self.game.perform_action(player, command)
-            # print(self.game.letzter_wurf)
+            await self.print_to_channel(channel, out_str)

@@ -1,5 +1,6 @@
 from offline_test_helpers import TestBot, FakeClient, FakeMember, FakeMessage
 from schocken.exceptions import SpielLäuft
+from schocken import wuerfel
 import pytest
 
 async def main():
@@ -13,19 +14,29 @@ async def main():
 
     # spieler_1 starts game 
     await bot.parse_input(FakeMessage(spieler_1, "!schocken"))
-    # another player also wants to start
-    await bot.parse_input(FakeMessage(spieler_2, "!schocken"))
 
-    # einwerfen
+    wuerfel.werfen = lambda n: (2,) * n
     await bot.parse_input(FakeMessage(spieler_1, "!einwerfen"))
+    # einwerfen, stechen testen
+    wuerfel.werfen = lambda n: (1,) * n
     await bot.parse_input(FakeMessage(spieler_2, "!einwerfen"))
     await bot.parse_input(FakeMessage(spieler_3, "!einwerfen"))
-
-    # stechen?
+     
+    wuerfel.werfen = lambda n: (3,) * n
     await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
 
-    # Correct exception, 
+    wuerfel.werfen = lambda n: (3,) * n
+    await bot.parse_input(FakeMessage(spieler_3, "!stechen"))
 
+    wuerfel.werfen = lambda n: (2,) * n
+    await bot.parse_input(FakeMessage(spieler_3, "!stechen"))
+
+    wuerfel.werfen = lambda n: (3,) * n
+    await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
+
+    # Einwerfen vorbei, jetzt würfeln.
+
+    
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
