@@ -179,14 +179,12 @@ class Halbzeit(object):
             spieler.anzahl_wuerfe += 1
             self.rdm.wurf(spieler_name, spieler.augen, aus_der_hand=True)
         else:
-            if self.rdm.num_maximale_würfe == 1:
-                raise ZuOftGeworfen(
-                    f"Maximal {self.rdm.num_maximale_würfe} Wurf ist erlaubt, {spieler.name}!"
-                )
-            else:
-                raise ZuOftGeworfen(
-                    f"Maximal {self.rdm.num_maximale_würfe} Würfe sind erlaubt, {spieler.name}!"
-                )
+            # AUF SEMANTIK ACHTEN (SPRECHT GUTES DEUTSCH IHR HURENSÖHNE)
+            num_wurf = self.rdm.num_maximale_würfe
+            plural_switch = "Wurf ist" if num_wurf == 1 else "Würfe sind"
+            zahl_zu_wort = {1: "ein", 2: "zwei", 3: "drei"}
+            meldung = f"Maximal {zahl_zu_wort[num_wurf]} {plural_switch} erlaubt, {spieler.name}!"
+            raise ZuOftGeworfen(meldung)
 
     def beiseite_legen_handler(self, state, event):
         pass
