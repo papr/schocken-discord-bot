@@ -1,7 +1,7 @@
 {
     "python.linting.pylintEnabled": false,
     "python.linting.pylamaEnabled": true,
-    "python.linting.enabled": false,
+    "python.linting.enabled": true,
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
     "python.linting.pylamaArgs": [
@@ -17,5 +17,6 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.pythonPath": "${workspaceFolder}/.venv/bin/python"
+    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+    "python.jediEnabled": false
 }
