@@ -40,3 +40,7 @@ class UnbekannterSpieler(ValueError):
 
 class KeineWürfeVorhanden(ValueError):
     pass
+
+
+class DuHastMistGebaut(RuntimeError):
+    pass
