@@ -1,4 +1,3 @@
-import numpy as np
 from schocken import wurf
 
 
