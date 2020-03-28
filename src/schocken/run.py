@@ -16,17 +16,19 @@ client = discord.Client()
 @client.event
 async def on_ready():
     client.bot = SchockenBot(client)
-    #check if server is correct:
+    # check if server is correct:
     for guild in client.guilds:
         if guild.name != client.bot.valid_guild_name:
             raise FalscherServer("Dieser Bot darf nur ins Café A")
     print("Success")
     return
 
+
 # when a message is read by the bot
 @client.event
 async def on_message(message):
     await client.bot.parse_input(message)
     return
+
 
 client.run(TOKEN)

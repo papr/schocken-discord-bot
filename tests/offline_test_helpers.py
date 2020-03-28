@@ -1,27 +1,32 @@
 from schocken.schocken_bot import SchockenBot
 
-class FakeGuild():
+
+class FakeGuild:
     def __init__(self, name):
         self.name = name
         self.emojis = []
 
-class FakeClient():
+
+class FakeClient:
     def __init__(self):
         self.guilds = [FakeGuild("Café A")]
 
-class FakeMember():
+
+class FakeMember:
     def __init__(self, name):
         self.name = name
-        self.mention = f"MENTION:{name}" 
+        self.mention = f"MENTION:{name}"
 
-class FakeChannel():
+
+class FakeChannel:
     def __init__(self, name):
         self.name = name
 
     def send(self, message):
         return f"MSG to channel {self.name}:\n {message}"
 
-class FakeMessage():
+
+class FakeMessage:
     def __init__(self, author, content):
         self.content = content
         self.author = author
@@ -30,12 +35,12 @@ class FakeMessage():
 
 class TestBot(SchockenBot):
     # override methods that need a server connection
-    def emoji_by_name(self,name):
+    def emoji_by_name(self, name):
         return f"EMOJI:{name}"
 
-    def name_to_member(self,name):
+    def name_to_member(self, name):
         return FakeMember(name)
 
     async def print_to_channel(self, channel, text):
         msg = channel.send(text)
-        print(msg+"\n"+"-"*72)
+        print(msg + "\n" + "-" * 72)
