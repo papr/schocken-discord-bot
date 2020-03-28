@@ -61,7 +61,6 @@ class RundenDeckelManagement:
         restliche_spieler = [s for s in self._spieler if self._topf or s.deckel]
         return SpielzeitStatus(self._topf, restliche_spieler)
 
-
     def wurf(
         self,
         spieler_name: str,

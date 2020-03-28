@@ -1,7 +1,7 @@
 from pysm import StateMachine, State, Event
 from .spieler import Spieler
 from . import wuerfel
-from .exceptions import FalscheAktion, FalscherSpieler
+from .exceptions import FalscheAktion, FalscherSpieler, ZuOftGeworfen
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 
 
@@ -143,6 +143,7 @@ class Halbzeit(object):
         self.aktiver_spieler = None
         self.spielzeit_status = None
         self.rdm = None
+        self.letzter_wurf = [None, None, None]
 
     def init_sm(self):
         sm = StateMachine("Halbzeit")
@@ -160,13 +161,40 @@ class Halbzeit(object):
         return sm
 
     def wuerfeln_handler(self, state, event):
-        pass
+        spieler = self.aktiver_spieler
+        spieler_name = event.cargo["spieler_name"]
+
+        if spieler_name != spieler.name:
+            raise FalscherSpieler(
+                f"{spieler_name} hat geworfen, {self.aktiver_spieler.name} war aber dran!"
+            )
+
+        # first throw (always 3 dice)
+        if spieler.anzahl_wuerfe == 0:
+            spieler.augen = wuerfel.werfen(3)
+            spieler.anzahl_wuerfe += 1
+            self.rdm.wurf(spieler_name, spieler.augen, aus_der_hand=True)
+        elif spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
+            spieler.augen = wuerfel.werfen(3)
+            spieler.anzahl_wuerfe += 1
+            self.rdm.wurf(spieler_name, spieler.augen, aus_der_hand=True)
+        else:
+            if self.rdm.num_maximale_würfe == 1:
+                raise ZuOftGeworfen(
+                    f"Maximal {self.rdm.num_maximale_würfe} Wurf ist erlaubt, {spieler.name}!"
+                )
+            else:
+                raise ZuOftGeworfen(
+                    f"Maximal {self.rdm.num_maximale_würfe} Würfe sind erlaubt, {spieler.name}!"
+                )
 
     def beiseite_legen_handler(self, state, event):
         pass
 
     def naechster_spieler_handler(self, state, event):
-        pass
+        self.rdm.weiter()
+        self.spieler_liste = self.spieler_liste[1:] + self.spieler_liste[:1]
+        self.aktiver_spieler = self.spieler_liste[0]
 
     def beendet(self):
         return len(self.spieler_liste) == 1
@@ -209,6 +237,7 @@ class SchockenRunde(object):
 
     def start_halbzeit(self, state, event):
         self.halbzeit.spieler_liste = self.spieler_liste
+        self.halbzeit.aktiver_spieler = self.spieler_liste[0]
         self.halbzeit.spielzeit_status = SpielzeitStatus(15, self.spieler_liste)
         self.halbzeit.rdm = RundenDeckelManagement(self.halbzeit.spielzeit_status)
 
@@ -219,6 +248,10 @@ class SchockenRunde(object):
             event = Event("wuerfeln", spieler_name=spieler_name)
         elif command == "stechen":
             event = Event("stechen", spieler_name=spieler_name)
+        elif command == "weiter":
+            event = Event("weiter", spieler_name=spieler_name)
+        elif command == "beiseite legen":
+            event = Event("beiseite legen", spieler_name=spieler_name)
         else:
             raise FalscheAktion
         self.sm.dispatch(event)
