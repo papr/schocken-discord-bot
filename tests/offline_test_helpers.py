@@ -1,4 +1,4 @@
-from schocken.schocken_bot import SchockenBot
+from schocken.bot import SchockenBot
 
 
 class FakeGuild:

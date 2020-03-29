@@ -5,7 +5,7 @@ from discord.utils import get
 from dotenv import load_dotenv
 
 from schocken.exceptions import FalscherServer
-from schocken.schocken_bot import SchockenBot
+from schocken.bot import SchockenBot
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
