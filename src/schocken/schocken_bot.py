@@ -1,6 +1,6 @@
 from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherSpielBefehl, FalscheAktion
 from .deckel_management import FalscherSpieler
-from .schockenrunde import SchockenSpiel
+from .spiel import SchockenSpiel
 from discord.utils import get
 
 

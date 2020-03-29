@@ -1,2 +1,2 @@
-from .schockenrunde import SchockenSpiel
+from .spiel import SchockenSpiel
 from .spieler import Spieler

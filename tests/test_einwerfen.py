@@ -1,7 +1,7 @@
 import pytest
 
 from schocken import events
-from schocken.schockenrunde import SchockenSpiel
+from schocken.spiel import SchockenSpiel
 from schocken.spieler import Spieler
 from schocken.exceptions import FalscheAktion, FalscherSpieler
 

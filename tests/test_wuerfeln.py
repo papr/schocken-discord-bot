@@ -1,6 +1,6 @@
 import pytest
 
-from schocken.schockenrunde import Einwerfen, SchockenSpiel
+from schocken.spiel import Einwerfen, SchockenSpiel
 from schocken.spieler import Spieler
 from schocken.exceptions import FalscheAktion, FalscherSpieler
 
