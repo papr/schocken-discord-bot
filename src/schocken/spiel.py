@@ -212,13 +212,13 @@ class Halbzeit(pysm.StateMachine):
             akt_spieler.augen = wuerfel.werfen(3)
             akt_spieler.anzahl_wuerfe += 1
             self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
-        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
+        elif akt_spieler.anzahl_wuerfe < self.__rdm.num_maximale_würfe:
             akt_spieler.augen = wuerfel.werfen(3)
             akt_spieler.anzahl_wuerfe += 1
             self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         else:
-            # AUF SEMANTIK ACHTEN (SPRECHT GUTES DEUTSCH IHR HURENSÖHNE)
-            num_wurf = self.rdm.num_maximale_würfe
+            # watch for semantics
+            num_wurf = self.__rdm.num_maximale_würfe
             plural_switch = "Wurf ist" if num_wurf == 1 else "Würfe sind"
             zahl_zu_wort = {1: "ein", 2: "zwei", 3: "drei"}
             meldung = (
@@ -227,10 +227,21 @@ class Halbzeit(pysm.StateMachine):
             )
             raise ZuOftGeworfen(meldung)
 
+        if akt_spieler.anzahl_wuerfe == self.__rdm.num_maximale_würfe:
+            akt_spieler.anzahl_wuerfe = 0
+            try:
+                self.__rdm.weiter()
+            except ValueError:
+                self.__spielzeit_status = (
+                    self.__rdm.deckel_verteilen_restliche_spieler()
+                )
+                self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
+
     def beiseite_legen_handler(self, state, event):
         pass
 
     def naechster_spieler_handler(self, state, event):
+        self.aktiver_spieler.anzahl_wuerfe = 0
         self.__rdm.weiter()
 
     def beendet(self):

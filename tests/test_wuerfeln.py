@@ -38,3 +38,7 @@ def test_wuerfeln(spieler):
     runde.command_to_event(spieler[2].name, "weiter")
 
     runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+
+    runde.command_to_event(spieler[1].name, "wuerfeln")
