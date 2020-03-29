@@ -1,6 +1,6 @@
 from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherSpielBefehl, FalscheAktion
 from .deckel_management import FalscherSpieler
-from .schockenrunde import SchockenRunde
+from .schockenrunde import SchockenSpiel
 from discord.utils import get
 
 
@@ -60,7 +60,7 @@ class SchockenBot:
                             raise SpielLäuft
                         else:
                             self.game_running = True
-                            self.game = SchockenRunde()
+                            self.game = SchockenSpiel()
                             msg = f"{message.author.mention} will schocken. `!einwerfen` zum mitmachen"
                             await self.print_to_channel(channel, msg)
 

@@ -237,9 +237,9 @@ class Halbzeit(pysm.StateMachine):
         return len(self.spieler_liste) == 1
 
 
-class SchockenRunde(pysm.StateMachine):
+class SchockenSpiel(pysm.StateMachine):
     def __init__(self):
-        super().__init__("SchockenRunde")
+        super().__init__("SchockenSpiel")
         self.einwerfen = Einwerfen()
         self.halbzeit_erste = Halbzeit()
         self.halbzeit_zweite = Halbzeit()

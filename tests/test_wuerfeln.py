@@ -1,6 +1,6 @@
 import pytest
 
-from schocken.schockenrunde import Einwerfen, SchockenRunde
+from schocken.schockenrunde import Einwerfen, SchockenSpiel
 from schocken.spieler import Spieler
 from schocken.exceptions import FalscheAktion, FalscherSpieler
 
@@ -14,11 +14,11 @@ def spieler(n=4):
 
 
 def test_wuerfeln(spieler):
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
 
     # Übergang von Einwerfen nach Halbzeit
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
     wuerfel.werfen = lambda n: (2,) * n
     runde.command_to_event(spieler[0].name, "einwerfen")

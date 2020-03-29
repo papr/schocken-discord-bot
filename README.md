@@ -35,9 +35,9 @@
 - verschiedene würfe? mit bounce, one bounce, am rand etc. (mit unterschiedlichen chancen auf rausfliegende würfel)
 
 ## TODO
-- SchockenRunde braucht ein Attribut aktueller_spieler oder jeder Spieler() braucht ein Attribut aktiv
+- SchockenSpiel braucht ein Attribut aktueller_spieler oder jeder Spieler() braucht ein Attribut aktiv
 - weiter; spieler mit niedrigstem wurf startet mit seinem ersten wurf die runde (state change zu Runde) **[Andre]**
-  - Ergebnis: sortierte Liste SchockenRunde.spieler_liste [reihenfolge verschoben auf den niedrigsten]
+  - Ergebnis: sortierte Liste SchockenSpiel.spieler_liste [reihenfolge verschoben auf den niedrigsten]
 - Runde; 
   - Rundenablauf; würfel beiseite legen
     - Ergebnis: Liste mit Würfen der einzelnen leute [sollte nach jedem wurf aktuell sein] [siehe input wurfauswertung]

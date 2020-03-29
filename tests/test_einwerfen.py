@@ -1,7 +1,7 @@
 import pytest
 
 from schocken import events
-from schocken.schockenrunde import SchockenRunde
+from schocken.schockenrunde import SchockenSpiel
 from schocken.spieler import Spieler
 from schocken.exceptions import FalscheAktion, FalscherSpieler
 
@@ -15,7 +15,7 @@ def spieler(n=4):
 
 
 def test_einwerfen_trotz_stechen(spieler):
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
 
     # FALL: Zwei Spieler werfen dasselbe ein, einer versucht zu starten
@@ -30,7 +30,7 @@ def test_einwerfen_trotz_stechen(spieler):
 @pytest.fixture
 def drei_spieler_eingeworfen_spieler_zwei_muss_werfen(spieler):
     # FALL: spieler 2 würfelt eindeutig das niedrigste
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
     wuerfel.werfen = lambda n: (2,) * n
     runde.command_to_event(spieler[0].name, "einwerfen")
@@ -67,7 +67,7 @@ def test_korrekter_start(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_wer
 
 @pytest.fixture
 def vierfach_stechen(spieler):
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
     wuerfel.werfen = lambda n: (1,) * n
     for S in spieler:
@@ -122,7 +122,7 @@ def test_mehrfaches_stechen(spieler, vierfach_stechen):
 
 def test_einwerfen_während_stechen(spieler):
     # FALL einwerfen wenn stechen im gange ist
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
 
     wuerfel.werfen = lambda n: (1,) * n
     runde.command_to_event(spieler[0].name, "einwerfen")
@@ -140,7 +140,7 @@ def test_einwerfen_während_stechen(spieler):
 
 def test_stiche_höher_einwurf_augen(spieler):
     # FALL Stiche sind größer als nächstkleinere Einwurf Augenzahlen
-    runde = SchockenRunde()
+    runde = SchockenSpiel()
 
     assert runde.leaf_state.name == "einwerfen"
     wuerfel.werfen = lambda n: (2,) * n
