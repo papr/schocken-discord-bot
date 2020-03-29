@@ -184,24 +184,23 @@ class Halbzeit(pysm.StateMachine):
         return sotiert
 
     def wuerfeln_handler(self, state, event):
-        spieler = self.aktiver_spieler
+        akt_spieler = self.__aktiver_spieler
         spieler_name = event.cargo["spieler_name"]
 
-        if spieler_name != spieler.name:
+        if spieler_name != akt_spieler.name:
             raise FalscherSpieler(
-                f"{spieler_name} hat geworfen, "
-                f"{self.aktiver_spieler.name} war aber dran!"
+                f"{spieler_name} hat geworfen, " f"{akt_spieler.name} war aber dran!"
             )
 
         # first throw (always 3 dice)
-        if spieler.anzahl_wuerfe == 0:
-            spieler.augen = wuerfel.werfen(3)
-            spieler.anzahl_wuerfe += 1
-            self.rdm.wurf(spieler_name, spieler.augen, aus_der_hand=True)
-        elif spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
-            spieler.augen = wuerfel.werfen(3)
-            spieler.anzahl_wuerfe += 1
-            self.rdm.wurf(spieler_name, spieler.augen, aus_der_hand=True)
+        if akt_spieler.anzahl_wuerfe == 0:
+            akt_spieler.augen = wuerfel.werfen(3)
+            akt_spieler.anzahl_wuerfe += 1
+            self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
+        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
+            akt_spieler.augen = wuerfel.werfen(3)
+            akt_spieler.anzahl_wuerfe += 1
+            self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         else:
             # AUF SEMANTIK ACHTEN (SPRECHT GUTES DEUTSCH IHR HURENSÖHNE)
             num_wurf = self.rdm.num_maximale_würfe
@@ -209,7 +208,7 @@ class Halbzeit(pysm.StateMachine):
             zahl_zu_wort = {1: "ein", 2: "zwei", 3: "drei"}
             meldung = (
                 f"Maximal {zahl_zu_wort[num_wurf]} {plural_switch} erlaubt, "
-                f"{spieler.name}!"
+                f"{akt_spieler.name}!"
             )
             raise ZuOftGeworfen(meldung)
 
@@ -217,9 +216,9 @@ class Halbzeit(pysm.StateMachine):
         pass
 
     def naechster_spieler_handler(self, state, event):
-        self.rdm.weiter()
-        self.spieler_liste = self.spieler_liste[1:] + self.spieler_liste[:1]
-        self.aktiver_spieler = self.spieler_liste[0]
+        self.__rdm.weiter()
+        self.__spieler_liste = self.spieler_liste[1:] + self.spieler_liste[:1]
+        self.__aktiver_spieler = self.spieler_liste[0]
 
     def beendet(self):
         return len(self.spieler_liste) == 1
