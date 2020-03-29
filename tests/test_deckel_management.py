@@ -3,7 +3,7 @@ from schocken.spieler import Spieler
 from schocken.deckel_management import RundenDeckelManagement, SpielzeitStatus
 
 
-def test_simulate_spielzeit():
+def test_simulate_spielzeit_naive():
     A = Spieler("A")
     B = Spieler("B")
 
@@ -15,15 +15,16 @@ def test_simulate_spielzeit():
     print(f"{spielzeit_status.spieler[0]} hat verloren!")
 
 
-def _runde_spielen_jule_im_ersten(status: SpielzeitStatus) -> SpielzeitStatus:
+def _runde_spielen_schockout_im_ersten(status: SpielzeitStatus) -> SpielzeitStatus:
     jules_augen = wurf.SonderWurf.Jule._value_
+    schockout_augen = wurf.Schock.out._value_
     rdm = RundenDeckelManagement(status)
 
     aktueller_spieler = 0
     rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)
     aktueller_spieler = rdm.weiter()
-    rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)
-    return rdm.deckel_verteilen()
+    rdm.wurf(status.spieler[aktueller_spieler].name, schockout_augen, aus_der_hand=True)
+    return rdm.deckel_verteilen_restliche_spieler()
 
 
 def _runde_spielen_jule_im_dritten(status: SpielzeitStatus) -> SpielzeitStatus:
@@ -34,10 +35,8 @@ def _runde_spielen_jule_im_dritten(status: SpielzeitStatus) -> SpielzeitStatus:
     for _ in range(3):
         rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)
     aktueller_spieler = rdm.weiter()
-    for _ in range(3):
+    # zweiter spieler muss gewinnen, da er/sie sonst anfängt
+    # und es zu einer Endlos-Schleife kommt
+    for _ in range(2):
         rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)
-    return rdm.deckel_verteilen()
-
-
-if __name__ == "__main__":
-    test_simulate_spielzeit()
+    return rdm.deckel_verteilen_restliche_spieler()

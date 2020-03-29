@@ -46,7 +46,7 @@ class RundenDeckelManagement:
         self._aktueller_spieler_idx += 1
         return self._aktueller_spieler_idx
 
-    def deckel_verteilen(self,) -> SpielzeitStatus:
+    def deckel_verteilen_restliche_spieler(self,) -> SpielzeitStatus:
         hoch, tief = self.hoch_und_tief()
         anzahl_deckel = hoch.wurf.deckel_wert
         if self._zahl_deckel_im_topf > 0:
@@ -61,6 +61,10 @@ class RundenDeckelManagement:
         restliche_spieler = [
             s for s in self._spieler if self._zahl_deckel_im_topf or s.deckel
         ]
+        start_idx = restliche_spieler.index(tief.spieler)
+        restliche_spieler = (
+            restliche_spieler[start_idx:] + restliche_spieler[:start_idx]
+        )
         return SpielzeitStatus(self._zahl_deckel_im_topf, restliche_spieler)
 
     def wurf(
