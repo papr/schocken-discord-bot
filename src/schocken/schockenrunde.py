@@ -30,19 +30,20 @@ class Einwerfen(pysm.StateMachine):
             "exit": self.idle_on_exit,
             "einwerfen": self.einwurf_handler,
             "wuerfeln": self.wuerfeln_handler,
+            "exit": self.__spieler_liste_fixieren,
         }
 
         stechen.handlers = {
             "stechen": self.stechen_handler,
             "einwerfen": self.raise_falsche_aktion,
             "wuerfeln": self.wuerfeln_handler,
+            "exit": self.__spieler_liste_fixieren,
         }
 
         self.add_transition(
             idle,
             stechen,
             events=["stechen"],
-            action=None,
             condition=self.stechen_possible,
             after=self.stechen_handler,
         )
@@ -122,6 +123,12 @@ class Einwerfen(pysm.StateMachine):
         return len(self.__spieler_liste) > 1 and self.__stecher_count <= 1
 
     def sortierte_spieler_liste(self):
+        try:
+            return self.__spieler_liste_fixiert
+        except AttributeError as err:
+            raise DuHastMistGebaut("Einwerfen war noch nicht vorbei!") from err
+
+    def __spieler_liste_fixieren(self, state, event):
         spieler_liste = self.__spieler_liste
         if self.state.name == "stechen":
             # rotate spieler_liste according to lowest stecher
@@ -134,7 +141,7 @@ class Einwerfen(pysm.StateMachine):
             min_roll = min(roll_list)
             min_index = roll_list.index(min_roll)
             spieler_liste = spieler_liste[min_index:] + spieler_liste[:min_index]
-        return spieler_liste
+        self.__spieler_liste_fixiert = spieler_liste
 
 
 class Halbzeit(pysm.StateMachine):
@@ -146,6 +153,8 @@ class Halbzeit(pysm.StateMachine):
         self.__rdm = None
         self.letzter_wurf = [None, None, None]
 
+        self.handlers = {"enter": self.__enter}
+
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
@@ -156,7 +165,7 @@ class Halbzeit(pysm.StateMachine):
 
         self.initialize()
 
-    def starten(self, state, event):
+    def __enter(self, state, event):
         vorheriger_state = self.root_machine.state_stack.peek()
         spieler_liste = vorheriger_state.sortierte_spieler_liste()
 
@@ -167,7 +176,11 @@ class Halbzeit(pysm.StateMachine):
 
     @property
     def spieler_liste(self):
-        return self.spielzeit_status.spieler
+        return self.__spielzeit_status.spieler
+
+    @property
+    def aktiver_spieler(self):
+        return self.__rdm.aktiver_spieler
 
     def sortierte_spieler_liste(self):
         if not self.__verlierende:
@@ -184,7 +197,7 @@ class Halbzeit(pysm.StateMachine):
         return sotiert
 
     def wuerfeln_handler(self, state, event):
-        akt_spieler = self.__aktiver_spieler
+        akt_spieler = self.aktiver_spieler
         spieler_name = event.cargo["spieler_name"]
 
         if spieler_name != akt_spieler.name:
@@ -217,8 +230,6 @@ class Halbzeit(pysm.StateMachine):
 
     def naechster_spieler_handler(self, state, event):
         self.__rdm.weiter()
-        self.__spieler_liste = self.spieler_liste[1:] + self.spieler_liste[:1]
-        self.__aktiver_spieler = self.spieler_liste[0]
 
     def beendet(self):
         return len(self.spieler_liste) == 1
@@ -244,20 +255,14 @@ class SchockenRunde(pysm.StateMachine):
             self.einwerfen,
             self.halbzeit_erste,
             events=[events.WÜRFELN],
-            after=self.halbzeit_erste.starten,
+            after=self.halbzeit_erste.wuerfeln_handler,
         )
 
         self.add_transition(
-            self.halbzeit_erste,
-            self.halbzeit_zweite,
-            events=[events.FERTIG_HALBZEIT],
-            after=self.halbzeit_zweite.starten,
+            self.halbzeit_erste, self.halbzeit_zweite, events=[events.FERTIG_HALBZEIT],
         )
         self.add_transition(
-            self.halbzeit_zweite,
-            self.finale,
-            events=[events.FERTIG_HALBZEIT],
-            after=self.finale.starten,
+            self.halbzeit_zweite, self.finale, events=[events.FERTIG_HALBZEIT],
         )
         self.add_transition(
             self.finale, anstoßen, events=[events.FERTIG_HALBZEIT], after=self.anstoßen,

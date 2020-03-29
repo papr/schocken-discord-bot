@@ -124,3 +124,7 @@ class RundenDeckelManagement:
             würfe_start_spieler = self._würfe[start_spieler_name]
             num_würfe_start_spieler = len(würfe_start_spieler)
             return num_würfe_start_spieler
+
+    @property
+    def aktiver_spieler(self):
+        return self._spieler[self._aktueller_spieler_idx]
