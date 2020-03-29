@@ -6,32 +6,35 @@ from schocken.exceptions import FalscheAktion, FalscherSpieler
 
 from schocken import wuerfel
 
-runde = SchockenRunde()
-assert runde.leaf_state.name == "einwerfen"
-# Testspieler
-spieler_1 = Spieler("spieler_1")
-spieler_2 = Spieler("spieler_2")
-spieler_3 = Spieler("spieler_3")
-spieler_4 = Spieler("spieler_4")
 
-# Übergang von Einwerfen nach Halbzeit
-runde = SchockenRunde()
-assert runde.leaf_state.name == "einwerfen"
-wuerfel.werfen = lambda n: (2,) * n
-runde.command_to_event(spieler_1.name, "einwerfen")
-wuerfel.werfen = lambda n: (3,) * n
-runde.command_to_event(spieler_2.name, "einwerfen")
-wuerfel.werfen = lambda n: (2,) * n
-runde.command_to_event(spieler_3.name, "einwerfen")
+@pytest.fixture
+def spieler(n=4):
+    # testspieler
+    return [Spieler(f"spieler_{i+1}") for i in range(n)]
 
-wuerfel.werfen = lambda n: (6,) * n
-runde.command_to_event(spieler_1.name, "stechen")
 
-wuerfel.werfen = lambda n: (5,) * n
-runde.command_to_event(spieler_3.name, "stechen")
+def test_wuerfeln(spieler):
+    runde = SchockenRunde()
+    assert runde.leaf_state.name == "einwerfen"
 
-runde.command_to_event(spieler_3.name, "wuerfeln")
+    # Übergang von Einwerfen nach Halbzeit
+    runde = SchockenRunde()
+    assert runde.leaf_state.name == "einwerfen"
+    wuerfel.werfen = lambda n: (2,) * n
+    runde.command_to_event(spieler[0].name, "einwerfen")
+    wuerfel.werfen = lambda n: (3,) * n
+    runde.command_to_event(spieler[1].name, "einwerfen")
+    wuerfel.werfen = lambda n: (2,) * n
+    runde.command_to_event(spieler[2].name, "einwerfen")
 
-runde.command_to_event(spieler_3.name, "weiter")
+    wuerfel.werfen = lambda n: (6,) * n
+    runde.command_to_event(spieler[0].name, "stechen")
 
-runde.command_to_event(spieler_1.name, "wuerfeln")
+    wuerfel.werfen = lambda n: (5,) * n
+    runde.command_to_event(spieler[2].name, "stechen")
+
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+
+    runde.command_to_event(spieler[2].name, "weiter")
+
+    runde.command_to_event(spieler[0].name, "wuerfeln")
