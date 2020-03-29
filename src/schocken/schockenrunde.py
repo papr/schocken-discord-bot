@@ -1,3 +1,5 @@
+import typing as T
+
 import pysm
 
 from . import events, wuerfel
@@ -175,11 +177,11 @@ class Halbzeit(pysm.StateMachine):
         self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
 
     @property
-    def spieler_liste(self):
+    def spieler_liste(self) -> T.List[Spieler]:
         return self.__spielzeit_status.spieler
 
     @property
-    def aktiver_spieler(self):
+    def aktiver_spieler(self) -> Spieler:
         return self.__rdm.aktiver_spieler
 
     def sortierte_spieler_liste(self):
