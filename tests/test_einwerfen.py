@@ -159,4 +159,6 @@ def test_stiche_höher_einwurf_augen(spieler):
     # spieler 3 muss anfangen zu würfeln
     with pytest.raises(FalscherSpieler):
         runde.command_to_event(spieler[0].name, events.WÜRFELN)
+
+    with pytest.raises(FalscherSpieler):
         runde.command_to_event(spieler[1].name, events.WÜRFELN)
