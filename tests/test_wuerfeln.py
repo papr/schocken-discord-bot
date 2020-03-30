@@ -33,12 +33,12 @@ def test_wuerfeln(spieler):
     wuerfel.werfen = lambda n: (5,) * n
     runde.command_to_event(spieler[2].name, "stechen")
 
+    wuerfel.werfen = lambda n: (1, 1, 3)
     runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    runde.command_to_event(spieler[2].name, "weiter")
+    runde.command_to_event(spieler[2].name, "beiseite legen")
 
-    runde.command_to_event(spieler[0].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (2,)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    runde.command_to_event(spieler[1].name, "wuerfeln")
-
-    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
