@@ -159,7 +159,7 @@ class Halbzeit(pysm.StateMachine):
         self.__verlierende = None
         self.__spielzeit_status = None
         self.__rdm = None
-        self.letzter_wurf = [None, None, None]
+        self.letzter_wurf = (None, None, None)
 
         self.handlers = {"enter": self.__enter}
 
@@ -223,7 +223,7 @@ class Halbzeit(pysm.StateMachine):
             # check if ones were put aside
             if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - akt_spieler.einsen)
-                akt_spieler.augen = (akt_spieler.einsen,) + wurf
+                akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
                 akt_spieler.anzahl_wuerfe += 1
                 self.letzter_wurf = akt_spieler.augen
                 self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
@@ -264,7 +264,7 @@ class Halbzeit(pysm.StateMachine):
 
         if 1 in akt_spieler.augen:
             try:
-                akt_spieler.einsen = len(akt_spieler.augen.count(1))
+                akt_spieler.einsen = akt_spieler.augen.count(1)
             except TypeError:
                 akt_spieler.einsen = 1
 

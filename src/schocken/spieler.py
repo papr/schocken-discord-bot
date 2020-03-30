@@ -3,7 +3,7 @@ class Spieler:
         self.name = name
         self.deckel = 0
         self.einsen = 0
-        self.augen = [None, None, None]
+        self.augen = (None, None, None)
         self.anzahl_wuerfe = 0
 
     def __str__(self):
