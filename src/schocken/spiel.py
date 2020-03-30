@@ -4,7 +4,13 @@ import pysm
 
 from . import events, wuerfel
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
-from .exceptions import DuHastMistGebaut, FalscheAktion, FalscherSpieler, ZuOftGeworfen
+from .exceptions import (
+    DuHastMistGebaut,
+    FalscheAktion,
+    FalscherSpieler,
+    ZuOftGeworfen,
+    NochNichtGeworfen,
+)
 from .spieler import Spieler
 
 
@@ -160,7 +166,7 @@ class Halbzeit(pysm.StateMachine):
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
-            "beiseite_legen": self.beiseite_legen_handler,
+            "beiseite legen": self.beiseite_legen_handler,
             "weiter": self.naechster_spieler_handler,
         }
         self.add_state(wuerfeln, initial=True)
@@ -211,11 +217,21 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe == 0:
             akt_spieler.augen = wuerfel.werfen(3)
             akt_spieler.anzahl_wuerfe += 1
+            self.letzter_wurf = akt_spieler.augen
             self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         elif akt_spieler.anzahl_wuerfe < self.__rdm.num_maximale_würfe:
-            akt_spieler.augen = wuerfel.werfen(3)
-            akt_spieler.anzahl_wuerfe += 1
-            self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
+            # check if ones were put aside
+            if akt_spieler.einsen > 0:
+                wurf = wuerfel.werfen(3 - akt_spieler.einsen)
+                akt_spieler.augen = (akt_spieler.einsen,) + wurf
+                akt_spieler.anzahl_wuerfe += 1
+                self.letzter_wurf = akt_spieler.augen
+                self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
+            else:
+                akt_spieler.augen = wuerfel.werfen(3)
+                akt_spieler.anzahl_wuerfe += 1
+                self.letzter_wurf = akt_spieler.augen
+                self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         else:
             # watch for semantics
             num_wurf = self.__rdm.num_maximale_würfe
@@ -228,7 +244,7 @@ class Halbzeit(pysm.StateMachine):
             raise ZuOftGeworfen(meldung)
 
         if akt_spieler.anzahl_wuerfe == self.__rdm.num_maximale_würfe:
-            akt_spieler.anzahl_wuerfe = 0
+            self.aktiver_spieler.anzahl_wuerfe = 0
             try:
                 self.__rdm.weiter()
             except ValueError:
@@ -238,11 +254,39 @@ class Halbzeit(pysm.StateMachine):
                 self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
 
     def beiseite_legen_handler(self, state, event):
-        pass
+        spieler_name = event.cargo["spieler_name"]
+        akt_spieler = self.aktiver_spieler
+
+        if spieler_name != akt_spieler.name:
+            raise FalscherSpieler(
+                f"{spieler_name} hat gewürfelt, {akt_spieler.name} war aber dran!"
+            )
+
+        if 1 in akt_spieler.augen:
+            try:
+                akt_spieler.einsen = len(akt_spieler.augen.count(1))
+            except TypeError:
+                akt_spieler.einsen = 1
+
+        else:
+            raise FalscheAktion(
+                f"Du hast keine Einsen gewürfelt die du zur Seite legen kannst!"
+            )
 
     def naechster_spieler_handler(self, state, event):
-        self.aktiver_spieler.anzahl_wuerfe = 0
-        self.__rdm.weiter()
+        spieler_name = event.cargo["spieler_name"]
+        akt_spieler = self.aktiver_spieler
+
+        if spieler_name != akt_spieler.name:
+            raise FalscherSpieler(
+                f"{spieler_name} hat gewürfelt, {akt_spieler.name} war aber dran!"
+            )
+
+        if akt_spieler.anzahl_wuerfe == 0:
+            raise NochNichtGeworfen("Es muss mindestens ein Mal geworfen werden!")
+        else:
+            akt_spieler.anzahl_wuerfe = 0
+            self.__rdm.weiter()
 
     def beendet(self):
         return len(self.spieler_liste) == 1
