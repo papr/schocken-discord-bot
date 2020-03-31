@@ -109,7 +109,8 @@ class Einwerfen(pysm.StateMachine):
         if not self.wuerfeln_possible():
             raise FalscheAktion
         elif spieler_name != self.stecher_liste[0].name:
-            raise FalscherSpieler
+            raise FalscherSpieler(f"Nur {self.stecher_liste[0].name} darf anfangen!")
+
 
     def raise_falsche_aktion(self, state, event):
         raise FalscheAktion
@@ -201,7 +202,7 @@ class Halbzeit(pysm.StateMachine):
 
         if spieler_name != akt_spieler.name:
             raise FalscherSpieler(
-                f"{spieler_name} hat geworfen, " f"{akt_spieler.name} war aber dran!"
+                f"{spieler_name} hat geworfen, {akt_spieler.name} war aber dran!"
             )
 
         # first throw (always 3 dice)
@@ -315,6 +316,8 @@ class SchockenSpiel(pysm.StateMachine):
         self.initialize()
 
     def command_to_event(self, spieler_name, command):
+        #please stick to the convention that event identifiers are the same
+        #as the command strings
         if command == "einwerfen":
             event = pysm.Event("einwerfen", spieler_name=spieler_name)
         elif command == "wuerfeln":
