@@ -65,7 +65,8 @@ class SchockenBot:
         channel = message.channel
         correct_channel = channel.name == self.schock_channel_name
         is_command = msg_text.startswith("!")
-        return correct_channel and is_command
+        is_not_restart = not self._restart_cmd in msg_text
+        return correct_channel and is_command and is_not_restart
 
     def restart_issued(self, message):
         msg_text = message.content
