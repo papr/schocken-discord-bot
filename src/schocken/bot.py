@@ -12,8 +12,6 @@ from .exceptions import (
 )
 from .spiel import SchockenSpiel
 from discord.utils import get
-import os
-import signal
 
 
 class SchockenBot:
@@ -43,7 +41,11 @@ class SchockenBot:
             "wuerfeln": "wuerfeln",
             "stechen": "stechen",
             "weiter": "weiter",
-            "beiseite legen": "beiseite legen",
+            "beiseite": "beiseite legen",
+        }
+
+        self.game_to_discord_cmd_dict = {
+            v: k for k, v in self.discord_to_game_cmd_dict.items()
         }
 
     def emoji_by_name(self, name):
@@ -65,6 +67,12 @@ class SchockenBot:
         spieler = next(sp for sp in spielerliste if sp.name == name)
         return spieler
 
+    def replace_names_by_mentions(self, string):
+        for name in self._all_member_names:
+            member = self.name_to_member(name)
+            string = string.replace(name, member.mention)
+        return string
+
     def command_in_schock_channel(self, message):
         msg_text = message.content
         channel = message.channel
@@ -81,7 +89,6 @@ class SchockenBot:
         # all messages from channels with read permissions are read
         msg_text = message.content
         channel = message.channel
-        msg_author = message.author
         try:
             if self.command_in_schock_channel(message):
                 command = msg_text.split("!")[-1]
@@ -120,7 +127,7 @@ class SchockenBot:
                 role_strs = [str(role) for role in message.author.roles]
                 if "developer" not in role_strs:
                     raise PermissionError
-                msg = f"👋 Bis gleich! :wave:"
+                msg = f"Bis gleich! :wave:"
                 await self.print_to_channel(channel, msg)
                 await self.client.logout()
                 os.kill(os.getpid(), signal.SIGINT)
@@ -145,26 +152,32 @@ class SchockenBot:
             await self.print_to_channel(channel, msg)
 
         except FalscherSpielBefehl:
-            msg = "Das geht leider nicht."
+            avail_handlers = self.game.leaf_state.handlers.keys()
+            cmds = [f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers]
+            msg = "Diesen Befehl gibt es nicht. Versuch's mal mit einem von diesen:\n"
+            msg+= ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
 
         except FalscherSpieler as e:
             if str(e):
-                msg = str(e)
+                msg = self.replace_names_by_mentions(str(e))
             else:
                 msg = "Das darfst du gerade nicht (Falsche Spielerin)."
             await self.print_to_channel(channel, msg)
 
         except ZuOftGeworfen as e:
             if str(e):
-                msg = str(e)
+                msg = self.replace_names_by_mentions(str(e))
             else:
                 msg = "Du darfst nicht nochmal!"
             await self.print_to_channel(channel, msg)
 
-        except FalscheAktion:
-            msg = "Das darfst du gerade nicht. (Falsche Aktion)"
+        except FalscheAktion as e:
+            if str(e):
+                msg = self.replace_names_by_mentions(str(e))
+            else:
+                msg = "Das darfst du gerade nicht. (Falsche Aktion)"
             await self.print_to_channel(channel, msg)
 
     async def print_to_channel(self, channel, text):
@@ -182,7 +195,7 @@ class SchockenBot:
         if game_cmd not in self.game.leaf_state.handlers.keys():
             raise FalscheAktion
 
-        self.game.command_to_event(spieler_name, command)
+        self.game.command_to_event(spieler_name, game_cmd)
         new_state = self.game.state.leaf_state.name
 
         state_changed = old_state != new_state
@@ -214,11 +227,7 @@ class SchockenBot:
             await self.print_to_channel(channel, out_str)
 
         elif new_state == "stechen":
-            spieler = next(
-                sp
-                for sp in self.game.einwerfen.spieler_liste
-                if sp.name == spieler_name
-            )
+            spieler = self.spieler_by_name(spieler_name, self.game.einwerfen.spieler_liste)
             noch_stechen = [
                 sp
                 for sp in self.game.einwerfen.stecher_liste
@@ -248,11 +257,12 @@ class SchockenBot:
             halbzeit_names = {1: "halbzeit_erste", 2: "halbzeit_zweite", 3: "finale"}
 
             halbzeit = getattr(self.game, halbzeit_names[halbzeit_no])
-            spieler = halbzeit.aktiver_spieler
+
+            new_spieler_liste = halbzeit.spieler_liste
+            spieler = self.spieler_by_name(spieler_name, new_spieler_liste)
 
             # Halbzeit beginnt
             if old_state in ["einwerfen", "stechen"] or halbzeit_no != 1:
-                new_spieler_liste = halbzeit.spieler_liste
                 old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
                 # Erster wurf nach einwerfen. Print reihenfolge
                 out_str0 = f"Halbzeit {halbzeit_no} beginnt. Die Reihenfolge ist:\n"
@@ -263,6 +273,7 @@ class SchockenBot:
 
             # handle wuerfeln
             wuerfe = spieler.augen
+            print(wuerfe)
             anzahl_wuerfe = spieler.anzahl_wuerfe
             # erster wurf (immer drei)
             wurf_emoji = "".join(

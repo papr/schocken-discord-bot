@@ -1,7 +1,5 @@
 import typing as T
-
 import pysm
-
 from . import events, wuerfel
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 from .exceptions import (
@@ -111,7 +109,6 @@ class Einwerfen(pysm.StateMachine):
         elif spieler_name != self.stecher_liste[0].name:
             raise FalscherSpieler(f"Nur {self.stecher_liste[0].name} darf anfangen!")
 
-
     def raise_falsche_aktion(self, state, event):
         raise FalscheAktion
 
@@ -119,7 +116,7 @@ class Einwerfen(pysm.StateMachine):
         if len(self.spieler_liste) > 1 and self.stecher_count > 1:
             return True
         else:
-            raise FalscheAktion
+            raise FalscheAktion("Stechen geht gerade nicht")
 
     def wuerfeln_possible(self):
         return len(self.spieler_liste) > 1 and self.stecher_count <= 1
