@@ -32,7 +32,6 @@ class Einwerfen(pysm.StateMachine):
         self.add_state(stechen)
 
         idle.handlers = {
-            "exit": self.idle_on_exit,
             "einwerfen": self.einwurf_handler,
             "wuerfeln": self.wuerfeln_handler,
             "exit": self.spieler_liste_fixieren,
@@ -114,9 +113,6 @@ class Einwerfen(pysm.StateMachine):
 
     def raise_falsche_aktion(self, state, event):
         raise FalscheAktion
-
-    def idle_on_exit(self, state, event):
-        pass
 
     def stechen_possible(self, state, event):
         if len(self.spieler_liste) > 1 and self.stecher_count > 1:
