@@ -2,6 +2,7 @@ class Spieler:
     def __init__(self, name):
         self.name = name
         self.deckel = 0
+        self.beiseite_gelegt = False
         self.einsen = 0
         self.augen = (None, None, None)
         self.anzahl_wuerfe = 0
