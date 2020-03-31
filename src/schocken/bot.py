@@ -4,8 +4,9 @@ from .exceptions import (
     FalscherSpielBefehl,
     FalscheAktion,
     PermissionError,
+    FalscherSpieler,
+    ZuOftGeworfen,
 )
-from .deckel_management import FalscherSpieler
 from .spiel import SchockenSpiel
 from discord.utils import get
 import os
@@ -20,6 +21,7 @@ class SchockenBot:
         self.schock_channel_name = "schocktresen"
         self.valid_guild_name = "Café A"
         self.game_running = False
+        self._all_member_names = [member.name for member in self.guild.members]
         self._start_game_cmd = "schocken"
         self._end_game_cmd = "beenden"
         self._restart_cmd = "neustart"
@@ -37,6 +39,8 @@ class SchockenBot:
             "einwerfen": "einwerfen",
             "wuerfeln": "wuerfeln",
             "stechen": "stechen",
+            "weiter": "weiter",
+            "beiseite legen": "beiseite legen",
         }
 
     def emoji_by_name(self, name):
@@ -50,6 +54,7 @@ class SchockenBot:
     def discord_to_game_cmd(self, discord_cmd):
         try:
             game_cmd = self.discord_to_game_cmd_dict[discord_cmd]
+            return game_cmd
         except KeyError:
             raise FalscherSpielBefehl
 
@@ -62,7 +67,7 @@ class SchockenBot:
         channel = message.channel
         correct_channel = channel.name == self.schock_channel_name
         is_command = msg_text.startswith("!")
-        is_not_restart = not self._restart_cmd in msg_text
+        is_not_restart = self._restart_cmd not in msg_text
         return correct_channel and is_command and is_not_restart
 
     def restart_issued(self, message):
@@ -74,8 +79,6 @@ class SchockenBot:
         msg_text = message.content
         channel = message.channel
         msg_author = message.author
-        # check if message is in the correct channel
-        # TODO externalize check
         try:
             if self.command_in_schock_channel(message):
                 command = msg_text.split("!")[-1]
@@ -114,7 +117,7 @@ class SchockenBot:
                 role_strs = [str(role) for role in message.author.roles]
                 if "developer" not in role_strs:
                     raise PermissionError
-                msg = f"Bis gleich! {self.emoji_by_name('wave')}"
+                msg = f"Bis gleich! 👋"
                 await self.print_to_channel(channel, msg)
                 await self.client.logout()
                 os.kill(os.getpid(), signal.SIGINT)
@@ -144,8 +147,18 @@ class SchockenBot:
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
 
-        except FalscherSpieler:
-            msg = "Das darfst du gerade nicht (Falsche Spielerin)."
+        except FalscherSpieler as e:
+            if str(e):
+                msg = str(e)
+            else:
+                msg = "Das darfst du gerade nicht (Falsche Spielerin)."
+            await self.print_to_channel(channel, msg)
+
+        except ZuOftGeworfen as e:
+            if str(e):
+                msg = str(e)
+            else:
+                msg = "Du darfst nicht nochmal!"
             await self.print_to_channel(channel, msg)
 
         except FalscheAktion:
@@ -164,9 +177,11 @@ class SchockenBot:
 
         old_state = self.game.state.leaf_state.name
         game_cmd = self.discord_to_game_cmd(command)
+        if game_cmd not in self.game.leaf_state.handlers.keys():
+            raise FalscheAktion
+
         self.game.command_to_event(spieler_name, command)
         new_state = self.game.state.leaf_state.name
-        # TODO: abfangen ob command in den handlers des aktuellen states vorhanden ist
 
         state_changed = old_state != new_state
         if new_state == "einwerfen":
@@ -205,7 +220,7 @@ class SchockenBot:
             noch_stechen = [
                 sp
                 for sp in self.game.einwerfen.stecher_liste
-                if sp not in self.game.einwerfen._gestochen_liste
+                if sp not in self.game.einwerfen.gestochen_liste
             ]
             out_str = f"{message.author.mention} sticht mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])}."
             if len(noch_stechen) > 1:
@@ -225,28 +240,37 @@ class SchockenBot:
             await self.print_to_channel(channel, out_str)
 
         elif new_state == "wuerfeln":
-            spieler = next(
-                sp for sp in self.game.halbzeit.spieler_liste if sp.name == spieler_name
-            )
-            new_spieler_liste = self.game.halbzeit.spieler_liste
-            old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
-            # Halbzeit
-            if old_state in ["einwerfen", "stechen"]:
+            stack_list = list(self.game.state_stack.deque)
+            stack_names = [st.name for st in stack_list]
+            halbzeit_no = stack_names.count("Halbzeit") + 1
+            halbzeit_names = {1: "halbzeit_erste",
+                              2: "halbzeit_zweite",
+                              3: "finale"}
+
+            halbzeit = getattr(self.game, halbzeit_names[halbzeit_no])
+            spieler = halbzeit.aktiver_spieler
+
+            # Halbzeit beginnt
+            if old_state in ["einwerfen", "stechen"] or halbzeit_no != 1:
+                new_spieler_liste = halbzeit.spieler_liste
+                old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
                 # Erster wurf nach einwerfen. Print reihenfolge
-                out_str0 = f"Das Spiel beginnt. Die Reihenfolge ist:\n"
+                out_str0 = f"Halbzeit {halbzeit_no} beginnt. Die Reihenfolge ist:\n"
                 out_str0 += ", ".join(
                     [self.name_to_member(pl.name).mention for pl in old_spieler_liste]
                 )
                 await self.print_to_channel(channel, out_str0)
+
             # handle wuerfeln
-            raise NotImplementedError
             wuerfe = spieler.augen
+            anzahl_wuerfe = spieler.anzahl_wuerfe
+            # erster wurf (immer drei)
             wurf_emoji = "".join(
                 [
-                    self.enmoji_by_name(self._wuerfel_emoji_names[wurf])
+                    self.emoji_by_name(self._wuerfel_emoji_names[wurf])
                     for wurf in wuerfe
                 ]
             )
-            out_str = f"{message.author.mention} wirft:"
+            out_str = f"{message.author.mention} wirft "
             out_str += wurf_emoji + "."
             await self.print_to_channel(channel, out_str)
