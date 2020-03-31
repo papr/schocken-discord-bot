@@ -44,6 +44,10 @@ class SchockenBot:
         except KeyError:
             raise FalscherSpielBefehl
 
+    def spieler_by_name(self, name, spielerliste):
+        spieler = next(sp for sp in spielerliste if sp.name == name)
+        return spieler
+
     async def parse_input(self, message):
         # all messages from channels with read permissions are read
         msg_text = message.content
@@ -124,19 +128,16 @@ class SchockenBot:
         command = msg_text.split("!")[-1]
         spieler_name = msg_author.name
 
-        old_state = self.game.state
+        old_state = self.game.state.leaf_state.name
         game_cmd = self.discord_to_game_cmd(command)
         self.game.command_to_event(spieler_name, command)
-        new_state = self.game.state
+        new_state = self.game.state.leaf_state.name
+        #TODO: abfangen ob command in den handlers des aktuellen states vorhanden ist
 
         state_changed = old_state != new_state
         if new_state == "einwerfen":
             # einwerfen is the initial state, no need to check for changes
-            spieler = next(
-                sp
-                for sp in self.game.__einwerfen.spieler_liste
-                if sp.name == spieler_name
-            )
+            spieler = self.spieler_by_name(spieler_name, self.game.einwerfen.spieler_liste)
             out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])} geworfen."
             # stechen oder nicht?
             if self.game.einwerfen.stecher_count > 1:
