@@ -60,9 +60,26 @@ Spieler:
 
 ## Deployment Instructions
 
+### Authentification
+
+Create a `.env` file in the top-level directory of the repository with the follwing content:
+```sh
+DISCORD_TOKEN=$TOKEN
+DISCORD_GUILD="Café A"
+```
+
+### Local Python Package
+
 ```
 python -m pip install -U pip
 python -m pip install -U schocken
 python -m schocken
 ```
 
+### Using Docker
+
+**Local**
+```sh
+docker build -f Dockerfile.local -t schocken.local
+docker run --env-file .env schocken.local:latest
+```
