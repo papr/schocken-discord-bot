@@ -253,6 +253,9 @@ class Halbzeit(pysm.StateMachine):
                 )
                 self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
 
+        if self.beendet():
+            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+
     def beiseite_legen_handler(self, state, event):
         spieler_name = event.cargo["spieler_name"]
         akt_spieler = self.aktiver_spieler
