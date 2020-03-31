@@ -48,3 +48,6 @@ class DuHastMistGebaut(RuntimeError):
 
 class RundeVorbei(ValueError):
     pass
+
+class PermissionError(ValueError):
+    pass
