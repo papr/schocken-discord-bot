@@ -8,6 +8,7 @@ from .exceptions import (
     FalscherSpieler,
     KeineWürfeVorhanden,
     UnbekannterSpieler,
+    RundeVorbei,
 )
 
 NUM_MAX_DECKEL = 15
@@ -42,7 +43,7 @@ class RundenDeckelManagement:
         if not self._würfe[aktueller_spieler]:
             raise NochNichtGeworfen
         if self._aktueller_spieler_idx + 1 >= len(self._spieler):
-            raise ValueError("Runde ist bereits vorbei!")
+            raise RundeVorbei("Runde ist bereits vorbei!")
         self._aktueller_spieler_idx += 1
         return self._aktueller_spieler_idx
 

@@ -10,6 +10,7 @@ from .exceptions import (
     FalscherSpieler,
     ZuOftGeworfen,
     NochNichtGeworfen,
+    RundeVorbei,
 )
 from .spieler import Spieler
 
@@ -247,7 +248,7 @@ class Halbzeit(pysm.StateMachine):
             self.aktiver_spieler.anzahl_wuerfe = 0
             try:
                 self.__rdm.weiter()
-            except ValueError:
+            except RundeVorbei:
                 self.__spielzeit_status = (
                     self.__rdm.deckel_verteilen_restliche_spieler()
                 )

@@ -30,26 +30,32 @@ def test_wuerfeln_uebergang_einwerfen_halbzeit(spieler):
     wuerfel.werfen = lambda n: (1, 2, 3)
     runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    assert runde._leaf_state.name == "wuerfeln"
+    runde.command_to_event(spieler[2].name, "weiter")
 
+    runde.command_to_event(spieler[0].name, "wuerfeln")
 
-@pytest.fixture
-def drei_spieler_eingeworfen_spieler_zwei_muss_werfen(spieler):
-    # FALL: spieler 2 würfelt eindeutig das niedrigste
-    runde = SchockenSpiel()
-    assert runde.leaf_state.name == "einwerfen"
-    wuerfel.werfen = lambda n: (2,) * n
-    runde.command_to_event(spieler[0].name, "einwerfen")
-    wuerfel.werfen = lambda n: (1,) * n
-    runde.command_to_event(spieler[1].name, "einwerfen")
-    wuerfel.werfen = lambda n: (3,) * n
-    runde.command_to_event(spieler[2].name, "einwerfen")
-    return runde
-
-
-def test_wuerfeln_falscher_spieler_wuerfelt(spieler):
-    runde = SchockenSpiel()
-    runde.leaf_state.name = "wuerfeln"
-    runde.spieler_
+    runde.command_to_event(spieler[1].name, "wuerfeln")
 
     assert runde._leaf_state.name == "wuerfeln"
+
+
+# @pytest.fixture
+# def drei_spieler_eingeworfen_spieler_zwei_muss_werfen(spieler):
+#     # FALL: spieler 2 würfelt eindeutig das niedrigste
+#     runde = SchockenSpiel()
+#     assert runde.leaf_state.name == "einwerfen"
+#     wuerfel.werfen = lambda n: (2,) * n
+#     runde.command_to_event(spieler[0].name, "einwerfen")
+#     wuerfel.werfen = lambda n: (1,) * n
+#     runde.command_to_event(spieler[1].name, "einwerfen")
+#     wuerfel.werfen = lambda n: (3,) * n
+#     runde.command_to_event(spieler[2].name, "einwerfen")
+#     return runde
+
+
+# def test_wuerfeln_falscher_spieler_wuerfelt(spieler):
+#     runde = SchockenSpiel()
+#     runde.leaf_state.name = "wuerfeln"
+#     runde.spieler_
+
+#     assert runde._leaf_state.name == "wuerfeln"
