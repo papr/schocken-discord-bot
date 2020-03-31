@@ -35,7 +35,7 @@ def _runde_spielen_jule_im_dritten(status: SpielzeitStatus) -> SpielzeitStatus:
     for _ in range(3):
         rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)
     aktueller_spieler = rdm.weiter()
-    # zweiter spieler muss gewinnen, da er/sie sonst anfängt
+    # zweiter spieler muss gewinnen, da er/sie sonst anfaengt
     # und es zu einer Endlos-Schleife kommt
     for _ in range(2):
         rdm.wurf(status.spieler[aktueller_spieler].name, jules_augen, aus_der_hand=True)

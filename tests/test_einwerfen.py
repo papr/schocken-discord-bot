@@ -120,7 +120,7 @@ def test_mehrfaches_stechen(spieler, vierfach_stechen):
     assert runde.einwerfen.sortierte_spieler_liste()[0].name == spieler[1].name
 
 
-def test_einwerfen_während_stechen(spieler):
+def test_einwerfen_waehrend_stechen(spieler):
     # FALL einwerfen wenn stechen im gange ist
     runde = SchockenSpiel()
 

@@ -214,7 +214,7 @@ class Halbzeit(pysm.StateMachine):
             akt_spieler.anzahl_wuerfe += 1
             self.letzter_wurf = akt_spieler.augen
             self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
-        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
+        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - akt_spieler.einsen)
@@ -229,7 +229,7 @@ class Halbzeit(pysm.StateMachine):
                 self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         else:
             # watch for semantics
-            num_wurf = self.rdm.num_maximale_würfe
+            num_wurf = self.rdm.num_maximale_wuerfe
             plural_switch = "Wurf ist" if num_wurf == 1 else "Würfe sind"
             zahl_zu_wort = {1: "ein", 2: "zwei", 3: "drei"}
             meldung = (
@@ -238,7 +238,7 @@ class Halbzeit(pysm.StateMachine):
             )
             raise ZuOftGeworfen(meldung)
 
-        if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_würfe:
+        if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
             self.aktiver_spieler.anzahl_wuerfe = 0
             try:
                 self.rdm.weiter()

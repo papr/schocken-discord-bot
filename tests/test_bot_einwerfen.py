@@ -1,16 +1,20 @@
 from offline_test_helpers import MockBot, MockClient, MockMember, MockMessage
-from schocken.exceptions import SpielLäuft
+from schocken.exceptions import SpielLaeuft
 from schocken import wuerfel
 import pytest, asyncio
+
 
 @pytest.fixture
 def member(n=4):
     return [MockMember(f"spieler_{i+1}") for i in range(n)]
 
+
 pytestmark = pytest.mark.asyncio
+
 
 async def test_start_game():
     assert True
+
 
 async def main():
     client = MockClient()
@@ -21,7 +25,7 @@ async def main():
     spieler_3 = MockMember("spieler_3")
     spieler_4 = MockMember("spieler_4")
 
-    # spieler_1 starts game 
+    # spieler_1 starts game
     await bot.parse_input(MockMessage(spieler_1, "!schocken"))
 
     wuerfel.werfen = lambda n: (2,) * n
@@ -30,7 +34,7 @@ async def main():
     wuerfel.werfen = lambda n: (1,) * n
     await bot.parse_input(MockMessage(spieler_2, "!einwerfen"))
     await bot.parse_input(MockMessage(spieler_3, "!einwerfen"))
-     
+
     wuerfel.werfen = lambda n: (3,) * n
     await bot.parse_input(MockMessage(spieler_2, "!stechen"))
 

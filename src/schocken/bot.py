@@ -1,4 +1,9 @@
-from .exceptions import SpielLäuft, SpielLäuftNicht, FalscherSpielBefehl, FalscheAktion
+from .exceptions import (
+    SpielLaeuft,
+    SpielLaeuftNicht,
+    FalscherSpielBefehl,
+    FalscheAktion,
+)
 from .deckel_management import FalscherSpieler
 from .spiel import SchockenSpiel
 from discord.utils import get
@@ -57,7 +62,7 @@ class SchockenBot:
                     command = msg_text.split("!")[-1]
                     if command == self._start_game_cmd:
                         if self.game_running:
-                            raise SpielLäuft
+                            raise SpielLaeuft
                         else:
                             self.game_running = True
                             self.game = SchockenSpiel()
@@ -70,7 +75,7 @@ class SchockenBot:
                             self.game_running = False
                             await self.print_to_channel(channel, msg)
                         else:
-                            raise SpielLäuftNicht
+                            raise SpielLaeuftNicht
 
                     elif command == "ICH WILL UNREAL TOURNAMENT SPIELEN":
                         msg = "Dann geh doch"
@@ -80,7 +85,7 @@ class SchockenBot:
 
                     else:
                         if not self.game_running:
-                            raise SpielLäuftNicht
+                            raise SpielLaeuftNicht
                         # actual game
                         await self.handle_game(message)
 
@@ -91,11 +96,11 @@ class SchockenBot:
                     self.game_running = False
                     del self.game
 
-                except SpielLäuftNicht:
+                except SpielLaeuftNicht:
                     msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
                     await self.print_to_channel(channel, msg)
 
-                except SpielLäuft:
+                except SpielLaeuft:
                     msg = (
                         f"Es läuft bereits ein Spiel, schau, ob du `!einwerfen` kannst."
                     )
