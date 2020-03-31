@@ -58,3 +58,11 @@ Spieler:
 - augen [letzter wurf]
 - anzahl der würfe
 
+## Deployment Instructions
+
+```
+python -m pip install -U pip
+python -m pip install -U schocken
+python -m schocken
+```
+
