@@ -1,3 +1,6 @@
+import os
+import signal
+
 from .exceptions import (
     SpielLaeuft,
     SpielLaeuftNicht,
@@ -115,7 +118,9 @@ class SchockenBot:
                     await self.handle_game(message)
 
             elif self.restart_issued(message):
-                raise NotImplementedError
+                await channel.send("Bis gleich! :wave:")
+                await self.client.logout()
+                os.kill(os.getpid(), signal.SIGINT)
 
         except NotImplementedError:
             msg = "Das geht leider noch nicht. (Nicht implementiert)"
