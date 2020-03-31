@@ -263,11 +263,7 @@ class Halbzeit(pysm.StateMachine):
             )
 
         if 1 in akt_spieler.augen:
-            try:
-                akt_spieler.einsen = akt_spieler.augen.count(1)
-            except TypeError:
-                akt_spieler.einsen = 1
-
+            akt_spieler.einsen = akt_spieler.augen.count(1)
         else:
             raise FalscheAktion(
                 f"Du hast keine Einsen gewürfelt die du zur Seite legen kannst!"

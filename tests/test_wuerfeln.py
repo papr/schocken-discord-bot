@@ -13,7 +13,7 @@ def spieler(n=4):
     return [Spieler(f"spieler_{i+1}") for i in range(n)]
 
 
-def test_wuerfeln(spieler):
+def test_wuerfeln_uebergang_einwerfen_halbzeit(spieler):
     runde = SchockenSpiel()
     assert runde.leaf_state.name == "einwerfen"
 
@@ -24,21 +24,17 @@ def test_wuerfeln(spieler):
     runde.command_to_event(spieler[0].name, "einwerfen")
     wuerfel.werfen = lambda n: (3,) * n
     runde.command_to_event(spieler[1].name, "einwerfen")
-    wuerfel.werfen = lambda n: (2,) * n
+    wuerfel.werfen = lambda n: (1,) * n
     runde.command_to_event(spieler[2].name, "einwerfen")
 
-    wuerfel.werfen = lambda n: (6,) * n
-    runde.command_to_event(spieler[0].name, "stechen")
-
-    wuerfel.werfen = lambda n: (5,) * n
-    runde.command_to_event(spieler[2].name, "stechen")
-
-    wuerfel.werfen = lambda n: (1, 1, 3)
+    wuerfel.werfen = lambda n: (1, 2, 3)
     runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    runde.command_to_event(spieler[2].name, "beiseite legen")
+    assert runde._leaf_state.name == "wuerfeln"
 
-    wuerfel.werfen = lambda n: (2,)
-    runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    runde.command_to_event(spieler[2].name, "wuerfeln")
+def test_wuerfeln_falscher_spieler_wuerfelt(spieler):
+    runde = SchockenSpiel()
+    runde.leaf_state.name = "wuerfeln"
+
+    assert runde._leaf_state.name == "wuerfeln"
