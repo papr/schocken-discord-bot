@@ -8,6 +8,8 @@ from .exceptions import (
 from .deckel_management import FalscherSpieler
 from .spiel import SchockenSpiel
 from discord.utils import get
+import os
+import signal
 
 
 class SchockenBot:
@@ -64,14 +66,7 @@ class SchockenBot:
 
     def restart_issued(self, message):
         msg_text = message.content
-        role_strs = [str(role) for role in message.author.roles]
-        if msg_text == f"!{self._restart_cmd}:
-            if "developer" not in role_strs:
-                raise PermissionError
-            else:
-                return True
-        else:
-            return False
+        return msg_text == f"!{self._restart_cmd}"
 
     async def parse_input(self, message):
         # all messages from channels with read permissions are read
@@ -84,7 +79,7 @@ class SchockenBot:
             if self.command_in_schock_channel(message):
                 command = msg_text.split("!")[-1]
                 if command == self._start_game_cmd:
-                    #TODO Status auf Spiel läuft setzten
+                    # TODO Status auf Spiel läuft setzten
                     if self.game_running:
                         raise SpielLaeuft
                     else:
@@ -94,7 +89,7 @@ class SchockenBot:
                         await self.print_to_channel(channel, msg)
 
                 elif command == self._end_game_cmd:
-                    #TODO Status auf Spiel beendet setzten
+                    # TODO Status auf Spiel beendet setzten
                     if self.game_running:
                         msg = f"{message.author.mention} hat das Spiel beendet"
                         self.game_running = False
@@ -115,6 +110,13 @@ class SchockenBot:
                     await self.handle_game(message)
 
             elif self.restart_issued(message):
+                role_strs = [str(role) for role in message.author.roles]
+                if "developer" not in role_strs:
+                    raise PermissionError
+                msg = f"Bis gleich! {self.emoji_by_name('wave')}"
+                await self.print_to_channel(channel, msg)
+                await self.client.logout()
+                os.kill(os.getpid(), signal.SIGINT)
                 raise NotImplementedError
 
         except NotImplementedError:
@@ -125,17 +127,15 @@ class SchockenBot:
             del self.game
 
         except PermissionError:
-            msg = "Das darfst du nicht, DU HURENSOHN!"
-            await self.print_to_channel(channel,msg)
+            msg = f"Das darfst du nicht, DU HURENSOHN! {self.emoji_by_name('king')}"
+            await self.print_to_channel(channel, msg)
 
         except SpielLaeuftNicht:
             msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
             await self.print_to_channel(channel, msg)
 
         except SpielLaeuft:
-            msg = (
-                f"Es läuft bereits ein Spiel, schau, ob du `!einwerfen` kannst."
-            )
+            msg = f"Es läuft bereits ein Spiel, schau, ob du `!einwerfen` kannst."
             await self.print_to_channel(channel, msg)
 
         except FalscherSpielBefehl:
@@ -165,12 +165,14 @@ class SchockenBot:
         game_cmd = self.discord_to_game_cmd(command)
         self.game.command_to_event(spieler_name, command)
         new_state = self.game.state.leaf_state.name
-        #TODO: abfangen ob command in den handlers des aktuellen states vorhanden ist
+        # TODO: abfangen ob command in den handlers des aktuellen states vorhanden ist
 
         state_changed = old_state != new_state
         if new_state == "einwerfen":
             # einwerfen is the initial state, no need to check for changes
-            spieler = self.spieler_by_name(spieler_name, self.game.einwerfen.spieler_liste)
+            spieler = self.spieler_by_name(
+                spieler_name, self.game.einwerfen.spieler_liste
+            )
             out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])} geworfen."
             # stechen oder nicht?
             if self.game.einwerfen.stecher_count > 1:
