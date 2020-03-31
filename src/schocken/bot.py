@@ -276,7 +276,7 @@ class SchockenBot:
             print(wuerfe)
             anzahl_wuerfe = spieler.anzahl_wuerfe
             # erster wurf (immer drei)
-            wurf_emoji = "".join(
+            wurf_emoji = " ".join(
                 [self.emoji_by_name(self._wuerfel_emoji_names[wurf]) for wurf in wuerfe]
             )
             out_str = f"{message.author.mention} wirft "
