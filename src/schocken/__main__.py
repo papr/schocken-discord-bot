@@ -8,6 +8,7 @@ from schocken import __version__
 from schocken.exceptions import FalscherServer
 from schocken.bot import SchockenBot
 
+
 def run_bot():
     load_dotenv()
     TOKEN = os.getenv("DISCORD_TOKEN")
@@ -34,7 +35,17 @@ def run_bot():
         await client.bot.parse_input(message)
         return
 
+    @client.event
+    async def on_error(error, *args, **kwargs):
+        import traceback
+
+        ch = client.get_channel(694603857950539887)  # errorland
+        trace = traceback.format_exc()
+        await ch.send(f"Error: {error}({args}, {kwargs})\n```\n{trace}\n```")
+        return
+
     client.run(TOKEN)
+
 
 if __name__ == "__main__":
     run_bot()
