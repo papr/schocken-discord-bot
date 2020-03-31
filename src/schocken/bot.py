@@ -3,6 +3,7 @@ from .exceptions import (
     SpielLaeuftNicht,
     FalscherSpielBefehl,
     FalscheAktion,
+    PermissionError,
 )
 from .deckel_management import FalscherSpieler
 from .spiel import SchockenSpiel
@@ -19,6 +20,7 @@ class SchockenBot:
         self.game_running = False
         self._start_game_cmd = "schocken"
         self._end_game_cmd = "beenden"
+        self._restart_cmd = "neustart"
         self._wuerfel_emoji_names = dict(
             [
                 (1, "wuerfel_1"),
@@ -53,6 +55,24 @@ class SchockenBot:
         spieler = next(sp for sp in spielerliste if sp.name == name)
         return spieler
 
+    def command_in_schock_channel(self, message):
+        msg_text = message.content
+        channel = message.channel
+        correct_channel = channel.name == self.schock_channel_name
+        is_command = msg_text.startswith("!")
+        return correct_channel and is_command
+
+    def restart_issued(self, message):
+        msg_text = message.content
+        role_strs = [str(role) for role in message.author.roles]
+        if msg_text == f"!{self._restart_cmd}:
+            if "developer" not in role_strs:
+                raise PermissionError("Nur Nutzerinnen mit der Rolle `developer`dürfen das")
+            else:
+                return True
+        else:
+            return False
+
     async def parse_input(self, message):
         # all messages from channels with read permissions are read
         msg_text = message.content
@@ -60,71 +80,76 @@ class SchockenBot:
         msg_author = message.author
         # check if message is in the correct channel
         # TODO externalize check
-        if channel.name == self.schock_channel_name:
-            # check if message is a command
-            if msg_text.startswith("!"):
-                try:
-                    command = msg_text.split("!")[-1]
-                    if command == self._start_game_cmd:
-                        #TODO Status auf Spiel läuft setzten
-                        if self.game_running:
-                            raise SpielLaeuft
-                        else:
-                            self.game_running = True
-                            self.game = SchockenSpiel()
-                            msg = f"{message.author.mention} will schocken. `!einwerfen` zum mitmachen"
-                            await self.print_to_channel(channel, msg)
-
-                    elif command == self._end_game_cmd:
-                        #TODO Status auf Spiel beendet setzten
-                        if self.game_running:
-                            msg = f"{message.author.mention} hat das Spiel beendet"
-                            self.game_running = False
-                            await self.print_to_channel(channel, msg)
-                        else:
-                            raise SpielLaeuftNicht
-
-                    elif command == "ICH WILL UNREAL TOURNAMENT SPIELEN":
-                        msg = "Dann geh doch"
-                        await self.print_to_channel(channel, msg)
-                        link = "https://tenor.com/view/unreal-tournament-kid-unreal-unreal-kid-rage-gif-16110833"
-                        await self.print_to_channel(channel, link)
-
+        try:
+            if self.command_in_schock_channel(message):
+                command = msg_text.split("!")[-1]
+                if command == self._start_game_cmd:
+                    #TODO Status auf Spiel läuft setzten
+                    if self.game_running:
+                        raise SpielLaeuft
                     else:
-                        if not self.game_running:
-                            raise SpielLaeuftNicht
-                        # actual game
-                        await self.handle_game(message)
+                        self.game_running = True
+                        self.game = SchockenSpiel()
+                        msg = f"{message.author.mention} will schocken. `!einwerfen` zum mitmachen"
+                        await self.print_to_channel(channel, msg)
 
-                except NotImplementedError:
-                    msg = "Das geht leider noch nicht. (Nicht implementiert)"
-                    msg += "\n Spiel wird beendet."
-                    await self.print_to_channel(channel, msg)
-                    self.game_running = False
-                    del self.game
+                elif command == self._end_game_cmd:
+                    #TODO Status auf Spiel beendet setzten
+                    if self.game_running:
+                        msg = f"{message.author.mention} hat das Spiel beendet"
+                        self.game_running = False
+                        await self.print_to_channel(channel, msg)
+                    else:
+                        raise SpielLaeuftNicht
 
-                except SpielLaeuftNicht:
-                    msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
+                elif command == "ICH WILL UNREAL TOURNAMENT SPIELEN":
+                    msg = "Dann geh doch"
                     await self.print_to_channel(channel, msg)
+                    link = "https://tenor.com/view/unreal-tournament-kid-unreal-unreal-kid-rage-gif-16110833"
+                    await self.print_to_channel(channel, link)
 
-                except SpielLaeuft:
-                    msg = (
-                        f"Es läuft bereits ein Spiel, schau, ob du `!einwerfen` kannst."
-                    )
-                    await self.print_to_channel(channel, msg)
+                else:
+                    if not self.game_running:
+                        raise SpielLaeuftNicht
+                    # actual game
+                    await self.handle_game(message)
 
-                except FalscherSpielBefehl:
-                    msg = "Das geht leider nicht."
-                    # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
-                    await self.print_to_channel(channel, msg)
+            elif self.restart_issued(message):
+                raise NotImplementedError
 
-                except FalscherSpieler:
-                    msg = "Das darfst du gerade nicht (Falsche Spielerin)."
-                    await self.print_to_channel(channel, msg)
+        except NotImplementedError:
+            msg = "Das geht leider noch nicht. (Nicht implementiert)"
+            msg += "\n Spiel wird beendet."
+            await self.print_to_channel(channel, msg)
+            self.game_running = False
+            del self.game
 
-                except FalscheAktion:
-                    msg = "Das darfst du gerade nicht. (Falsche Aktion)"
-                    await self.print_to_channel(channel, msg)
+        except PermissionError:
+            msg = "Das darfst du nicht, DU HURENSOHN!"
+            await self.print_to_channel(channel,msg)
+
+        except SpielLaeuftNicht:
+            msg = f"Gerade läuft kein Spiel. `!{self._start_game_cmd}` zum starten"
+            await self.print_to_channel(channel, msg)
+
+        except SpielLaeuft:
+            msg = (
+                f"Es läuft bereits ein Spiel, schau, ob du `!einwerfen` kannst."
+            )
+            await self.print_to_channel(channel, msg)
+
+        except FalscherSpielBefehl:
+            msg = "Das geht leider nicht."
+            # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
+            await self.print_to_channel(channel, msg)
+
+        except FalscherSpieler:
+            msg = "Das darfst du gerade nicht (Falsche Spielerin)."
+            await self.print_to_channel(channel, msg)
+
+        except FalscheAktion:
+            msg = "Das darfst du gerade nicht. (Falsche Aktion)"
+            await self.print_to_channel(channel, msg)
 
     async def print_to_channel(self, channel, text):
         return await channel.send(text)
