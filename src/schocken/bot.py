@@ -67,7 +67,7 @@ class SchockenBot:
         role_strs = [str(role) for role in message.author.roles]
         if msg_text == f"!{self._restart_cmd}:
             if "developer" not in role_strs:
-                raise PermissionError("Nur Nutzerinnen mit der Rolle `developer`dürfen das")
+                raise PermissionError
             else:
                 return True
         else:
