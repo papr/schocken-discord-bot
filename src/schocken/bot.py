@@ -134,7 +134,7 @@ class SchockenBot:
             # einwerfen is the initial state, no need to check for changes
             spieler = next(
                 sp
-                for sp in self.game.__einwerfen.spieler_liste
+                for sp in self.game.einwerfen.spieler_liste
                 if sp.name == spieler_name
             )
             out_str = f"{message.author.mention} hat eine {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])} geworfen."
@@ -144,17 +144,17 @@ class SchockenBot:
                     ", ".join(
                         [
                             self.name_to_member(pl.name).mention
-                            for pl in self.game.__einwerfen.stecher_liste
+                            for pl in self.game.einwerfen.stecher_liste
                         ]
                     )
-                    + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.__einwerfen.spieler_liste[0].augen])} geworfen.\n"
+                    + f" haben eine {self.emoji_by_name(self._wuerfel_emoji_names[self.game.einwerfen.spieler_liste[0].augen])} geworfen.\n"
                 )
                 out_str += (
                     "`!stechen` um zu stechen oder auf weiteres `!einwerfen` warten"
                 )
             else:
-                if len(self.game.__einwerfen.spieler_liste) > 1:
-                    anfaenger = self.game.__einwerfen.spieler_liste[0]
+                if len(self.game.einwerfen.spieler_liste) > 1:
+                    anfaenger = self.game.einwerfen.spieler_liste[0]
                     out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
                     out_str += "\n`!wuerfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
             await self.print_to_channel(channel, out_str)
@@ -162,12 +162,12 @@ class SchockenBot:
         elif new_state == "stechen":
             spieler = next(
                 sp
-                for sp in self.game.__einwerfen.spieler_liste
+                for sp in self.game.einwerfen.spieler_liste
                 if sp.name == spieler_name
             )
             noch_stechen = [
                 sp
-                for sp in self.game.__einwerfen.stecher_liste
+                for sp in self.game.einwerfen.stecher_liste
                 if sp not in self.game.einwerfen._gestochen_liste
             ]
             out_str = f"{message.author.mention} sticht mit einer {self.emoji_by_name(self._wuerfel_emoji_names[spieler.augen])}."
@@ -178,12 +178,10 @@ class SchockenBot:
                     )
                     + f" müssen `!stechen`."
                 )
-            elif (
-                len(noch_stechen) == 1 and len(self.game.__einwerfen.stecher_liste) > 1
-            ):
+            elif len(noch_stechen) == 1 and len(self.game.einwerfen.stecher_liste) > 1:
                 out_str += f"\n {self.name_to_member(noch_stechen[0].name).mention} muss noch `!stechen`."
             else:
-                anfaenger = self.game.__einwerfen.spieler_liste[0]
+                anfaenger = self.game.einwerfen.spieler_liste[0]
                 out_str += f"\n{self.name_to_member(anfaenger.name).mention} hat mit einer {self.emoji_by_name(self._wuerfel_emoji_names[anfaenger.augen])} den niedrigsten Wurf und darf anfangen."
                 out_str += "\n`!wuerfeln` um das Spiel zu beginnen."
 
