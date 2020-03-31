@@ -13,9 +13,10 @@ class MockClient:
 
 
 class MockMember:
-    def __init__(self, name):
+    def __init__(self, name, roles=["Schichtler/in"]):
         self.name = name
         self.mention = f"MENTION:{name}"
+        self.roles = roles
 
 
 class MockChannel:
