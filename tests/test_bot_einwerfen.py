@@ -1,12 +1,18 @@
-from offline_test_helpers import MockBot, MockClient, MockMember, MockMessage, MockMessage
-from schocken.exceptions import SpielLaeuft
+from offline_test_helpers import (
+    MockBot,
+    MockClient,
+    MockMember,
+    MockMessage,
+)
+# from schocken.exceptions import SpielLaeuft
 from schocken import wuerfel
-import pytest, asyncio
+import pytest
 
 
 @pytest.fixture
 def member(n=4):
     return [MockMember(f"spieler_{i+1}") for i in range(n)]
+
 
 @pytest.fixture
 def bot():
@@ -14,12 +20,14 @@ def bot():
     bot = MockBot(client)
     return bot
 
+
 pytestmark = pytest.mark.asyncio
 
+
 async def test_start_game(capsys, member, bot):
-    assert bot.game_running == False
+    assert not bot.game_running
     await bot.parse_input(MockMessage(member[0], "!schocken"))
-    assert bot.game_running == True
+    assert bot.game_running
     out, err = capsys.readouterr()
     # richtiger spieler:
     assert "spieler_1" in out
@@ -30,11 +38,12 @@ async def test_start_game(capsys, member, bot):
     out, err = capsys.readouterr()
     assert "läuft" in out
 
-async def test_einwerfen( member, bot):
+
+async def test_einwerfen(member, bot):
     # spiel starten mit fixture ist schwierig wegen der coroutines
     # spiel manuell starten:
     await bot.parse_input(MockMessage(member[0], "!schocken"))
-    assert bot.game_running == True
+    assert bot.game_running
 
     print(bot.game.state)
     wuerfel.werfen = lambda n: (2,) * n

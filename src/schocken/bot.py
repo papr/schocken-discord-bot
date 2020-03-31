@@ -59,12 +59,14 @@ class SchockenBot:
         channel = message.channel
         msg_author = message.author
         # check if message is in the correct channel
+        # TODO externalize check
         if channel.name == self.schock_channel_name:
             # check if message is a command
             if msg_text.startswith("!"):
                 try:
                     command = msg_text.split("!")[-1]
                     if command == self._start_game_cmd:
+                        #TODO Status auf Spiel läuft setzten
                         if self.game_running:
                             raise SpielLaeuft
                         else:
@@ -74,6 +76,7 @@ class SchockenBot:
                             await self.print_to_channel(channel, msg)
 
                     elif command == self._end_game_cmd:
+                        #TODO Status auf Spiel beendet setzten
                         if self.game_running:
                             msg = f"{message.author.mention} hat das Spiel beendet"
                             self.game_running = False
