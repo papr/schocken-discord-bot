@@ -27,12 +27,13 @@ def run_bot():
         print("Success")
         return
 
-
     # when a message is read by the bot
     @client.event
     async def on_message(message):
         await client.bot.parse_input(message)
         return
 
-
     client.run(TOKEN)
+
+if __name__ == "__main__":
+    run_bot()
