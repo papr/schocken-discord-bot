@@ -27,10 +27,10 @@ class MockChannel:
 
 
 class MockMessage:
-    def __init__(self, author, content):
+    def __init__(self, author, content, channel_name="schocktresen"):
         self.content = content
         self.author = author
-        self.channel = MockChannel("schocktresen")
+        self.channel = MockChannel(channel_name)
 
 
 class MockBot(SchockenBot):
