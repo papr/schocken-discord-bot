@@ -76,10 +76,24 @@ python -m pip install -U schocken
 python -m schocken
 ```
 
-### Using Docker
 
-**Local**
+### Using Docker (PyPI build)
+
+```sh
+docker build -f Dockerfile.pypi -t schocken.pypi
+docker run              \
+  --env-file .env       \
+  --restart always      \
+  schocken.pypi:latest
+```
+
+### Using Docker (local build)
+
 ```sh
 docker build -f Dockerfile.local -t schocken.local
-docker run --env-file .env schocken.local:latest
+docker run              \
+  --env-file .env       \
+  --restart always      \
+  -v `pwd`:/schocken    \
+  schocken.local:latest
 ```

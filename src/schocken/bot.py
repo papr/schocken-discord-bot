@@ -117,7 +117,7 @@ class SchockenBot:
                 role_strs = [str(role) for role in message.author.roles]
                 if "developer" not in role_strs:
                     raise PermissionError
-                msg = f"Bis gleich! {self.emoji_by_name('wave')}"
+                msg = f"Bis gleich! :wave:"
                 await self.print_to_channel(channel, msg)
                 await self.client.logout()
                 os.kill(os.getpid(), signal.SIGINT)
