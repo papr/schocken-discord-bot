@@ -19,14 +19,10 @@ class Einwerfen(pysm.StateMachine):
     def __init__(self):
         super().__init__("Einwerfen")
         self.init_sm()
-        self.__spieler_liste = []
-        self.__stecher_count = 0
-        self.__stecher_liste = []
-        self.__gestochen_liste = []
-
-    @property
-    def stecher_liste(self):
-        return self.__stecher_liste
+        self.spieler_liste = []
+        self.stecher_count = 0
+        self.stecher_liste = []
+        self.gestochen_liste = []
 
     def init_sm(self):
         idle = pysm.State("einwerfen")
@@ -39,14 +35,14 @@ class Einwerfen(pysm.StateMachine):
             "exit": self.idle_on_exit,
             "einwerfen": self.einwurf_handler,
             "wuerfeln": self.wuerfeln_handler,
-            "exit": self.__spieler_liste_fixieren,
+            "exit": self.spieler_liste_fixieren,
         }
 
         stechen.handlers = {
             "stechen": self.stechen_handler,
             "einwerfen": self.raise_falsche_aktion,
             "wuerfeln": self.wuerfeln_handler,
-            "exit": self.__spieler_liste_fixieren,
+            "exit": self.spieler_liste_fixieren,
         }
 
         self.add_transition(
@@ -62,29 +58,29 @@ class Einwerfen(pysm.StateMachine):
     def einwurf_handler(self, state, event):
         """Called when event "einwerfen" is dispatched"""
         spieler_name = event.cargo["spieler_name"]
-        if spieler_name in [sp.name for sp in self.__spieler_liste]:
+        if spieler_name in [sp.name for sp in self.spieler_liste]:
             raise FalscherSpieler
 
         spieler = Spieler(spieler_name)
         einwurf = wuerfel.werfen(1)[0]
 
         spieler.augen = einwurf
-        self.__spieler_liste.append(spieler)
+        self.spieler_liste.append(spieler)
 
-        roll_list = [sp.augen for sp in self.__spieler_liste]
+        roll_list = [sp.augen for sp in self.spieler_liste]
 
-        self.__stecher_liste = [
-            sp for sp in self.__spieler_liste if sp.augen == min(roll_list)
+        self.stecher_liste = [
+            sp for sp in self.spieler_liste if sp.augen == min(roll_list)
         ]
-        self.__stecher_count = len(self.__stecher_liste)
+        self.stecher_count = len(self.stecher_liste)
 
     def stechen_handler(self, state, event):
         spieler_name = event.cargo["spieler_name"]
-        if len(self.__gestochen_liste) == 0:
-            self._init_stecher_count = len(self.__stecher_liste)
+        if len(self.gestochen_liste) == 0:
+            self._init_stecher_count = len(self.stecher_liste)
 
         # check if already gestochen
-        if spieler_name in [pl.name for pl in self.__gestochen_liste]:
+        if spieler_name in [pl.name for pl in self.gestochen_liste]:
             raise FalscherSpieler
 
         # check if eligible
@@ -92,28 +88,28 @@ class Einwerfen(pysm.StateMachine):
             raise FalscherSpieler
 
         stich = wuerfel.werfen(1)[0]
-        stecher = [sp for sp in self.__spieler_liste if sp.name == spieler_name][0]
+        stecher = [sp for sp in self.spieler_liste if sp.name == spieler_name][0]
         stecher.augen = stich
 
-        self.__gestochen_liste.append(stecher)
+        self.gestochen_liste.append(stecher)
         # if all stiche done, determine starting player or stech again
-        if len(self.__gestochen_liste) == self._init_stecher_count:
-            stich_list = [st.augen for st in self.__gestochen_liste]
-            self.__stecher_liste = [
-                sp for sp in self.__gestochen_liste if sp.augen == min(stich_list)
+        if len(self.gestochen_liste) == self._init_stecher_count:
+            stich_list = [st.augen for st in self.gestochen_liste]
+            self.stecher_liste = [
+                sp for sp in self.gestochen_liste if sp.augen == min(stich_list)
             ]
-            self.__gestochen_liste = []
+            self.gestochen_liste = []
             # sort stecher by stich
-        elif len(self.__gestochen_liste) < self._init_stecher_count:
+        elif len(self.gestochen_liste) < self._init_stecher_count:
             pass
 
-        self.__stecher_count = len(self.__stecher_liste)
+        self.stecher_count = len(self.stecher_liste)
 
     def wuerfeln_handler(self, state, event):
         spieler_name = event.cargo["spieler_name"]
         if not self.wuerfeln_possible():
             raise FalscheAktion
-        elif spieler_name != self.__stecher_liste[0].name:
+        elif spieler_name != self.stecher_liste[0].name:
             raise FalscherSpieler
 
     def raise_falsche_aktion(self, state, event):
@@ -123,26 +119,26 @@ class Einwerfen(pysm.StateMachine):
         pass
 
     def stechen_possible(self, state, event):
-        if len(self.__spieler_liste) > 1 and self.__stecher_count > 1:
+        if len(self.spieler_liste) > 1 and self.stecher_count > 1:
             return True
         else:
             raise FalscheAktion
 
     def wuerfeln_possible(self):
-        return len(self.__spieler_liste) > 1 and self.__stecher_count <= 1
+        return len(self.spieler_liste) > 1 and self.stecher_count <= 1
 
     def sortierte_spieler_liste(self):
         try:
-            return self.__spieler_liste_fixiert
+            return self.spieler_liste_fixiert
         except AttributeError as err:
             raise DuHastMistGebaut("Einwerfen war noch nicht vorbei!") from err
 
-    def __spieler_liste_fixieren(self, state, event):
-        spieler_liste = self.__spieler_liste
+    def spieler_liste_fixieren(self, state, event):
+        spieler_liste = self.spieler_liste
         if self.state.name == "stechen":
             # rotate spieler_liste according to lowest stecher
-            spieler = self.__stecher_liste[0]
-            idx = self.__spieler_liste.index(spieler)
+            spieler = self.stecher_liste[0]
+            idx = self.spieler_liste.index(spieler)
             spieler_liste = spieler_liste[idx:] + spieler_liste[:idx]
         else:
             # rotate spieler_liste such that lowest roll is first element
@@ -150,19 +146,18 @@ class Einwerfen(pysm.StateMachine):
             min_roll = min(roll_list)
             min_index = roll_list.index(min_roll)
             spieler_liste = spieler_liste[min_index:] + spieler_liste[:min_index]
-        self.__spieler_liste_fixiert = spieler_liste
+        self.spieler_liste_fixiert = spieler_liste
 
 
 class Halbzeit(pysm.StateMachine):
     def __init__(self):
         super().__init__("Halbzeit")
-        self.__aktiver_spieler = None
-        self.__verlierende = None
-        self.__spielzeit_status = None
-        self.__rdm = None
+        self.verlierende = None
+        self.spielzeit_status = None
+        self.rdm = None
         self.letzter_wurf = (None, None, None)
 
-        self.handlers = {"enter": self.__enter}
+        self.handlers = {"enter": self.enter}
 
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
@@ -174,35 +169,34 @@ class Halbzeit(pysm.StateMachine):
 
         self.initialize()
 
-    def __enter(self, state, event):
+    def enter(self, state, event):
         vorheriger_state = self.root_machine.state_stack.peek()
         spieler_liste = vorheriger_state.sortierte_spieler_liste()
 
-        self.__initiale_spieler = spieler_liste.copy()
-        self.__aktiver_spieler = spieler_liste[0]
-        self.__spielzeit_status = SpielzeitStatus(15, spieler_liste)
-        self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
+        self.initiale_spieler = spieler_liste.copy()
+        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
+        self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     @property
     def spieler_liste(self) -> T.List[Spieler]:
-        return self.__spielzeit_status.spieler
+        return self.spielzeit_status.spieler
 
     @property
-    def aktiver_spieler(self) -> Spieler:
-        return self.__rdm.aktiver_spieler
+    def aktiver_spieler(self) -> T.Optional[Spieler]:
+        return self.rdm.aktiver_spieler if self.rdm else None
 
     def sortierte_spieler_liste(self):
-        if not self.__verlierende:
+        if not self.verlierende:
             raise DuHastMistGebaut("Es gibt noch keinen definierten Startspieler")
-        for idx, spieler in enumerate(self.__initiale_spieler):
-            if spieler.name == self.__verlierende.name:
+        for idx, spieler in enumerate(self.initiale_spieler):
+            if spieler.name == self.verlierende.name:
                 break
         else:
             raise DuHastMistGebaut(
-                f"Der/die Verlierende `{self.__verlierende.name}`)` spielt gar nicht "
-                f"mit! Mitspielende: {self.__initiale_spieler}"
+                f"Der/die Verlierende `{self.verlierende.name}`)` spielt gar nicht "
+                f"mit! Mitspielende: {self.initiale_spieler}"
             )
-        sotiert = self.__initiale_spieler[idx:] + self.__initiale_spieler[:idx]
+        sotiert = self.initiale_spieler[idx:] + self.initiale_spieler[:idx]
         return sotiert
 
     def wuerfeln_handler(self, state, event):
@@ -219,23 +213,23 @@ class Halbzeit(pysm.StateMachine):
             akt_spieler.augen = wuerfel.werfen(3)
             akt_spieler.anzahl_wuerfe += 1
             self.letzter_wurf = akt_spieler.augen
-            self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
-        elif akt_spieler.anzahl_wuerfe < self.__rdm.num_maximale_würfe:
+            self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
+        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_würfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - akt_spieler.einsen)
                 akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
                 akt_spieler.anzahl_wuerfe += 1
                 self.letzter_wurf = akt_spieler.augen
-                self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
+                self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
             else:
                 akt_spieler.augen = wuerfel.werfen(3)
                 akt_spieler.anzahl_wuerfe += 1
                 self.letzter_wurf = akt_spieler.augen
-                self.__rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
+                self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
         else:
             # watch for semantics
-            num_wurf = self.__rdm.num_maximale_würfe
+            num_wurf = self.rdm.num_maximale_würfe
             plural_switch = "Wurf ist" if num_wurf == 1 else "Würfe sind"
             zahl_zu_wort = {1: "ein", 2: "zwei", 3: "drei"}
             meldung = (
@@ -244,15 +238,13 @@ class Halbzeit(pysm.StateMachine):
             )
             raise ZuOftGeworfen(meldung)
 
-        if akt_spieler.anzahl_wuerfe == self.__rdm.num_maximale_würfe:
+        if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_würfe:
             self.aktiver_spieler.anzahl_wuerfe = 0
             try:
-                self.__rdm.weiter()
+                self.rdm.weiter()
             except RundeVorbei:
-                self.__spielzeit_status = (
-                    self.__rdm.deckel_verteilen_restliche_spieler()
-                )
-                self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
+                self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
+                self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
         if self.beendet():
             self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
@@ -286,7 +278,7 @@ class Halbzeit(pysm.StateMachine):
             raise NochNichtGeworfen("Es muss mindestens ein Mal geworfen werden!")
         else:
             akt_spieler.anzahl_wuerfe = 0
-            self.__rdm.weiter()
+            self.rdm.weiter()
 
     def beendet(self):
         return len(self.spieler_liste) == 1

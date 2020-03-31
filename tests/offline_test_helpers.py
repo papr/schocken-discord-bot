@@ -1,5 +1,6 @@
 from schocken.bot import SchockenBot
 
+
 class MockGuild:
     def __init__(self, name):
         self.name = name
