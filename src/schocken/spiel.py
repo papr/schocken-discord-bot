@@ -10,6 +10,7 @@ from .exceptions import (
     FalscherSpieler,
     ZuOftGeworfen,
     NochNichtGeworfen,
+    RundeVorbei,
 )
 from .spieler import Spieler
 
@@ -247,11 +248,14 @@ class Halbzeit(pysm.StateMachine):
             self.aktiver_spieler.anzahl_wuerfe = 0
             try:
                 self.__rdm.weiter()
-            except ValueError:
+            except RundeVorbei:
                 self.__spielzeit_status = (
                     self.__rdm.deckel_verteilen_restliche_spieler()
                 )
                 self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
+
+        if self.beendet():
+            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
 
     def beiseite_legen_handler(self, state, event):
         spieler_name = event.cargo["spieler_name"]
@@ -263,11 +267,7 @@ class Halbzeit(pysm.StateMachine):
             )
 
         if 1 in akt_spieler.augen:
-            try:
-                akt_spieler.einsen = akt_spieler.augen.count(1)
-            except TypeError:
-                akt_spieler.einsen = 1
-
+            akt_spieler.einsen = akt_spieler.augen.count(1)
         else:
             raise FalscheAktion(
                 f"Du hast keine Einsen gewürfelt die du zur Seite legen kannst!"

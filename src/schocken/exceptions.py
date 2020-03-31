@@ -44,3 +44,7 @@ class KeineWürfeVorhanden(ValueError):
 
 class DuHastMistGebaut(RuntimeError):
     pass
+
+
+class RundeVorbei(ValueError):
+    pass
