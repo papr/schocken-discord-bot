@@ -4,6 +4,7 @@ import discord
 from discord.utils import get
 from dotenv import load_dotenv
 
+from schocken import __version__
 from schocken.exceptions import FalscherServer
 from schocken.bot import SchockenBot
 
@@ -23,7 +24,7 @@ def run_bot():
                 raise FalscherServer("Dieser Bot darf nur ins Café A")
 
         ch = client.get_channel(690929770355097610)  # schocktresen
-        await ch.send("Schocken kann jetzt losgehen. :muscle:")
+        await ch.send(f"Schocken (v{__version__}) kann jetzt losgehen. :muscle:")
         print("Success")
         return
 
