@@ -1,4 +1,4 @@
-from offline_test_helpers import MockBot, MockClient, MockMember, MockMessage
+from offline_test_helpers import MockBot, MockClient, MockMember, MockMessage, MockMessage
 from schocken.exceptions import SpielLaeuft
 from schocken import wuerfel
 import pytest, asyncio
@@ -8,12 +8,43 @@ import pytest, asyncio
 def member(n=4):
     return [MockMember(f"spieler_{i+1}") for i in range(n)]
 
+@pytest.fixture
+def bot():
+    client = MockClient()
+    bot = MockBot(client)
+    return bot
 
 pytestmark = pytest.mark.asyncio
 
+async def test_start_game(capsys, member, bot):
+    assert bot.game_running == False
+    await bot.parse_input(MockMessage(member[0], "!schocken"))
+    assert bot.game_running == True
+    out, err = capsys.readouterr()
+    # richtiger spieler:
+    assert "spieler_1" in out
+    # start message sollte !einwerfen drin haben:
+    assert "!einwerfen" in out
+    # anderer spieler will auch starten
+    await bot.parse_input(MockMessage(member[1], "!schocken"))
+    out, err = capsys.readouterr()
+    assert "läuft" in out
 
-async def test_start_game():
-    assert True
+async def test_einwerfen( member, bot):
+    # spiel starten mit fixture ist schwierig wegen der coroutines
+    # spiel manuell starten:
+    await bot.parse_input(MockMessage(member[0], "!schocken"))
+    assert bot.game_running == True
+
+    print(bot.game.state)
+    wuerfel.werfen = lambda n: (2,) * n
+    await bot.parse_input(MockMessage(member[0], "!einwerfen"))
+
+    wuerfel.werfen = lambda n: (2,) * n
+    await bot.parse_input(MockMessage(member[0], "!einwerfen"))
+
+    # out, _ = capsys.readouterr()
+    # print(out)
 
 
 async def main():

@@ -35,10 +35,6 @@ class MockMessage:
 
 class MockBot(SchockenBot):
     # override methods that need a server connection
-    def __init__(self, print_to_cli=True):
-        super().__init__()
-        self.print_to_cli = print_to_cli
-
     def emoji_by_name(self, name):
         return f"EMOJI:{name}"
 
@@ -47,6 +43,4 @@ class MockBot(SchockenBot):
 
     async def print_to_channel(self, channel, text):
         msg = channel.send(text)
-        if self.print_to_cli:
-            print(msg + "\n" + "-" * 72)
-        return msg
+        print(msg + "\n" + "-" * 72)
