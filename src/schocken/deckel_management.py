@@ -1,4 +1,6 @@
 import typing as T
+from copy import deepcopy
+
 from .wurf import welcher_wurf, Wurf, prioritaet, Schock
 from .spieler import Spieler
 from .exceptions import (
@@ -123,6 +125,14 @@ class RundenDeckelManagement:
             spieler=self._spieler[spieler_idx],
             wurf=wurf,
         )
+
+    def ist_lust_wurf(self, wurf: WurfEvaluierung):
+        if wurf.wurf_anzahl <= 1 or wurf.reihenfolge == 0:
+            return False
+        simulation = deepcopy(self)
+        verteilung = simulation.deckel_verteilen_restliche_spieler()
+        waere_raus = wurf.spieler not in verteilung.spieler
+        return waere_raus
 
     def hoch_und_tief(self) -> T.Tuple[WurfEvaluierung, WurfEvaluierung]:
         erster_spieler = self._spieler_namen[0]

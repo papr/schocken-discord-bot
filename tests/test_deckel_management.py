@@ -15,6 +15,27 @@ def neue_runde() -> RundenDeckelManagement:
     return rdm
 
 
+def test_ist_lust_wurf(neue_runde):
+    rdm = neue_runde
+    erster_wurf = rdm.wurf("A", (2, 2, 1), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("A", (1, 1, 1), aus_der_hand=False)
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert not rdm.ist_lust_wurf(zweiter_wurf)
+
+    rdm.weiter()
+    erster_wurf = rdm.wurf("B", (5, 5, 6), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("B", (5, 5, 6), aus_der_hand=True)
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert not rdm.ist_lust_wurf(zweiter_wurf)
+
+    rdm.weiter()
+    erster_wurf = rdm.wurf("C", (1, 2, 3), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("C", (1, 2, 3), aus_der_hand=True)
+
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert rdm.ist_lust_wurf(zweiter_wurf)
+
+
 def test_schockout_verteilen_einen(neue_runde: RundenDeckelManagement):
     rdm = neue_runde
     rdm.wurf("A", (1, 2, 3), aus_der_hand=True)
