@@ -170,7 +170,7 @@ class SchockenBot:
             # cmds = [
                 # f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
             # ]
-            msg = "Diesen Befehl gibt es nicht. Versuch's mal mit einem von diesen:\n"
+            msg = "Diesen Befehl gibt es nicht." #Versuch's mal mit einem von diesen:\n"
             # msg += ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
@@ -313,7 +313,6 @@ class SchockenBot:
                 out_str = f"{message.author.mention} wirft "
                 is_erster_wurf = False
             out_str += wurf_emoji + "."
-            print(augen_name)
 
             reicht = tief.spieler.name != spieler.name
             comment_choices = [" "]
