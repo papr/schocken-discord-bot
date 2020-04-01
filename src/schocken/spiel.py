@@ -181,6 +181,8 @@ class Halbzeit(pysm.StateMachine):
 
         self.__initiale_spieler = spieler_liste.copy()
         self.__aktiver_spieler = spieler_liste[0]
+        for s in spieler_liste:
+            s.deckel = 0
         self.__spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
 
