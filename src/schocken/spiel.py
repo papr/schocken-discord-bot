@@ -151,7 +151,7 @@ class Halbzeit(pysm.StateMachine):
         self.rdm = None
         self.letzter_wurf = (None, None, None)
 
-        self.handlers = {"enter": self.enter}
+        self.handlers = {"enter": self.enter, "after": self.after}
 
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
@@ -177,13 +177,15 @@ class Halbzeit(pysm.StateMachine):
             spieler_liste = vorheriger_state.sortierte_spieler_liste()
             self.initiale_spieler = spieler_liste.copy()
 
-        if len(spieler_liste) < len(set(spieler_liste)):
+        self._spielerinnen_unique = set(s.name for s in spieler_liste)
+        for s in spieler_liste:
+            s.deckel = 0
+        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
+        self.rdm = RundenDeckelManagement(self.spielzeit_status)
+
+    def after(self):
+        if len(self._spielerinnen_unique) == 1:
             self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-        else:
-            for s in spieler_liste:
-                s.deckel = 0
-            self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
-            self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     @property
     def spieler_liste(self) -> T.List[Spieler]:
