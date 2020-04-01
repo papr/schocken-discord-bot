@@ -12,7 +12,7 @@ from .exceptions import (
 )
 from .spiel import SchockenSpiel
 from discord.utils import get
-
+from copy import deepcopy
 
 class SchockenBot:
     def __init__(self, client):
@@ -204,27 +204,16 @@ class SchockenBot:
         command = msg_text.split("!")[-1]
         spieler_name = msg_author.name
 
-        old_state = self.game.state.leaf_state.name
-
-        if old_state == "wuerfeln":
-            old_stack_list = list(self.game.state_stack.deque)
-            old_stack_names = [st.name for st in old_stack_list]
-            old_halbzeit_no = old_stack_names.count("Halbzeit") + 1
-            old_halbzeit = getattr(
-                self.game, self._halbzeit_state_names[old_halbzeit_no]
-            )
-
-            old_hoch, old_tief = old_halbzeit.rdm.hoch_und_tief()
-
+        # freeze old game state. some properties are needed for the bot
+        game_old = deepcopy(self.game)
+        #run game state machine
         game_cmd = self.discord_to_game_cmd(command)
         if game_cmd not in self.game.leaf_state.handlers.keys():
             raise FalscherSpielBefehl
-
         self.game.command_to_event(spieler_name, game_cmd)
-        new_state = self.game.state.leaf_state.name
+        state_new = self.game.state.leaf_state.name
 
-        state_changed = old_state != new_state
-        if new_state == "einwerfen":
+        if state_new == "einwerfen":
             # einwerfen is the initial state, no need to check for changes
             spieler = self.spieler_by_name(
                 spieler_name, self.game.einwerfen.spieler_liste
@@ -251,7 +240,7 @@ class SchockenBot:
                     out_str += "\n`!wuerfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
             await self.print_to_channel(channel, out_str)
 
-        elif new_state == "stechen":
+        elif state_new == "stechen":
             spieler = self.spieler_by_name(
                 spieler_name, self.game.einwerfen.spieler_liste
             )
@@ -277,7 +266,19 @@ class SchockenBot:
 
             await self.print_to_channel(channel, out_str)
 
-        elif new_state == "wuerfeln":
+        elif state_new == "wuerfeln":
+            state_old = game_old.state.leaf_state.name
+
+            if state_old == "wuerfeln":
+                # we were already inside halbzeit, find out which one
+                old_stack_list = list(game_old.state_stack.deque)
+                old_stack_names = [st.name for st in old_stack_list]
+                old_halbzeit_no = old_stack_names.count("Halbzeit") + 1
+                old_halbzeit = getattr(
+                    self.game, self._halbzeit_state_names[old_halbzeit_no]
+                )
+
+                old_hoch, old_tief = old_halbzeit.rdm.hoch_und_tief()
             stack_list = list(self.game.state_stack.deque)
             stack_names = [st.name for st in stack_list]
             halbzeit_no = stack_names.count("Halbzeit") + 1
