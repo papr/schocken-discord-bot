@@ -171,20 +171,19 @@ class Halbzeit(pysm.StateMachine):
         if len(num_halbzeit) > 1:
             verlierende_1 = self.root_machine.halbzeit_erste.verlierende
             verlierende_2 = self.root_machine.halbzeit_zweite.verlierende
-            if verlierende_1 == verlierende_2:
-                self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-            else:
-                spieler_liste = [verlierende_2, verlierende_1]
+            spieler_liste = [verlierende_2, verlierende_1]
         else:
             vorheriger_state = self.root_machine.state_stack.peek()
             spieler_liste = vorheriger_state.sortierte_spieler_liste()
-
             self.initiale_spieler = spieler_liste.copy()
 
-        for s in spieler_liste:
-            s.deckel = 0
-        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
-        self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        if len(spieler_liste) < len(set(spieler_liste)):
+            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+        else:
+            for s in spieler_liste:
+                s.deckel = 0
+            self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
+            self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     @property
     def spieler_liste(self) -> T.List[Spieler]:

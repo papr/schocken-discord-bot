@@ -232,5 +232,11 @@ def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
     wuerfel.werfen = lambda n: (3, 3, 3)
     runde.command_to_event(spieler[2].name, "wuerfeln")
 
-    wuerfel.werfen = lambda n: (1, 2, 2)
+    wuerfel.werfen = lambda n: (1, 1, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    assert runde.leaf_state.name == "anstoßen!"
