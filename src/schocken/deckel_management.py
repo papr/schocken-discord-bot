@@ -1,5 +1,5 @@
 import typing as T
-from .wurf import welcher_wurf, Wurf, prioritaet
+from .wurf import welcher_wurf, Wurf, prioritaet, Schock
 from .spieler import Spieler
 from .exceptions import (
     ZuWenigSpieler,
@@ -47,32 +47,50 @@ class RundenDeckelManagement:
         self._aktueller_spieler_idx += 1
         return self._aktueller_spieler_idx
 
-    def deckel_verteilen_restliche_spieler(self,) -> SpielzeitStatus:
+    def deckel_verteilen_restliche_spieler(self) -> SpielzeitStatus:
         hoch, tief = self.hoch_und_tief()
-        anzahl_deckel = hoch.wurf.deckel_wert
-        if self._zahl_deckel_im_topf > 0:
-            if anzahl_deckel == 15:
-                self._zahl_deckel_im_topf = 0
-                for s in self._spieler:
-                    s.deckel = 0
-                tief.spieler.deckel = 15
-            else:
-                anzahl_deckel = min(self._zahl_deckel_im_topf, anzahl_deckel)
-                self._zahl_deckel_im_topf -= anzahl_deckel
-                tief.spieler.deckel += anzahl_deckel
-        else:
-            anzahl_deckel = min(hoch.spieler.deckel, anzahl_deckel)
-            hoch.spieler.deckel -= anzahl_deckel
-            tief.spieler.deckel += anzahl_deckel
-
-        restliche_spieler = [
-            s for s in self._spieler if self._zahl_deckel_im_topf or s.deckel
-        ]
-        start_idx = restliche_spieler.index(tief.spieler)
-        restliche_spieler = (
-            restliche_spieler[start_idx:] + restliche_spieler[:start_idx]
-        )
+        self._deckel_verteilen(hoch, tief)
+        restliche_spieler = self._restliche_spielerinnen_bestimmen(tief.spieler)
         return SpielzeitStatus(self._zahl_deckel_im_topf, restliche_spieler)
+
+    def _deckel_verteilen(self, hoch: WurfEvaluierung, tief: WurfEvaluierung):
+        if hoch.wurf is Schock.out:
+            self._schockout_verteilen(tief)
+        elif self._zahl_deckel_im_topf > 0:
+            self._deckel_im_topf_verteilen(hoch, tief)
+        else:
+            self._deckel_von_hoch_an_tief_verteilen(hoch, tief)
+
+    def _deckel_im_topf_verteilen(self, hoch: WurfEvaluierung, tief: WurfEvaluierung):
+        anzahl_deckel = hoch.wurf.deckel_wert
+        anzahl_deckel = min(self._zahl_deckel_im_topf, anzahl_deckel)
+        self._zahl_deckel_im_topf -= anzahl_deckel
+        tief.spieler.deckel += anzahl_deckel
+
+    def _deckel_von_hoch_an_tief_verteilen(
+        self, hoch: WurfEvaluierung, tief: WurfEvaluierung
+    ):
+        anzahl_deckel = hoch.wurf.deckel_wert
+        anzahl_deckel = min(hoch.spieler.deckel, anzahl_deckel)
+        hoch.spieler.deckel -= anzahl_deckel
+        tief.spieler.deckel += anzahl_deckel
+
+    def _schockout_verteilen(self, tief: WurfEvaluierung):
+        zahl_verteile_deckel = sum(s.deckel for s in self._spieler)
+        zahl_alle_deckel = self._zahl_deckel_im_topf + zahl_verteile_deckel
+        self._zahl_deckel_im_topf = 0
+        for s in self._spieler:
+            s.deckel = 0
+        tief.spieler.deckel = zahl_alle_deckel
+
+    def _restliche_spielerinnen_bestimmen(self, verlierer: Spieler) -> T.List[Spieler]:
+        spielerinnen = [s for s in self._spieler if self._noch_im_spiel(s)]
+        start_idx = spielerinnen.index(verlierer)
+        spielerinnen = spielerinnen[start_idx:] + spielerinnen[:start_idx]
+        return spielerinnen
+
+    def _noch_im_spiel(self, spielerin):
+        return self._zahl_deckel_im_topf or spielerin.deckel
 
     def wurf(
         self,
