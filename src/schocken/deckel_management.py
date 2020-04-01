@@ -143,8 +143,22 @@ class RundenDeckelManagement:
                 wurf=letzter_wurf,
             )
             evaluierungen.append(evaluierung)
-        evaluierungen.sort()  # hoch: index 0, tief: index -1
+        # hoch: index 0, tief: index -1
+        evaluierungen.sort(key=self._schockout_reihenfolge_fix)
         return evaluierungen[0], evaluierungen[-1]
+
+    @staticmethod
+    def _schockout_reihenfolge_fix(evaluierung: WurfEvaluierung):
+        """Schocks werden in umgekehrter Reihenfolge gewertet"""
+        if evaluierung.wurf is Schock.out:
+            evaluierung = WurfEvaluierung(
+                prioritaet=evaluierung.prioritaet,
+                wurf_anzahl=evaluierung.wurf_anzahl,
+                reihenfolge=-evaluierung.reihenfolge,  # NOTE: Reihenfolge umgekehrt
+                spieler=evaluierung.spieler,
+                wurf=evaluierung.wurf,
+            )
+        return evaluierung
 
     @property
     def num_maximale_wuerfe(self):
