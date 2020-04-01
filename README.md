@@ -58,3 +58,42 @@ Spieler:
 - augen [letzter wurf]
 - anzahl der würfe
 
+## Deployment Instructions
+
+### Authentification
+
+Create a `.env` file in the top-level directory of the repository with the follwing content:
+```sh
+DISCORD_TOKEN=$TOKEN
+DISCORD_GUILD="Café A"
+```
+
+### Local Python Package
+
+```
+python -m pip install -U pip
+python -m pip install -U schocken
+python -m schocken
+```
+
+
+### Using Docker (PyPI build)
+
+```sh
+docker build -f Dockerfile.pypi -t schocken.pypi .
+docker run              \
+  --env-file .env       \
+  --restart always      \
+  schocken.pypi:latest
+```
+
+### Using Docker (local build)
+
+```sh
+docker build -f Dockerfile.local -t schocken.local .
+docker run              \
+  --env-file .env       \
+  --restart always      \
+  -v `pwd`:/schocken    \
+  schocken.local:latest
+```

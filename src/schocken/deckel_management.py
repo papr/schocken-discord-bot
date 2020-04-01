@@ -1,12 +1,12 @@
 import typing as T
-from .wurf import welcher_wurf, Wurf, priorität
+from .wurf import welcher_wurf, Wurf, prioritaet
 from .spieler import Spieler
 from .exceptions import (
     ZuWenigSpieler,
     NochNichtGeworfen,
     ZuOftGeworfen,
     FalscherSpieler,
-    KeineWürfeVorhanden,
+    KeineWuerfeVorhanden,
     UnbekannterSpieler,
     RundeVorbei,
 )
@@ -15,7 +15,7 @@ NUM_MAX_DECKEL = 15
 
 
 class WurfEvaluierung(T.NamedTuple):
-    priorität: float
+    prioritaet: float
     wurf_anzahl: int
     reihenfolge: int
     spieler: Spieler
@@ -36,11 +36,11 @@ class RundenDeckelManagement:
         self._spieler = runden_status.spieler
         self._spieler_namen = [S.name for S in self._spieler]
         self._aktueller_spieler_idx = 0
-        self._würfe = {S.name: [] for S in self._spieler}
+        self._wuerfe = {S.name: [] for S in self._spieler}
 
     def weiter(self) -> int:
         aktueller_spieler = self._spieler_namen[self._aktueller_spieler_idx]
-        if not self._würfe[aktueller_spieler]:
+        if not self._wuerfe[aktueller_spieler]:
             raise NochNichtGeworfen
         if self._aktueller_spieler_idx + 1 >= len(self._spieler):
             raise RundeVorbei("Runde ist bereits vorbei!")
@@ -91,16 +91,16 @@ class RundenDeckelManagement:
                 f"{spieler_name} hat geworfen, {aktueller_spieler} war aber dran!"
             )
 
-        bestehende_würfe = self._würfe[spieler_name]
-        if len(bestehende_würfe) >= self.num_maximale_würfe:
+        bestehende_wuerfe = self._wuerfe[spieler_name]
+        if len(bestehende_wuerfe) >= self.num_maximale_wuerfe:
             raise ZuOftGeworfen()
 
         wurf = welcher_wurf(augen, aus_der_hand)
-        bestehende_würfe.append(wurf)
+        bestehende_wuerfe.append(wurf)
 
         return WurfEvaluierung(
-            priorität(wurf),
-            wurf_anzahl=len(bestehende_würfe),
+            prioritaet(wurf),
+            wurf_anzahl=len(bestehende_wuerfe),
             reihenfolge=spieler_idx,
             spieler=self._spieler[spieler_idx],
             wurf=wurf,
@@ -108,18 +108,18 @@ class RundenDeckelManagement:
 
     def hoch_und_tief(self) -> T.Tuple[WurfEvaluierung, WurfEvaluierung]:
         erster_spieler = self._spieler_namen[0]
-        if not self._würfe[erster_spieler]:
-            raise KeineWürfeVorhanden()
+        if not self._wuerfe[erster_spieler]:
+            raise KeineWuerfeVorhanden()
 
         evaluierungen = []
         for idx, spieler in enumerate(self._spieler):
-            bestehende_würfe = self._würfe[spieler.name]
-            if not bestehende_würfe:
+            bestehende_wuerfe = self._wuerfe[spieler.name]
+            if not bestehende_wuerfe:
                 break
-            letzter_wurf = bestehende_würfe[-1]
+            letzter_wurf = bestehende_wuerfe[-1]
             evaluierung = WurfEvaluierung(
-                priorität=priorität(letzter_wurf),
-                wurf_anzahl=len(bestehende_würfe),
+                prioritaet=prioritaet(letzter_wurf),
+                wurf_anzahl=len(bestehende_wuerfe),
                 reihenfolge=idx,
                 spieler=spieler,
                 wurf=letzter_wurf,
@@ -129,14 +129,14 @@ class RundenDeckelManagement:
         return evaluierungen[0], evaluierungen[-1]
 
     @property
-    def num_maximale_würfe(self):
+    def num_maximale_wuerfe(self):
         if self._aktueller_spieler_idx == 0:
             return 3
         else:
             start_spieler_name = self._spieler_namen[0]
-            würfe_start_spieler = self._würfe[start_spieler_name]
-            num_würfe_start_spieler = len(würfe_start_spieler)
-            return num_würfe_start_spieler
+            wuerfe_start_spieler = self._wuerfe[start_spieler_name]
+            num_wuerfe_start_spieler = len(wuerfe_start_spieler)
+            return num_wuerfe_start_spieler
 
     @property
     def aktiver_spieler(self):

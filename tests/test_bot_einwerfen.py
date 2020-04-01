@@ -1,43 +1,91 @@
-from offline_test_helpers import TestBot, FakeClient, FakeMember, FakeMessage
-from schocken.exceptions import SpielLäuft
+from offline_test_helpers import (
+    MockBot,
+    MockClient,
+    MockMember,
+    MockMessage,
+)
+# from schocken.exceptions import SpielLaeuft
 from schocken import wuerfel
 import pytest
 
-async def main():
-    client = FakeClient()
-    bot = TestBot(client)
 
-    spieler_1 = FakeMember("spieler_1")
-    spieler_2 = FakeMember("spieler_2")
-    spieler_3 = FakeMember("spieler_3")
-    spieler_4 = FakeMember("spieler_4")
+@pytest.fixture
+def member(n=4):
+    return [MockMember(f"spieler_{i+1}") for i in range(n)]
 
-    # spieler_1 starts game 
-    await bot.parse_input(FakeMessage(spieler_1, "!schocken"))
+
+@pytest.fixture
+def bot():
+    client = MockClient()
+    bot = MockBot(client)
+    return bot
+
+
+pytestmark = pytest.mark.asyncio
+
+
+async def test_start_game(capsys, member, bot):
+    assert not bot.game_running
+    await bot.parse_input(MockMessage(member[0], "!schocken"))
+    assert bot.game_running
+    out, err = capsys.readouterr()
+    # richtiger spieler:
+    assert "spieler_1" in out
+    # start message sollte !einwerfen drin haben:
+    assert "!einwerfen" in out
+    # anderer spieler will auch starten
+    await bot.parse_input(MockMessage(member[1], "!schocken"))
+    out, err = capsys.readouterr()
+    assert "läuft" in out
+
+
+async def test_einwerfen(member, bot):
+    # spiel starten mit fixture ist schwierig wegen der coroutines
+    # spiel manuell starten:
+    await bot.parse_input(MockMessage(member[0], "!schocken"))
+    assert bot.game_running
+
+    print(bot.game.state)
+    wuerfel.werfen = lambda n: (2,) * n
+    await bot.parse_input(MockMessage(member[0], "!einwerfen"))
 
     wuerfel.werfen = lambda n: (2,) * n
-    await bot.parse_input(FakeMessage(spieler_1, "!einwerfen"))
+    await bot.parse_input(MockMessage(member[0], "!einwerfen"))
+
+    # out, _ = capsys.readouterr()
+    # print(out)
+
+
+async def main():
+    client = MockClient()
+    bot = MockBot(client)
+
+    spieler_1 = MockMember("spieler_1")
+    spieler_2 = MockMember("spieler_2")
+    spieler_3 = MockMember("spieler_3")
+    spieler_4 = MockMember("spieler_4")
+
+    # spieler_1 starts game
+    await bot.parse_input(MockMessage(spieler_1, "!schocken"))
+
+    wuerfel.werfen = lambda n: (2,) * n
+    await bot.parse_input(MockMessage(spieler_1, "!einwerfen"))
     # einwerfen, stechen testen
     wuerfel.werfen = lambda n: (1,) * n
-    await bot.parse_input(FakeMessage(spieler_2, "!einwerfen"))
-    await bot.parse_input(FakeMessage(spieler_3, "!einwerfen"))
-     
-    wuerfel.werfen = lambda n: (3,) * n
-    await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
+    await bot.parse_input(MockMessage(spieler_2, "!einwerfen"))
+    await bot.parse_input(MockMessage(spieler_3, "!einwerfen"))
 
     wuerfel.werfen = lambda n: (3,) * n
-    await bot.parse_input(FakeMessage(spieler_3, "!stechen"))
+    await bot.parse_input(MockMessage(spieler_2, "!stechen"))
+
+    wuerfel.werfen = lambda n: (3,) * n
+    await bot.parse_input(MockMessage(spieler_3, "!stechen"))
 
     wuerfel.werfen = lambda n: (2,) * n
-    await bot.parse_input(FakeMessage(spieler_3, "!stechen"))
+    await bot.parse_input(MockMessage(spieler_3, "!stechen"))
 
     wuerfel.werfen = lambda n: (3,) * n
-    await bot.parse_input(FakeMessage(spieler_2, "!stechen"))
+    await bot.parse_input(MockMessage(spieler_2, "!stechen"))
 
     # Einwerfen vorbei, jetzt würfeln.
-    await bot.parse_input(FakeMessage(spieler_3, "!wuerfeln"))
-
-    
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    await bot.parse_input(MockMessage(spieler_3, "!wuerfeln"))

@@ -10,11 +10,11 @@ class FalscherSpielBefehl(ValueError):
     pass
 
 
-class SpielLäuft(ValueError):
+class SpielLaeuft(ValueError):
     pass
 
 
-class SpielLäuftNicht(ValueError):
+class SpielLaeuftNicht(ValueError):
     pass
 
 
@@ -38,7 +38,7 @@ class UnbekannterSpieler(ValueError):
     pass
 
 
-class KeineWürfeVorhanden(ValueError):
+class KeineWuerfeVorhanden(ValueError):
     pass
 
 
@@ -47,4 +47,7 @@ class DuHastMistGebaut(RuntimeError):
 
 
 class RundeVorbei(ValueError):
+    pass
+
+class PermissionError(ValueError):
     pass

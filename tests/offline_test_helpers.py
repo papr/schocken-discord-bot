@@ -1,24 +1,36 @@
 from schocken.bot import SchockenBot
 
 
-class FakeGuild:
+class LogoutException(ValueError):
+    pass
+
+
+class MockGuild:
     def __init__(self, name):
         self.name = name
         self.emojis = []
+        self.members = [MockMember("spieler_1"),
+                        MockMember("spieler_2"),
+                        MockMember("spieler_3"),
+                        MockMember("spieler_4")]
 
 
-class FakeClient:
+class MockClient:
     def __init__(self):
-        self.guilds = [FakeGuild("Café A")]
+        self.guilds = [MockGuild("Café A")]
+
+    def logout(self):
+        raise LogoutException("client.logout() called")
 
 
-class FakeMember:
-    def __init__(self, name):
+class MockMember:
+    def __init__(self, name, roles=["Schichtler/in"]):
         self.name = name
         self.mention = f"MENTION:{name}"
+        self.roles = roles
 
 
-class FakeChannel:
+class MockChannel:
     def __init__(self, name):
         self.name = name
 
@@ -26,20 +38,20 @@ class FakeChannel:
         return f"MSG to channel {self.name}:\n {message}"
 
 
-class FakeMessage:
-    def __init__(self, author, content):
+class MockMessage:
+    def __init__(self, author, content, channel_name="schocktresen"):
         self.content = content
         self.author = author
-        self.channel = FakeChannel("schocktresen")
+        self.channel = MockChannel(channel_name)
 
 
-class TestBot(SchockenBot):
+class MockBot(SchockenBot):
     # override methods that need a server connection
     def emoji_by_name(self, name):
         return f"EMOJI:{name}"
 
     def name_to_member(self, name):
-        return FakeMember(name)
+        return MockMember(name)
 
     async def print_to_channel(self, channel, text):
         msg = channel.send(text)
