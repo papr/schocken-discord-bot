@@ -1,6 +1,84 @@
+import pytest
+
 from schocken import wurf
 from schocken.spieler import Spieler
 from schocken.deckel_management import RundenDeckelManagement, SpielzeitStatus
+
+NUM_START_DECKEL = 15
+
+
+@pytest.fixture
+def neue_runde() -> RundenDeckelManagement:
+    spielerinnen = [Spieler(name) for name in "ABC"]
+    szs = SpielzeitStatus(NUM_START_DECKEL, spielerinnen)
+    rdm = RundenDeckelManagement(szs)
+    return rdm
+
+
+def test_ist_lust_wurf(neue_runde):
+    rdm = neue_runde
+    erster_wurf = rdm.wurf("A", (2, 2, 1), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("A", (1, 1, 1), aus_der_hand=False)
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert not rdm.ist_lust_wurf(zweiter_wurf)
+
+    rdm.weiter()
+    erster_wurf = rdm.wurf("B", (5, 5, 6), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("B", (5, 5, 6), aus_der_hand=True)
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert not rdm.ist_lust_wurf(zweiter_wurf)
+
+    rdm.weiter()
+    erster_wurf = rdm.wurf("C", (1, 2, 3), aus_der_hand=True)
+    zweiter_wurf = rdm.wurf("C", (1, 2, 3), aus_der_hand=True)
+
+    assert not rdm.ist_lust_wurf(erster_wurf)
+    assert rdm.ist_lust_wurf(zweiter_wurf)
+
+
+def test_schockout_verteilen_einen(neue_runde: RundenDeckelManagement):
+    rdm = neue_runde
+    rdm.wurf("A", (1, 2, 3), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("B", (1, 1, 1), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("C", (5, 5, 6), aus_der_hand=True)
+
+    neuer_status = rdm.deckel_verteilen_restliche_spieler()
+    assert neuer_status.deckel_in_topf == 0
+    assert len(neuer_status.spieler) == 1
+    assert neuer_status.spieler[0].deckel == NUM_START_DECKEL
+    assert neuer_status.spieler[0].name == "C"
+
+
+def test_schockout_verteilen_zwei(neue_runde: RundenDeckelManagement):
+    rdm = neue_runde
+    rdm.wurf("A", (1, 1, 1), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("B", (1, 1, 1), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("C", (5, 5, 6), aus_der_hand=True)
+
+    neuer_status = rdm.deckel_verteilen_restliche_spieler()
+    assert neuer_status.deckel_in_topf == 0
+    assert len(neuer_status.spieler) == 1
+    assert neuer_status.spieler[0].deckel == NUM_START_DECKEL
+    assert neuer_status.spieler[0].name == "C"
+
+
+def test_schockout_verteilen_alle(neue_runde: RundenDeckelManagement):
+    rdm = neue_runde
+    rdm.wurf("A", (1, 1, 1), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("B", (1, 1, 1), aus_der_hand=True)
+    rdm.weiter()
+    rdm.wurf("C", (1, 1, 1), aus_der_hand=True)
+
+    neuer_status = rdm.deckel_verteilen_restliche_spieler()
+    assert neuer_status.deckel_in_topf == 0
+    assert len(neuer_status.spieler) == 1
+    assert neuer_status.spieler[0].deckel == NUM_START_DECKEL
+    assert neuer_status.spieler[0].name == "A"
 
 
 def test_simulate_spielzeit_naive():
