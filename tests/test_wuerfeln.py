@@ -178,12 +178,12 @@ def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
     runde.command_to_event(spieler[0].name, "wuerfeln")
 
     # Spieler 3 hat verloren und muss als nächstes beginnen
-    assert runde.halbzeit_erste.sortierte_spieler_liste()[0].name == spieler[2].name
+    assert runde.halbzeit_erste.aktiver_spieler.name == spieler[2].name
     # Spieler 3 hat einen Deckel bekommen
-    assert runde.halbzeit_erste.sortierte_spieler_liste()[0].deckel == 1
+    assert runde.halbzeit_erste.spieler_liste[0].deckel == 1
     # Die anderen Spieler haben keine Deckel bekommen
-    assert runde.halbzeit_erste.sortierte_spieler_liste()[1].deckel == 0
-    assert runde.halbzeit_erste.sortierte_spieler_liste()[2].deckel == 0
+    assert runde.halbzeit_erste.spieler_liste[1].deckel == 0
+    assert runde.halbzeit_erste.spieler_liste[2].deckel == 0
 
     # Spieler 1 will anfangen, darf er aber nicht
     with pytest.raises(FalscherSpieler):
@@ -203,10 +203,34 @@ def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
     wuerfel.werfen = lambda n: (3, 3, 3)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    # Spieler 1 muss alle Deckel haben
-    assert runde.halbzeit_erste.sortierte_spieler_liste()[0].deckel == 15
+    # Spieler muss verloren haben
+    assert runde.halbzeit_erste.verlierende.name == spieler[0].name
 
+    # Start zweite Halbzeit
     # Startspieler der zweiten Halbzeit ist Spieler 1
     assert runde.halbzeit_zweite.aktiver_spieler.name == spieler[0].name
+    # Folgespieler ist Spieler 2
+    assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[1].name
+    # Folgespieler ist Spieler 3
+    assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[2].name
+    # Spieler 4 spielt nicht mit
+    with pytest.raises(IndexError):
+        assert runde.halbzeit_zweite.spieler_liste[3].name == spieler[3].name
 
-    assert runde.halbzeit_zweite.aktiver_spieler.deckel == 0
+    # alle spieler haben wieder 0 deckel
+    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
+    assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
+    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
+
+    wuerfel.werfen = lambda n: (1, 1, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "weiter")
+
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+
+    wuerfel.werfen = lambda n: (3, 3, 3)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
