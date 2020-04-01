@@ -49,5 +49,11 @@ class DuHastMistGebaut(RuntimeError):
 class RundeVorbei(ValueError):
     pass
 
+
 class PermissionError(ValueError):
     pass
+
+
+class LustWurf(RuntimeError):
+    def __init__(self, wurf):
+        self.wurf = wurf
