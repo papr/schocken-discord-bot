@@ -12,9 +12,7 @@ from .exceptions import (
 )
 from .spiel import SchockenSpiel
 from discord.utils import get
-import os
-import signal
-
+from copy import deepcopy
 
 class SchockenBot:
     def __init__(self, client):
@@ -43,7 +41,17 @@ class SchockenBot:
             "wuerfeln": "wuerfeln",
             "stechen": "stechen",
             "weiter": "weiter",
-            "beiseite legen": "beiseite legen",
+            "beiseite": "beiseite legen",
+        }
+
+        self.game_to_discord_cmd_dict = {
+            v: k for k, v in self.discord_to_game_cmd_dict.items()
+        }
+
+        self._halbzeit_state_names = {
+            1: "halbzeit_erste",
+            2: "halbzeit_zweite",
+            3: "finale",
         }
 
     def emoji_by_name(self, name):
@@ -53,6 +61,12 @@ class SchockenBot:
     def name_to_member(self, name):
         member = get(self.guild.members, name=name)
         return member
+
+    def wurf_to_emoji(self, wuerfe):
+        out = " ".join(
+            [self.emoji_by_name(self._wuerfel_emoji_names[wurf]) for wurf in wuerfe]
+        )
+        return out
 
     def discord_to_game_cmd(self, discord_cmd):
         try:
@@ -64,6 +78,12 @@ class SchockenBot:
     def spieler_by_name(self, name, spielerliste):
         spieler = next(sp for sp in spielerliste if sp.name == name)
         return spieler
+
+    def replace_names_by_mentions(self, string):
+        for name in self._all_member_names:
+            member = self.name_to_member(name)
+            string = string.replace(name, member.mention)
+        return string
 
     def command_in_schock_channel(self, message):
         msg_text = message.content
@@ -81,7 +101,6 @@ class SchockenBot:
         # all messages from channels with read permissions are read
         msg_text = message.content
         channel = message.channel
-        msg_author = message.author
         try:
             if self.command_in_schock_channel(message):
                 command = msg_text.split("!")[-1]
@@ -145,26 +164,34 @@ class SchockenBot:
             await self.print_to_channel(channel, msg)
 
         except FalscherSpielBefehl:
-            msg = "Das geht leider nicht."
+            avail_handlers = self.game.leaf_state.handlers.keys()
+            cmds = [
+                f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
+            ]
+            msg = "Diesen Befehl gibt es nicht. Versuch's mal mit einem von diesen:\n"
+            msg += ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
 
         except FalscherSpieler as e:
             if str(e):
-                msg = str(e)
+                msg = self.replace_names_by_mentions(str(e))
             else:
                 msg = "Das darfst du gerade nicht (Falsche Spielerin)."
             await self.print_to_channel(channel, msg)
 
         except ZuOftGeworfen as e:
             if str(e):
-                msg = str(e)
+                msg = self.replace_names_by_mentions(str(e))
             else:
                 msg = "Du darfst nicht nochmal!"
             await self.print_to_channel(channel, msg)
 
-        except FalscheAktion:
-            msg = "Das darfst du gerade nicht. (Falsche Aktion)"
+        except FalscheAktion as e:
+            if str(e):
+                msg = self.replace_names_by_mentions(str(e))
+            else:
+                msg = "Das darfst du gerade nicht. (Falsche Aktion)"
             await self.print_to_channel(channel, msg)
 
     async def print_to_channel(self, channel, text):
@@ -177,16 +204,16 @@ class SchockenBot:
         command = msg_text.split("!")[-1]
         spieler_name = msg_author.name
 
-        old_state = self.game.state.leaf_state.name
+        # freeze old game state. some properties are needed for the bot
+        game_old = deepcopy(self.game)
+        #run game state machine
         game_cmd = self.discord_to_game_cmd(command)
         if game_cmd not in self.game.leaf_state.handlers.keys():
-            raise FalscheAktion
+            raise FalscherSpielBefehl
+        self.game.command_to_event(spieler_name, game_cmd)
+        state_new = self.game.state.leaf_state.name
 
-        self.game.command_to_event(spieler_name, command)
-        new_state = self.game.state.leaf_state.name
-
-        state_changed = old_state != new_state
-        if new_state == "einwerfen":
+        if state_new == "einwerfen":
             # einwerfen is the initial state, no need to check for changes
             spieler = self.spieler_by_name(
                 spieler_name, self.game.einwerfen.spieler_liste
@@ -213,11 +240,9 @@ class SchockenBot:
                     out_str += "\n`!wuerfeln` um das Spiel zu beginnen oder auf weiteres `!einwerfen` warten."
             await self.print_to_channel(channel, out_str)
 
-        elif new_state == "stechen":
-            spieler = next(
-                sp
-                for sp in self.game.einwerfen.spieler_liste
-                if sp.name == spieler_name
+        elif state_new == "stechen":
+            spieler = self.spieler_by_name(
+                spieler_name, self.game.einwerfen.spieler_liste
             )
             noch_stechen = [
                 sp
@@ -241,18 +266,31 @@ class SchockenBot:
 
             await self.print_to_channel(channel, out_str)
 
-        elif new_state == "wuerfeln":
+        elif state_new == "wuerfeln":
+            state_old = game_old.state.leaf_state.name
+
+            if state_old == "wuerfeln":
+                # we were already inside halbzeit, find out which one
+                old_stack_list = list(game_old.state_stack.deque)
+                old_stack_names = [st.name for st in old_stack_list]
+                old_halbzeit_no = old_stack_names.count("Halbzeit") + 1
+                old_halbzeit = getattr(
+                    self.game, self._halbzeit_state_names[old_halbzeit_no]
+                )
+
+                old_hoch, old_tief = old_halbzeit.rdm.hoch_und_tief()
             stack_list = list(self.game.state_stack.deque)
             stack_names = [st.name for st in stack_list]
             halbzeit_no = stack_names.count("Halbzeit") + 1
-            halbzeit_names = {1: "halbzeit_erste", 2: "halbzeit_zweite", 3: "finale"}
 
-            halbzeit = getattr(self.game, halbzeit_names[halbzeit_no])
-            spieler = halbzeit.aktiver_spieler
+            halbzeit = getattr(self.game, self._halbzeit_state_names[halbzeit_no])
+
+            new_spieler_liste = halbzeit.spieler_liste
+            spieler = self.spieler_by_name(spieler_name, new_spieler_liste)
 
             # Halbzeit beginnt
-            if old_state in ["einwerfen", "stechen"] or halbzeit_no != 1:
-                new_spieler_liste = halbzeit.spieler_liste
+            if old_state in ["einwerfen", "stechen"] or self.halbzeit_no != halbzeit_no:
+                self.halbzeit_no = halbzeit_no
                 old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
                 # Erster wurf nach einwerfen. Print reihenfolge
                 out_str0 = f"Halbzeit {halbzeit_no} beginnt. Die Reihenfolge ist:\n"
@@ -265,9 +303,20 @@ class SchockenBot:
             wuerfe = spieler.augen
             anzahl_wuerfe = spieler.anzahl_wuerfe
             # erster wurf (immer drei)
-            wurf_emoji = "".join(
-                [self.emoji_by_name(self._wuerfel_emoji_names[wurf]) for wurf in wuerfe]
-            )
+            wurf_emoji = self.wurf_to_emoji(wuerfe)
             out_str = f"{message.author.mention} wirft "
             out_str += wurf_emoji + "."
+            if spieler.anzahl_wuerfe == 0 or game_cmd == "weiter":
+                naechster = self.name_to_member(halbzeit.aktiver_spieler.name)
+                out_str += f"\nAls nächstes ist {naechster.mention} an "
+                out_str += f"der Reihe. Bitte `!wuerfeln`\n"
+                # TODO figure out how to get high/low aus dem letzten durchgang
+                hoch_spieler = old_hoch.spieler
+                tief_spieler = old_tief.spieler
+                hoch_augen = old_hoch.spieler.augen
+                tief_augen = old_tief.spieler.augen
+                out_str += f"Hoch ist {self.name_to_member(hoch_spieler.name).mention} "
+                out_str += f"mit: {self.wurf_to_emoji(hoch_augen)}\n"
+                out_str += f"Tief ist {self.name_to_member(tief_spieler.name).mention} "
+                out_str += f"mit: {self.wurf_to_emoji(tief_augen)}\n"
             await self.print_to_channel(channel, out_str)
