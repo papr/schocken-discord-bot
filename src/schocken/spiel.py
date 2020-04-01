@@ -251,8 +251,8 @@ class Halbzeit(pysm.StateMachine):
                 self.__spielzeit_status = (
                     self.__rdm.deckel_verteilen_restliche_spieler()
                 )
-                self.__verlierende = self.__spielzeit_status.spieler[0]
                 if self.beendet():
+                    self.__verlierende = self.__spielzeit_status.spieler[0]
                     self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
                 else:
                     self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
