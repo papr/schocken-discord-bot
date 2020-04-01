@@ -111,7 +111,6 @@ class Einwerfen(pysm.StateMachine):
         elif spieler_name != self.stecher_liste[0].name:
             raise FalscherSpieler(f"Nur {self.stecher_liste[0].name} darf anfangen!")
 
-
     def raise_falsche_aktion(self, state, event):
         raise FalscheAktion
 
@@ -161,6 +160,7 @@ class Halbzeit(pysm.StateMachine):
             "wuerfeln": self.wuerfeln_handler,
             "beiseite legen": self.beiseite_legen_handler,
             "weiter": self.naechster_spieler_handler,
+            "umdrehen": self.sechsen_handler,
         }
         self.add_state(wuerfeln, initial=True)
 
@@ -171,6 +171,8 @@ class Halbzeit(pysm.StateMachine):
         spieler_liste = vorheriger_state.sortierte_spieler_liste()
 
         self.initiale_spieler = spieler_liste.copy()
+        for s in spieler_liste:
+            s.deckel = 0
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
@@ -202,21 +204,16 @@ class Halbzeit(pysm.StateMachine):
 
         if spieler_name != akt_spieler.name:
             raise FalscherSpieler(
-                f"{spieler_name} hat geworfen, {akt_spieler.name} war aber dran!"
+                f"{spieler_name} wollte würfeln, {akt_spieler.name} ist aber dran!"
             )
 
-        # first throw (always 3 dice)
-        if akt_spieler.anzahl_wuerfe == 0:
-            akt_spieler.augen = wuerfel.werfen(3)
-            akt_spieler.anzahl_wuerfe += 1
-            self.letzter_wurf = akt_spieler.augen
-            self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
-        elif akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
+        if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - akt_spieler.einsen)
                 akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
                 akt_spieler.anzahl_wuerfe += 1
+                akt_spieler.beiseite_gelegt = False
                 self.letzter_wurf = akt_spieler.augen
                 self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
             else:
@@ -236,46 +233,75 @@ class Halbzeit(pysm.StateMachine):
             raise ZuOftGeworfen(meldung)
 
         if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
-            self.aktiver_spieler.anzahl_wuerfe = 0
+            akt_spieler.anzahl_wuerfe = 0
+            akt_spieler.einsen = 0
             try:
                 self.rdm.weiter()
             except RundeVorbei:
                 self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
-                self.rdm = RundenDeckelManagement(self.spielzeit_status)
-
-        if self.beendet():
-            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+                if self.beendet():
+                    self.verlierende = self.spielzeit_status.spieler[0]
+                    self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+                else:
+                    self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     def beiseite_legen_handler(self, state, event):
-        spieler_name = event.cargo["spieler_name"]
         akt_spieler = self.aktiver_spieler
+        spieler_name = event.cargo["spieler_name"]
 
         if spieler_name != akt_spieler.name:
             raise FalscherSpieler(
-                f"{spieler_name} hat gewürfelt, {akt_spieler.name} war aber dran!"
+                f"Das kannst du zur Zeit nicht tun, {spieler_name}. "
+                f"{akt_spieler.name} ist an der Reihe!"
             )
 
-        if 1 in akt_spieler.augen:
-            akt_spieler.einsen = akt_spieler.augen.count(1)
+        if akt_spieler.beiseite_gelegt:
+            raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
+        elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
+            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
+            akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
                 f"Du hast keine Einsen gewürfelt die du zur Seite legen kannst!"
             )
 
     def naechster_spieler_handler(self, state, event):
-        spieler_name = event.cargo["spieler_name"]
         akt_spieler = self.aktiver_spieler
+        spieler_name = event.cargo["spieler_name"]
 
         if spieler_name != akt_spieler.name:
             raise FalscherSpieler(
-                f"{spieler_name} hat gewürfelt, {akt_spieler.name} war aber dran!"
+                f"Das kannst du zur Zeit nicht tun, {spieler_name}. "
+                f"{akt_spieler.name} ist an der Reihe!"
             )
 
         if akt_spieler.anzahl_wuerfe == 0:
-            raise NochNichtGeworfen("Es muss mindestens ein Mal geworfen werden!")
+            raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
         else:
             akt_spieler.anzahl_wuerfe = 0
             self.rdm.weiter()
+
+    def sechsen_handler(self, state, event):
+        akt_spieler = self.aktiver_spieler
+        spieler_name = event.cargo["spieler_name"]
+
+        if spieler_name != akt_spieler.name:
+            raise FalscherSpieler(
+                f"Das kannst du zur Zeit nicht tun, {spieler_name}. "
+                f"{akt_spieler.name} ist an der Reihe!"
+            )
+
+        if 6 not in akt_spieler.augen:
+            raise FalscheAktion("Du hast keine Sechsen zum Umdrehen!")
+        elif akt_spieler.augen.count(6) == 1:
+            raise FalscheAktion("Du hast nur eine Sechs gewürfelt!")
+        elif akt_spieler.beiseite_gelegt:
+            raise FalscheAktion(
+                f"Du hast bereits deine Sechsen zu einer Eins umgewandelt!"
+            )
+        else:
+            akt_spieler.einsen += 1
+            akt_spieler.beiseite_gelegt = True
 
     def beendet(self):
         return len(self.spieler_liste) == 1
@@ -316,8 +342,8 @@ class SchockenSpiel(pysm.StateMachine):
         self.initialize()
 
     def command_to_event(self, spieler_name, command):
-        #please stick to the convention that event identifiers are the same
-        #as the command strings
+        # please stick to the convention that event identifiers are the same
+        # as the command strings
         if command == "einwerfen":
             event = pysm.Event("einwerfen", spieler_name=spieler_name)
         elif command == "wuerfeln":
@@ -328,6 +354,8 @@ class SchockenSpiel(pysm.StateMachine):
             event = pysm.Event("weiter", spieler_name=spieler_name)
         elif command == "beiseite legen":
             event = pysm.Event("beiseite legen", spieler_name=spieler_name)
+        elif command == "umdrehen":
+            event = pysm.Event("umdrehen", spieler_name=spieler_name)
         else:
             raise FalscheAktion
         self.dispatch(event)

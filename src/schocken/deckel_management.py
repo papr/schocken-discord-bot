@@ -51,9 +51,15 @@ class RundenDeckelManagement:
         hoch, tief = self.hoch_und_tief()
         anzahl_deckel = hoch.wurf.deckel_wert
         if self._zahl_deckel_im_topf > 0:
-            anzahl_deckel = min(self._zahl_deckel_im_topf, anzahl_deckel)
-            self._zahl_deckel_im_topf -= anzahl_deckel
-            tief.spieler.deckel += anzahl_deckel
+            if anzahl_deckel == 15:
+                self._zahl_deckel_im_topf = 0
+                for s in self._spieler:
+                    s.deckel = 0
+                tief.spieler.deckel = 15
+            else:
+                anzahl_deckel = min(self._zahl_deckel_im_topf, anzahl_deckel)
+                self._zahl_deckel_im_topf -= anzahl_deckel
+                tief.spieler.deckel += anzahl_deckel
         else:
             anzahl_deckel = min(hoch.spieler.deckel, anzahl_deckel)
             hoch.spieler.deckel -= anzahl_deckel
