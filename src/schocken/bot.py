@@ -166,12 +166,12 @@ class SchockenBot:
             await self.print_to_channel(channel, msg)
 
         except FalscherSpielBefehl:
-            avail_handlers = self.game.leaf_state.handlers.keys()
-            cmds = [
-                f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
-            ]
+            # avail_handlers = self.game.leaf_state.handlers.keys()
+            # cmds = [
+                # f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
+            # ]
             msg = "Diesen Befehl gibt es nicht. Versuch's mal mit einem von diesen:\n"
-            msg += ", ".join(cmds)
+            # msg += ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
 
