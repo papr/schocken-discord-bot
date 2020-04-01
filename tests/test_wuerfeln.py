@@ -208,3 +208,5 @@ def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
 
     # Startspieler der zweiten Halbzeit ist Spieler 1
     assert runde.halbzeit_zweite.aktiver_spieler.name == spieler[0].name
+
+    assert runde.halbzeit_zweite.aktiver_spieler.deckel == 0

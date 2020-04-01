@@ -169,6 +169,8 @@ class Halbzeit(pysm.StateMachine):
         spieler_liste = vorheriger_state.sortierte_spieler_liste()
 
         self.initiale_spieler = spieler_liste.copy()
+        for s in spieler_liste:
+            s.deckel = 0
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
@@ -203,7 +205,7 @@ class Halbzeit(pysm.StateMachine):
                 f"{spieler_name} wollte würfeln, {akt_spieler.name} ist aber dran!"
             )
 
-        if akt_spieler.anzahl_wuerfe < self.__rdm.num_maximale_würfe:
+        if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - akt_spieler.einsen)
@@ -228,20 +230,18 @@ class Halbzeit(pysm.StateMachine):
             )
             raise ZuOftGeworfen(meldung)
 
-        if akt_spieler.anzahl_wuerfe == self.__rdm.num_maximale_würfe:
+        if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
             akt_spieler.anzahl_wuerfe = 0
             akt_spieler.einsen = 0
             try:
                 self.rdm.weiter()
             except RundeVorbei:
-                self.__spielzeit_status = (
-                    self.__rdm.deckel_verteilen_restliche_spieler()
-                )
-                self.__verlierende = self.__spielzeit_status.spieler[0]
+                self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
                 if self.beendet():
+                    self.verlierende = self.spielzeit_status.spieler[0]
                     self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
                 else:
-                    self.__rdm = RundenDeckelManagement(self.__spielzeit_status)
+                    self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     def beiseite_legen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -340,8 +340,8 @@ class SchockenSpiel(pysm.StateMachine):
         self.initialize()
 
     def command_to_event(self, spieler_name, command):
-        #please stick to the convention that event identifiers are the same
-        #as the command strings
+        # please stick to the convention that event identifiers are the same
+        # as the command strings
         if command == "einwerfen":
             event = pysm.Event("einwerfen", spieler_name=spieler_name)
         elif command == "wuerfeln":
