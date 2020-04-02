@@ -58,6 +58,9 @@ class SchockenBot:
             3: "finale",
         }
 
+        self._num_halbzeit_old_old = -1
+
+
     def emoji_by_name(self, name):
         emoji = get(self.guild.emojis, name=name)
         return str(emoji)
@@ -275,7 +278,7 @@ class SchockenBot:
             await self.print_to_channel(channel, out_str)
 
         elif state_new == "wuerfeln":
-
+            # Vorbereitungen
             # in welcher halbzeit sind wir gerade?
             stack_list = list(self.game.state_stack.deque)
             stack_names = [st.name for st in stack_list]
@@ -299,31 +302,32 @@ class SchockenBot:
 
             try:
                 spieler_liste_old = halbzeit_old.spieler_liste
-                spieler_old= self.spieler_by_name(spieler_name, spieler_liste_old)
-
+                spieler_old = self.spieler_by_name(spieler_name, spieler_liste_old)
             except AttributeError:
                 # nur im allerersten wurf einer halbzeit!
-                spieler_liste_old = spieler_liste[:1]+spieler_liste[1:]
+                spieler_liste_old = spieler_liste[:1] + spieler_liste[1:]
                 pass
 
-            is_neue_halbzeit = state_old in ["einwerfen", "stechen"] or num_halbzeit_old != num_halbzeit
-
-            if is_neue_halbzeit:
-                out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
-                out_str0 += ", ".join(
-                    [self.name_to_member(pl.name).mention for pl in spieler_liste_old]
-                )
+            if _is_neue_halbzeit:
+                out_str0 = self.gen_vor_halbzeit_output(spieler_liste_old, num_halbzeit)
                 await self.print_to_channel(channel, out_str0)
 
-            if not is_neue_halbzeit:
+           _ is_erste_halbzeit = state_old in ["einwerfen", "stechen"]
+
+            if num_halbzeit != num_halbzeit_old:
+                changed_to = num_halbzeit
+            else:
+                changed_to = 0
+
+            if not _is_neue_halbzeit:
                 hoch, tief = halbzeit.rdm.hoch_und_tief()
 
             if command == "wuerfeln":
                 # Generiere Output in abhängigkeit des wurfes
-                if is_neue_halbzeit:
-                    out_str = self.handle_augen_output(message, spieler)
+                if _is_neue_halbzeit:
+                    out_str = self.gen_wuerfel_output(message, spieler)
                 else:
-                    out_str = self.handle_augen_output(message, spieler, hoch, tief)
+                    out_str = self.gen_wuerfel_output(message, spieler, hoch, tief)
 
                 if halbzeit.rdm.num_maximale_wuerfe == 1:
                     schon_geworfen = 1
@@ -337,7 +341,10 @@ class SchockenBot:
                 schon_geworfen = 0
 
             # Zug vorbei, print Information
-            if schon_geworfen == halbzeit.rdm.num_maximale_wuerfe  or game_cmd == "weiter":
+            if (
+                schon_geworfen == halbzeit.rdm.num_maximale_wuerfe
+                or game_cmd == "weiter"
+            ):
                 naechster = self.name_to_member(halbzeit.aktiver_spieler.name)
                 out_str += f"\nAls nächstes ist {naechster.mention} an "
                 out_str += f"der Reihe. Bitte `!wuerfeln`\n"
@@ -350,9 +357,18 @@ class SchockenBot:
                 out_str += f"mit: {self.wurf_to_emoji(hoch_augen)}\n"
                 out_str += f"Tief ist {self.name_to_member(tief_spieler.name).mention} "
                 out_str += f"mit: {self.wurf_to_emoji(tief_augen)}"
-            await self.print_to_channel(channel, out_str)
 
-    def handle_augen_output(self, message, spieler, hoch = None, tief= None):
+            await self.print_to_channel(channel, out_str)
+            # print(halbzeit.spielzeit_status)
+
+    def gen_vor_halbzeit_output(self, spieler_liste_old, num_halbzeit):
+        out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
+        out_str0 += ", ".join(
+            [self.name_to_member(pl.name).mention for pl in spieler_liste_old]
+        )
+        return out_str0
+
+    def gen_wuerfel_output(self, message, spieler, hoch=None, tief=None):
         augen = spieler.augen
         wurf_emoji = self.wurf_to_emoji(augen)
         # besonderer wurf?
