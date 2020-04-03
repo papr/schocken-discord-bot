@@ -185,7 +185,7 @@ class Halbzeit(pysm.StateMachine):
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
-    def after(self):
+    def after(self, state, event):
         if len(self._spielerinnen_unique) == 1:
             self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
 
@@ -228,7 +228,7 @@ class Halbzeit(pysm.StateMachine):
                 akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
-                aus_der_hand = True
+                aus_der_hand = False
             else:
                 akt_spieler.augen = wuerfel.werfen(3)
                 akt_spieler.anzahl_wuerfe += 1
@@ -353,7 +353,7 @@ class SchockenSpiel(pysm.StateMachine):
             self.halbzeit_erste, self.halbzeit_zweite, events=[events.FERTIG_HALBZEIT],
         )
         self.add_transition(
-            self.halbzeit_zweite, self.finale, events=[events.FERTIG_HALBZEIT],
+            self.halbzeit_zweite, self.finale, events=[events.FERTIG_HALBZEIT], after=self.finale.after,
         )
         self.add_transition(
             self.finale, anstoßen, events=[events.FERTIG_HALBZEIT], after=self.anstoßen,
