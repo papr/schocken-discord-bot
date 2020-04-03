@@ -9,10 +9,12 @@ class MockGuild:
     def __init__(self, name):
         self.name = name
         self.emojis = []
-        self.members = [MockMember("spieler_1"),
-                        MockMember("spieler_2"),
-                        MockMember("spieler_3"),
-                        MockMember("spieler_4")]
+        self.members = [
+            MockMember("spieler_1"),
+            MockMember("spieler_2"),
+            MockMember("spieler_3"),
+            MockMember("spieler_4"),
+        ]
 
 
 class MockClient:

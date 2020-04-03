@@ -299,14 +299,17 @@ class SchockenBot:
 
             try:
                 spieler_liste_old = halbzeit_old.spieler_liste
-                spieler_old= self.spieler_by_name(spieler_name, spieler_liste_old)
+                spieler_old = self.spieler_by_name(spieler_name, spieler_liste_old)
 
             except AttributeError:
                 # nur im allerersten wurf einer halbzeit!
-                spieler_liste_old = spieler_liste[:1]+spieler_liste[1:]
+                spieler_liste_old = spieler_liste[:1] + spieler_liste[1:]
                 pass
 
-            is_neue_halbzeit = state_old in ["einwerfen", "stechen"] or num_halbzeit_old != num_halbzeit
+            is_neue_halbzeit = (
+                state_old in ["einwerfen", "stechen"]
+                or num_halbzeit_old != num_halbzeit
+            )
 
             if is_neue_halbzeit:
                 out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
@@ -337,7 +340,10 @@ class SchockenBot:
                 schon_geworfen = 0
 
             # Zug vorbei, print Information
-            if schon_geworfen == halbzeit.rdm.num_maximale_wuerfe  or game_cmd == "weiter":
+            if (
+                schon_geworfen == halbzeit.rdm.num_maximale_wuerfe
+                or game_cmd == "weiter"
+            ):
                 naechster = self.name_to_member(halbzeit.aktiver_spieler.name)
                 out_str += f"\nAls nächstes ist {naechster.mention} an "
                 out_str += f"der Reihe. Bitte `!wuerfeln`\n"
@@ -352,7 +358,7 @@ class SchockenBot:
                 out_str += f"mit: {self.wurf_to_emoji(tief_augen)}"
             await self.print_to_channel(channel, out_str)
 
-    def handle_augen_output(self, message, spieler, hoch = None, tief= None):
+    def handle_augen_output(self, message, spieler, hoch=None, tief=None):
         augen = spieler.augen
         wurf_emoji = self.wurf_to_emoji(augen)
         # besonderer wurf?

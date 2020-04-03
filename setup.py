@@ -13,9 +13,5 @@ setup(
     extras_require={"dev": pyproject["dev-dependencies"].keys()},
     package_dir={"": package_dir},
     packages=find_namespace_packages(where=package_dir),
-    entry_points={
-        'console_scripts': [
-            'schocken = schocken.__main__:run_bot',
-        ],
-    },
+    entry_points={"console_scripts": ["schocken = schocken.__main__:run_bot",],},
 )
