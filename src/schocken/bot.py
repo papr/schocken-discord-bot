@@ -16,6 +16,7 @@ from discord.utils import get
 from copy import deepcopy
 import random
 
+
 class SchockenBot:
     def __init__(self, client):
         self.client = client
@@ -168,9 +169,11 @@ class SchockenBot:
         except FalscherSpielBefehl:
             # avail_handlers = self.game.leaf_state.handlers.keys()
             # cmds = [
-                # f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
+            # f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
             # ]
-            msg = "Diesen Befehl gibt es nicht." #Versuch's mal mit einem von diesen:\n"
+            msg = (
+                "Diesen Befehl gibt es nicht."  # Versuch's mal mit einem von diesen:\n"
+            )
             # msg += ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
@@ -208,7 +211,7 @@ class SchockenBot:
 
         # freeze old game state. some properties are needed for the bot
         game_old = deepcopy(self.game)
-        #run game state machine
+        # run game state machine
         game_cmd = self.discord_to_game_cmd(command)
         if game_cmd not in self.game.leaf_state.handlers.keys():
             raise FalscherSpielBefehl
@@ -288,7 +291,10 @@ class SchockenBot:
             spieler = self.spieler_by_name(spieler_name, new_spieler_liste)
 
             # Halbzeit beginnt
-            if state_old in ["einwerfen", "stechen"] or num_halbzeit_old != num_halbzeit:
+            if (
+                state_old in ["einwerfen", "stechen"]
+                or num_halbzeit_old != num_halbzeit
+            ):
                 old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
                 # Erster wurf nach einwerfen. Print reihenfolge
                 out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
@@ -297,7 +303,6 @@ class SchockenBot:
                 )
                 await self.print_to_channel(channel, out_str0)
 
-
             hoch, tief = halbzeit.rdm.hoch_und_tief()
             # handle wuerfeln
             augen = spieler.augen
@@ -305,7 +310,7 @@ class SchockenBot:
             # besonderer wurf?
             augen_name = str(wurf.welcher_wurf(augen))
 
-            if hoch==tief:
+            if hoch == tief:
                 # erster Wurf der Runde
                 out_str = f"{message.author.mention} legt vor: "
                 is_erster_wurf = True
@@ -318,80 +323,78 @@ class SchockenBot:
             comment_choices = [" "]
             if "Gemuese" in augen_name:
                 if augen[0] < 5:
-                    comment_choices = ["Gar nicht mal so gut...",
-                               "Schlechtes Gemüse...",
-                               "Das kannst du besser!",
-                               "Wow."]
-                    reicht_choices = {"reicht": [" Aber reicht sogar.",
-                                                 ],
-                                  "reichtnicht": [" Und reicht nicht mal.",
-                                                  ]
-                                      }
+                    comment_choices = [
+                        "Gar nicht mal so gut...",
+                        "Schlechtes Gemüse...",
+                        "Das kannst du besser!",
+                        "Wow.",
+                    ]
+                    reicht_choices = {
+                        "reicht": [" Aber reicht sogar.",],
+                        "reichtnicht": [" Und reicht nicht mal.",],
+                    }
 
                 elif augen[0] == 5:
-                    comment_choices = ["Solides Gemüse.",
-                               "Das kann man noch schlagen.",
-                               "Ausbaufähig...",
-                               ]
-                    reicht_choices = {"reicht": [" Und reicht sogar.",
-                                                 ],
-                                  "reichtnicht": [" Aber reicht gar nicht.",
-                                                  ]
-                                      }
+                    comment_choices = [
+                        "Solides Gemüse.",
+                        "Das kann man noch schlagen.",
+                        "Ausbaufähig...",
+                    ]
+                    reicht_choices = {
+                        "reicht": [" Und reicht sogar.",],
+                        "reichtnicht": [" Aber reicht gar nicht.",],
+                    }
 
                 elif augen[0] == 6:
-                    comment_choices = ["Hohes Gemüse.",
-                               "Nicht schlecht!",
-                               ]
-                    reicht_choices = {"reicht": [" Und reicht sogar.",
-                                                 ],
-                                  "reichtnicht": [" Aber reicht gar nicht.",
-                                                  ]
-                                      }
+                    comment_choices = [
+                        "Hohes Gemüse.",
+                        "Nicht schlecht!",
+                    ]
+                    reicht_choices = {
+                        "reicht": [" Und reicht sogar.",],
+                        "reichtnicht": [" Aber reicht gar nicht.",],
+                    }
 
             elif "General" in augen_name:
-                comment_choices = ["Kann man liegen lassen.",
-                           "General."]
-                reicht_choices = {"reicht": [" Reicht ja.",
-                                                ],
-                                "reichtnicht": [" Aber reicht gar nicht.",
-                                                ]
-                                    }
+                comment_choices = ["Kann man liegen lassen.", "General."]
+                reicht_choices = {
+                    "reicht": [" Reicht ja.",],
+                    "reichtnicht": [" Aber reicht gar nicht.",],
+                }
 
             elif "Schock" in augen_name:
                 if "out" in augen_name:
-                    comment_choices = ["Nice.", "Random Schock Out",
-                                       "Würde ich liegen lassen"]
-                    reicht_choices = {"reicht": [" Reicht auch.",
-                                                    ],
-                                    "reichtnicht": [" Aber reicht ja nicht mal.",
-                                                    ]
-                                        }
+                    comment_choices = [
+                        "Nice.",
+                        "Random Schock Out",
+                        "Würde ich liegen lassen",
+                    ]
+                    reicht_choices = {
+                        "reicht": [" Reicht auch.",],
+                        "reichtnicht": [" Aber reicht ja nicht mal.",],
+                    }
                 else:
                     comment_choices = ["Schöner Schock."]
-                    reicht_choices = {"reicht": [" Reicht auch.",
-                                                    ],
-                                    "reichtnicht": [" Aber reicht gar nicht.",
-                                                    ]
-                                        }
+                    reicht_choices = {
+                        "reicht": [" Reicht auch.",],
+                        "reichtnicht": [" Aber reicht gar nicht.",],
+                    }
 
             elif "Herrenwurf" in augen_name:
                 comment_choices = ["Herrenwurf. Verliert nicht."]
-                reicht_choices = {"reicht": [" Und reicht sogar.",
-                                                ],
-                                "reichtnicht": [" ...aber vielleicht schon.",
-                                                ]
-                                    }
+                reicht_choices = {
+                    "reicht": [" Und reicht sogar.",],
+                    "reichtnicht": [" ...aber vielleicht schon.",],
+                }
 
             elif "Jule" in augen_name:
                 comment_choices = ["Schöne Jule."]
-                reicht_choices = {"reicht": [" Und sie reicht.",
-                                                ],
-                                "reichtnicht": [" Aber reicht leider nicht.",
-                                                ]
-                                    }
+                reicht_choices = {
+                    "reicht": [" Und sie reicht.",],
+                    "reichtnicht": [" Aber reicht leider nicht.",],
+                }
 
-            out_str += "\n"+random.choice(comment_choices)
+            out_str += "\n" + random.choice(comment_choices)
             if not is_erster_wurf:
                 if reicht:
                     out_str += random.choice(reicht_choices["reicht"])

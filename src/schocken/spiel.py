@@ -353,7 +353,10 @@ class SchockenSpiel(pysm.StateMachine):
             self.halbzeit_erste, self.halbzeit_zweite, events=[events.FERTIG_HALBZEIT],
         )
         self.add_transition(
-            self.halbzeit_zweite, self.finale, events=[events.FERTIG_HALBZEIT], after=self.finale.after,
+            self.halbzeit_zweite,
+            self.finale,
+            events=[events.FERTIG_HALBZEIT],
+            after=self.finale.after,
         )
         self.add_transition(
             self.finale, anstoßen, events=[events.FERTIG_HALBZEIT], after=self.anstoßen,
