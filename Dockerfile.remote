@@ -2,4 +2,4 @@ FROM python:3.8-buster
 WORKDIR /schocken
 RUN python -m pip install -U pip
 RUN python -m pip install -U git+https://github.com/papr/schocken.git
-CMD python -m pip install -U pip; python -m pip install -U schocken; python -m schocken
+CMD python -m python -m pip install -U git+https://github.com/papr/schocken.git; python -m schocken
