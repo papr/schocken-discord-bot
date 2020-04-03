@@ -2,7 +2,7 @@ import pytest
 
 from schocken.spiel import Einwerfen, SchockenSpiel
 from schocken.spieler import Spieler
-from schocken.exceptions import FalscheAktion, FalscherSpieler, NochNichtGeworfen
+from schocken.exceptions import FalscheAktion, FalscherSpieler, NochNichtGeworfen, LustWurf
 
 from schocken import wuerfel
 
@@ -240,7 +240,7 @@ def test_uebergang_zweite_halbzeit_finale_mit_zwei_spielern(spieler, erste_halbz
     assert runde.finale.spieler_liste[1].deckel == 0
 
 
-def test_ein_spieler_verliert_beide_halbzeiten(spieler, erste_halbzeit_beendet):
+def test_uebergang_zweite_halbzeit_finale_ein_spieler_verliert_beide_halbzeiten(spieler, erste_halbzeit_beendet):
     runde = erste_halbzeit_beendet
 
     # Erste Halbzeit verlor Spieler 2, diese wird er ebenso verlieren
@@ -256,3 +256,58 @@ def test_ein_spieler_verliert_beide_halbzeiten(spieler, erste_halbzeit_beendet):
     assert runde.state_stack.deque[2].name == "Halbzeit"
     # root_machine sollte sich nun im state "anstoßen!" befinden
     assert runde.state.name == "anstoßen!"
+
+
+def test_lustwurf(spieler, erste_halbzeit_beendet):
+    runde = erste_halbzeit_beendet
+
+    # Erste Halbzeit verlor Spieler 2
+    # Reihenfolge: Spieler 2, Spieler 3, Spieler 1
+    # Spieler 2 würfelt Jule
+    wuerfel.werfen = lambda n: (1, 2, 4)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    wuerfel.werfen = lambda n: (2, 2, 3)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    # Spieler 1 hat verloren und demnach 7 Deckel
+    # Reihenfolge: Spieler 1, Spieler 2, Spieler 3
+    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 7
+
+    # Spieler 1 würfelt Jule
+    wuerfel.werfen = lambda n: (1, 2, 4)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "weiter")
+    wuerfel.werfen = lambda n: (2, 2, 3)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+
+    # Spieler 3 hat verloren und demnach 7 Deckel
+    # Reihenfolge: Spieler 3, Spieler 2, Spieler 1
+    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 7
+
+    # Spieler 3 würfelt Jule im 3. Wurf
+    wuerfel.werfen = lambda n: (4, 3, 4)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (3, 3, 4)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 2, 4)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # Spieler 1 lässt Ehrenwurf liegen
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "weiter")
+    # Spieler 2 würfelt höher
+    wuerfel.werfen = lambda n: (3, 2, 3)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    # Spieler 2 macht Lustwurf
+    with pytest.raises(LustWurf):
+        wuerfel.werfen = lambda n: (6, 5, 3)
+        runde.command_to_event(spieler[1].name, "wuerfeln")
+        wuerfel.werfen = lambda n: (3, 2, 3)
+        runde.command_to_event(spieler[1].name, "wuerfeln")
+
+    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 1
