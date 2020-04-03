@@ -1,4 +1,6 @@
 import typing as T
+from copy import deepcopy
+
 from .wurf import welcher_wurf, Wurf, prioritaet, Schock
 from .spieler import Spieler
 from .exceptions import (
@@ -32,6 +34,7 @@ class RundenDeckelManagement:
         if len(runden_status.spieler) < 2:
             raise ZuWenigSpieler
 
+        self._waren_anfangs_deckel_im_topf = runden_status.deckel_in_topf > 0
         self._zahl_deckel_im_topf = runden_status.deckel_in_topf
         self._spieler = runden_status.spieler
         self._spieler_namen = [S.name for S in self._spieler]
@@ -56,24 +59,37 @@ class RundenDeckelManagement:
     def _deckel_verteilen(self, hoch: WurfEvaluierung, tief: WurfEvaluierung):
         if hoch.wurf is Schock.out:
             self._schockout_verteilen(tief)
-        elif self._zahl_deckel_im_topf > 0:
-            self._deckel_im_topf_verteilen(hoch, tief)
+        elif self._waren_anfangs_deckel_im_topf:
+            self._deckel_im_topf_verteilen_hoch_tief(hoch, tief)
         else:
             self._deckel_von_hoch_an_tief_verteilen(hoch, tief)
 
-    def _deckel_im_topf_verteilen(self, hoch: WurfEvaluierung, tief: WurfEvaluierung):
+    def _deckel_im_topf_verteilen_hoch_tief(
+        self, hoch: WurfEvaluierung, tief: WurfEvaluierung
+    ):
         anzahl_deckel = hoch.wurf.deckel_wert
+        self._deckel_im_topf_verteilen(tief.spieler, anzahl_deckel)
+
+    def _deckel_im_topf_verteilen(self, spieler: Spieler, anzahl_deckel: int):
         anzahl_deckel = min(self._zahl_deckel_im_topf, anzahl_deckel)
         self._zahl_deckel_im_topf -= anzahl_deckel
-        tief.spieler.deckel += anzahl_deckel
+        spieler.deckel += anzahl_deckel
 
     def _deckel_von_hoch_an_tief_verteilen(
         self, hoch: WurfEvaluierung, tief: WurfEvaluierung
     ):
-        anzahl_deckel = hoch.wurf.deckel_wert
-        anzahl_deckel = min(hoch.spieler.deckel, anzahl_deckel)
-        hoch.spieler.deckel -= anzahl_deckel
-        tief.spieler.deckel += anzahl_deckel
+        self._deckel_von_spieler_an_spieler(
+            geber=hoch.spieler,
+            empfaenger=tief.spieler,
+            anzahl_deckel=hoch.wurf.deckel_wert,
+        )
+
+    def _deckel_von_spieler_an_spieler(
+        self, geber: Spieler, empfaenger: Spieler, anzahl_deckel: int
+    ):
+        anzahl_deckel = min(geber.deckel, anzahl_deckel)
+        geber.deckel -= anzahl_deckel
+        empfaenger.deckel += anzahl_deckel
 
     def _schockout_verteilen(self, tief: WurfEvaluierung):
         zahl_verteile_deckel = sum(s.deckel for s in self._spieler)
@@ -123,6 +139,27 @@ class RundenDeckelManagement:
             spieler=self._spieler[spieler_idx],
             wurf=wurf,
         )
+
+    def ist_lust_wurf(self, wurf: WurfEvaluierung):
+        if wurf.wurf_anzahl <= 1 or wurf.reihenfolge == 0:
+            return False
+        simulation = deepcopy(self)
+        verteilung = simulation.deckel_verteilen_restliche_spieler()
+        waere_raus = wurf.spieler not in verteilung.spieler
+        return waere_raus
+
+    def strafdeckel_verteilen(self, bestrafte: Spieler):
+        if self._waren_anfangs_deckel_im_topf:
+            self._deckel_im_topf_verteilen(bestrafte, 1)
+        else:  # spieler mit den meisten Deckeln gibt ab
+            deckel = [s.deckel for s in self._spieler]
+            meiste_deckel_index = deckel.index(max(deckel))
+            geber = self._spieler[meiste_deckel_index]
+            self._deckel_von_spieler_an_spieler(geber, bestrafte, 1)
+        # NOTE: Auslegungssache. Falls der bestrafte keinen Deckel bekommen hat, zb wenn
+        # es keinen Deckel mehr im Topf gab, und nächste Runde trotzdem spielen müsste,
+        # dann muss hier entsprechendes `spieler.bestraft` flag gesetzt werden, dass
+        # dann in `_restliche_spielerinnen_bestimmen()` abgefragt werden muss.
 
     def hoch_und_tief(self) -> T.Tuple[WurfEvaluierung, WurfEvaluierung]:
         erster_spieler = self._spieler_namen[0]

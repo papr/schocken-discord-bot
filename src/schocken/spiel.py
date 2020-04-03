@@ -10,6 +10,7 @@ from .exceptions import (
     ZuOftGeworfen,
     NochNichtGeworfen,
     RundeVorbei,
+    LustWurf,
 )
 from .spieler import Spieler
 
@@ -152,7 +153,7 @@ class Halbzeit(pysm.StateMachine):
         self.rdm = None
         self.letzter_wurf = (None, None, None)
 
-        self.handlers = {"enter": self.enter}
+        self.handlers = {"enter": self.enter, "after": self.after}
 
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
@@ -178,13 +179,15 @@ class Halbzeit(pysm.StateMachine):
             spieler_liste = vorheriger_state.sortierte_spieler_liste()
             self.initiale_spieler = spieler_liste.copy()
 
-        if len(spieler_liste) > len(set(spieler_liste)):
-            threading.Thread(target=self.root_machine.dispatch, args=['FERTIG_HALBZEIT']).start()
-        else:
-            for s in spieler_liste:
-                s.deckel = 0
-            self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
-            self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        self._spielerinnen_unique = set(s.name for s in spieler_liste)
+        for s in spieler_liste:
+            s.deckel = 0
+        self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
+        self.rdm = RundenDeckelManagement(self.spielzeit_status)
+
+    def after(self):
+        if len(self._spielerinnen_unique) == 1:
+            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
 
     @property
     def spieler_liste(self) -> T.List[Spieler]:
@@ -209,6 +212,7 @@ class Halbzeit(pysm.StateMachine):
         return sotiert
 
     def wuerfeln_handler(self, state, event):
+        lust_wurf_geworfen = False
         akt_spieler = self.aktiver_spieler
         spieler_name = event.cargo["spieler_name"]
 
@@ -224,13 +228,15 @@ class Halbzeit(pysm.StateMachine):
                 akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
-                self.letzter_wurf = akt_spieler.augen
-                self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=False)
+                aus_der_hand = True
             else:
                 akt_spieler.augen = wuerfel.werfen(3)
                 akt_spieler.anzahl_wuerfe += 1
-                self.letzter_wurf = akt_spieler.augen
-                self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand=True)
+                aus_der_hand = True
+            letzter_wurf = self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand)
+            if self.rdm.ist_lust_wurf(letzter_wurf):
+                self.rdm.strafdeckel_verteilen(letzter_wurf.spieler)
+                lust_wurf_geworfen = True
         else:
             # watch for semantics
             num_wurf = self.rdm.num_maximale_wuerfe
@@ -254,6 +260,9 @@ class Halbzeit(pysm.StateMachine):
                     self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
                 else:
                     self.rdm = RundenDeckelManagement(self.spielzeit_status)
+
+        if lust_wurf_geworfen:
+            raise LustWurf(letzter_wurf)
 
     def beiseite_legen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler

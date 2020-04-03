@@ -11,8 +11,10 @@ from .exceptions import (
     ZuOftGeworfen,
 )
 from .spiel import SchockenSpiel
+from . import wurf
 from discord.utils import get
 from copy import deepcopy
+import random
 
 class SchockenBot:
     def __init__(self, client):
@@ -164,12 +166,12 @@ class SchockenBot:
             await self.print_to_channel(channel, msg)
 
         except FalscherSpielBefehl:
-            avail_handlers = self.game.leaf_state.handlers.keys()
-            cmds = [
-                f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
-            ]
-            msg = "Diesen Befehl gibt es nicht. Versuch's mal mit einem von diesen:\n"
-            msg += ", ".join(cmds)
+            # avail_handlers = self.game.leaf_state.handlers.keys()
+            # cmds = [
+                # f"`!{self.game_to_discord_cmd_dict[hdlr]}`" for hdlr in avail_handlers
+            # ]
+            msg = "Diesen Befehl gibt es nicht." #Versuch's mal mit einem von diesen:\n"
+            # msg += ", ".join(cmds)
             # msg += "\n".join(["`" + bef + "`" for bef in zulaessig])
             await self.print_to_channel(channel, msg)
 
@@ -267,54 +269,144 @@ class SchockenBot:
             await self.print_to_channel(channel, out_str)
 
         elif state_new == "wuerfeln":
+            # get old state information
             state_old = game_old.state.leaf_state.name
+            stack_list_old = list(game_old.state_stack.deque)
+            stack_names_old = [st.name for st in stack_list_old]
+            num_halbzeit_old = stack_names_old.count("Halbzeit") + 1
+            halbzeit_old = getattr(
+                game_old, self._halbzeit_state_names[num_halbzeit_old]
+            )
 
-            if state_old == "wuerfeln":
-                # we were already inside halbzeit, find out which one
-                old_stack_list = list(game_old.state_stack.deque)
-                old_stack_names = [st.name for st in old_stack_list]
-                old_halbzeit_no = old_stack_names.count("Halbzeit") + 1
-                old_halbzeit = getattr(
-                    self.game, self._halbzeit_state_names[old_halbzeit_no]
-                )
-
-                old_hoch, old_tief = old_halbzeit.rdm.hoch_und_tief()
             stack_list = list(self.game.state_stack.deque)
             stack_names = [st.name for st in stack_list]
-            halbzeit_no = stack_names.count("Halbzeit") + 1
+            num_halbzeit = stack_names.count("Halbzeit") + 1
 
-            halbzeit = getattr(self.game, self._halbzeit_state_names[halbzeit_no])
+            halbzeit = getattr(self.game, self._halbzeit_state_names[num_halbzeit])
 
             new_spieler_liste = halbzeit.spieler_liste
             spieler = self.spieler_by_name(spieler_name, new_spieler_liste)
 
             # Halbzeit beginnt
-            if old_state in ["einwerfen", "stechen"] or self.halbzeit_no != halbzeit_no:
-                self.halbzeit_no = halbzeit_no
+            if state_old in ["einwerfen", "stechen"] or num_halbzeit_old != num_halbzeit:
                 old_spieler_liste = new_spieler_liste[:1] + new_spieler_liste[1:]
                 # Erster wurf nach einwerfen. Print reihenfolge
-                out_str0 = f"Halbzeit {halbzeit_no} beginnt. Die Reihenfolge ist:\n"
+                out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
                 out_str0 += ", ".join(
                     [self.name_to_member(pl.name).mention for pl in old_spieler_liste]
                 )
                 await self.print_to_channel(channel, out_str0)
 
+
+            hoch, tief = halbzeit.rdm.hoch_und_tief()
             # handle wuerfeln
-            wuerfe = spieler.augen
-            anzahl_wuerfe = spieler.anzahl_wuerfe
-            # erster wurf (immer drei)
-            wurf_emoji = self.wurf_to_emoji(wuerfe)
-            out_str = f"{message.author.mention} wirft "
+            augen = spieler.augen
+            wurf_emoji = self.wurf_to_emoji(augen)
+            # besonderer wurf?
+            augen_name = str(wurf.welcher_wurf(augen))
+
+            if hoch==tief:
+                # erster Wurf der Runde
+                out_str = f"{message.author.mention} legt vor: "
+                is_erster_wurf = True
+            else:
+                out_str = f"{message.author.mention} wirft "
+                is_erster_wurf = False
             out_str += wurf_emoji + "."
+
+            reicht = tief.spieler.name != spieler.name
+            comment_choices = [" "]
+            if "Gemuese" in augen_name:
+                if augen[0] < 5:
+                    comment_choices = ["Gar nicht mal so gut...",
+                               "Schlechtes Gemüse...",
+                               "Das kannst du besser!",
+                               "Wow."]
+                    reicht_choices = {"reicht": [" Aber reicht sogar.",
+                                                 ],
+                                  "reichtnicht": [" Und reicht nicht mal.",
+                                                  ]
+                                      }
+
+                elif augen[0] == 5:
+                    comment_choices = ["Solides Gemüse.",
+                               "Das kann man noch schlagen.",
+                               "Ausbaufähig...",
+                               ]
+                    reicht_choices = {"reicht": [" Und reicht sogar.",
+                                                 ],
+                                  "reichtnicht": [" Aber reicht gar nicht.",
+                                                  ]
+                                      }
+
+                elif augen[0] == 6:
+                    comment_choices = ["Hohes Gemüse.",
+                               "Nicht schlecht!",
+                               ]
+                    reicht_choices = {"reicht": [" Und reicht sogar.",
+                                                 ],
+                                  "reichtnicht": [" Aber reicht gar nicht.",
+                                                  ]
+                                      }
+
+            elif "General" in augen_name:
+                comment_choices = ["Kann man liegen lassen.",
+                           "General."]
+                reicht_choices = {"reicht": [" Reicht ja.",
+                                                ],
+                                "reichtnicht": [" Aber reicht gar nicht.",
+                                                ]
+                                    }
+
+            elif "Schock" in augen_name:
+                if "out" in augen_name:
+                    comment_choices = ["Nice.", "Random Schock Out",
+                                       "Würde ich liegen lassen"]
+                    reicht_choices = {"reicht": [" Reicht auch.",
+                                                    ],
+                                    "reichtnicht": [" Aber reicht ja nicht mal.",
+                                                    ]
+                                        }
+                else:
+                    comment_choices = ["Schöner Schock."]
+                    reicht_choices = {"reicht": [" Reicht auch.",
+                                                    ],
+                                    "reichtnicht": [" Aber reicht gar nicht.",
+                                                    ]
+                                        }
+
+            elif "Herrenwurf" in augen_name:
+                comment_choices = ["Herrenwurf. Verliert nicht."]
+                reicht_choices = {"reicht": [" Und reicht sogar.",
+                                                ],
+                                "reichtnicht": [" ...aber vielleicht schon.",
+                                                ]
+                                    }
+
+            elif "Jule" in augen_name:
+                comment_choices = ["Schöne Jule."]
+                reicht_choices = {"reicht": [" Und sie reicht.",
+                                                ],
+                                "reichtnicht": [" Aber reicht leider nicht.",
+                                                ]
+                                    }
+
+            out_str += "\n"+random.choice(comment_choices)
+            if not is_erster_wurf:
+                if reicht:
+                    out_str += random.choice(reicht_choices["reicht"])
+                else:
+                    out_str += random.choice(reicht_choices["reichtnicht"])
+
             if spieler.anzahl_wuerfe == 0 or game_cmd == "weiter":
                 naechster = self.name_to_member(halbzeit.aktiver_spieler.name)
                 out_str += f"\nAls nächstes ist {naechster.mention} an "
                 out_str += f"der Reihe. Bitte `!wuerfeln`\n"
                 # TODO figure out how to get high/low aus dem letzten durchgang
-                hoch_spieler = old_hoch.spieler
-                tief_spieler = old_tief.spieler
-                hoch_augen = old_hoch.spieler.augen
-                tief_augen = old_tief.spieler.augen
+                hoch_spieler = hoch.spieler
+                tief_spieler = tief.spieler
+                hoch_augen = hoch.spieler.augen
+                tief_augen = tief.spieler.augen
                 out_str += f"Hoch ist {self.name_to_member(hoch_spieler.name).mention} "
                 out_str += f"mit: {self.wurf_to_emoji(hoch_augen)}\n"
                 out_str += f"Tief ist {self.name_to_member(tief_spieler.name).mention} "
