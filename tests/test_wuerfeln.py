@@ -92,7 +92,7 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "umdrehen")
 
-    # Mehrmaliges umdrehen ist nicht erlaubt
+    # Mehrmaliges umdrehen derselben Sechsen ist nicht erlaubt
     with pytest.raises(FalscheAktion):
         runde.command_to_event(spieler[1].name, "umdrehen")
 
@@ -130,7 +130,7 @@ def test_einsen_beiseite_legen(
     wuerfel.werfen = lambda n: (1, 2, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "beiseite legen")
-    # zweimal zur Seite legen ist nicht!
+    # zweimal zur Seite legen derselben Eins ist nicht!
     with pytest.raises(FalscheAktion):
         runde.command_to_event(spieler[1].name, "beiseite legen")
 
@@ -147,7 +147,7 @@ def test_einsen_beiseite_legen(
 def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
 
-    # Spieler 2 würfelt zweimal zwei Einsen und legt diese nacheinander zur Seite
+    # Kombination aus Einsen beiseite legen und Sechsen umdrehen
     wuerfel.werfen = lambda n: (5, 6, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "umdrehen")
@@ -164,79 +164,173 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
     assert runde.halbzeit_erste.aktiver_spieler.name == "spieler_3"
 
 
-def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+def test_nachgeworfen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+
+    # Alle Spieler würfeln dasselbe, letzter Spieler verliert die Runde
+    wuerfel.werfen = lambda n: (5, 6, 6)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    runde.halbzeit_erste.spieler_liste[2].deckel == 1
+
+
+def test_uebergang_erste_halbzeit_zweite_halbzeit(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+
+    # Herrenwurf verliert nicht ;)
+    wuerfel.werfen = lambda n: (5, 5, 6)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    wuerfel.werfen = lambda n: (1, 1, 3)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 1, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    # Erste Halbzeit ist vorbei und befindet sich im state_stack der root_machine
+    assert runde.state_stack.deque[1].name == "Halbzeit"
+    # Startspieler ist Spieler 2
+    assert runde.halbzeit_zweite.spieler_liste[0].name == spieler[1].name
+    # Spielerreihenfolge ist nun Spieler 2, Spieler 3, Spieler 1
+    assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[2].name
+    assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[0].name
+    # Alle Spieler haben wieder Null Deckel
+    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
+    assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
+    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
+
+
+@pytest.fixture
+def erste_halbzeit_beendet(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
 
     wuerfel.werfen = lambda n: (5, 5, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "weiter")
-
-    wuerfel.werfen = lambda n: (3, 3, 2)
+    wuerfel.werfen = lambda n: (1, 1, 3)
     runde.command_to_event(spieler[2].name, "wuerfeln")
-
-    wuerfel.werfen = lambda n: (2, 3, 6)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
-
-    # Spieler 3 hat verloren und muss als nächstes beginnen
-    assert runde.halbzeit_erste.aktiver_spieler.name == spieler[2].name
-    # Spieler 3 hat einen Deckel bekommen
-    assert runde.halbzeit_erste.spieler_liste[0].deckel == 1
-    # Die anderen Spieler haben keine Deckel bekommen
-    assert runde.halbzeit_erste.spieler_liste[1].deckel == 0
-    assert runde.halbzeit_erste.spieler_liste[2].deckel == 0
-
-    # Spieler 1 will anfangen, darf er aber nicht
-    with pytest.raises(FalscherSpieler):
-        runde.command_to_event(spieler[0].name, "wuerfeln")
-
-    # Spieler 3 will direkt weiter geben ohne zu würfeln
-    with pytest.raises(NochNichtGeworfen):
-        runde.command_to_event(spieler[2].name, "weiter")
-
-    wuerfel.werfen = lambda n: (1, 1, 1)
-    runde.command_to_event(spieler[2].name, "wuerfeln")
-    runde.command_to_event(spieler[2].name, "weiter")
-
-    wuerfel.werfen = lambda n: (1, 2, 2)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
-
-    wuerfel.werfen = lambda n: (3, 3, 3)
-    runde.command_to_event(spieler[1].name, "wuerfeln")
-
-    # Spieler muss verloren haben
-    assert runde.halbzeit_erste.verlierende.name == spieler[0].name
-
-    # Start zweite Halbzeit
-    # Startspieler der zweiten Halbzeit ist Spieler 1
-    assert runde.halbzeit_zweite.aktiver_spieler.name == spieler[0].name
-    # Folgespieler ist Spieler 2
-    assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[1].name
-    # Folgespieler ist Spieler 3
-    assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[2].name
-    # Spieler 4 spielt nicht mit
-    with pytest.raises(IndexError):
-        assert runde.halbzeit_zweite.spieler_liste[3].name == spieler[3].name
-
-    # alle spieler haben wieder 0 deckel
-    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
-
     wuerfel.werfen = lambda n: (1, 1, 1)
     runde.command_to_event(spieler[0].name, "wuerfeln")
-    runde.command_to_event(spieler[0].name, "weiter")
 
-    wuerfel.werfen = lambda n: (1, 2, 2)
-    runde.command_to_event(spieler[1].name, "wuerfeln")
+    return runde
 
-    wuerfel.werfen = lambda n: (3, 3, 3)
-    runde.command_to_event(spieler[2].name, "wuerfeln")
 
+def test_uebergang_zweite_halbzeit_finale_mit_zwei_spielern(spieler, erste_halbzeit_beendet):
+    runde = erste_halbzeit_beendet
+
+    # Erste Halbzeit verlor Spieler 2, diese wird Spieler 3 verlieren
     wuerfel.werfen = lambda n: (1, 1, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "weiter")
-
-    wuerfel.werfen = lambda n: (1, 2, 2)
+    wuerfel.werfen = lambda n: (2, 2, 3)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 2, 1)
     runde.command_to_event(spieler[0].name, "wuerfeln")
 
-    assert runde.leaf_state.name == "anstoßen!"
+    # Zweite Halbzeit ist vorbei und befindet sich im state_stack der root_machine
+    assert runde.state_stack.deque[2].name == "Halbzeit"
+    # Startspieler ist Spieler 1
+    assert runde.finale.spieler_liste[0].name == spieler[2].name
+    # Zweiter Spieler ist Spieler 2
+    assert runde.finale.spieler_liste[1].name == spieler[1].name
+    # Finalisten haben wieder Null Deckel
+    assert runde.finale.spieler_liste[0].deckel == 0
+    assert runde.finale.spieler_liste[1].deckel == 0
+
+
+def test_ein_spieler_verliert_beide_halbzeiten(spieler, erste_halbzeit_beendet):
+    runde = erste_halbzeit_beendet
+
+    # Erste Halbzeit verlor Spieler 2, diese wird er ebenso verlieren
+    wuerfel.werfen = lambda n: (1, 2, 2)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    wuerfel.werfen = lambda n: (2, 2, 3)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    wuerfel.werfen = lambda n: (1, 1, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    # Zweite Halbzeit ist vorbei und befindet sich im state_stack der root_machine
+    assert runde.state_stack.deque[2].name == "Halbzeit"
+    # root_machine sollte sich nun im state "anstoßen!" befinden
+    assert runde.state.name == "anstoßen!"
+
+
+# def test_gluecksrunde(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+#     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+
+#     wuerfel.werfen = lambda n: (5, 5, 6)
+#     runde.command_to_event(spieler[1].name, "wuerfeln")
+#     runde.command_to_event(spieler[1].name, "weiter")
+
+#     wuerfel.werfen = lambda n: (3, 3, 2)
+#     runde.command_to_event(spieler[2].name, "wuerfeln")
+
+#     wuerfel.werfen = lambda n: (2, 3, 6)
+#     runde.command_to_event(spieler[0].name, "wuerfeln")
+
+#     # Spieler 3 hat verloren und muss als nächstes beginnen
+#     assert runde.halbzeit_erste.aktiver_spieler.name == spieler[2].name
+#     # Spieler 3 hat einen Deckel bekommen
+#     assert runde.halbzeit_erste.spieler_liste[0].deckel == 1
+#     # Die anderen Spieler haben keine Deckel bekommen
+#     assert runde.halbzeit_erste.spieler_liste[1].deckel == 0
+#     assert runde.halbzeit_erste.spieler_liste[2].deckel == 0
+
+#     # Spieler 1 will anfangen, darf er aber nicht
+#     with pytest.raises(FalscherSpieler):
+#         runde.command_to_event(spieler[0].name, "wuerfeln")
+
+#     # Spieler 3 will direkt weiter geben ohne zu würfeln
+#     with pytest.raises(NochNichtGeworfen):
+#         runde.command_to_event(spieler[2].name, "weiter")
+
+#     wuerfel.werfen = lambda n: (1, 1, 1)
+#     runde.command_to_event(spieler[2].name, "wuerfeln")
+#     runde.command_to_event(spieler[2].name, "weiter")
+
+#     wuerfel.werfen = lambda n: (1, 2, 2)
+#     runde.command_to_event(spieler[0].name, "wuerfeln")
+
+#     wuerfel.werfen = lambda n: (3, 3, 3)
+#     runde.command_to_event(spieler[1].name, "wuerfeln")
+
+#     # Spieler muss verloren haben
+#     assert runde.halbzeit_erste.verlierende.name == spieler[0].name
+
+#     # Start zweite Halbzeit
+#     # Startspieler der zweiten Halbzeit ist Spieler 1
+#     assert runde.halbzeit_zweite.aktiver_spieler.name == spieler[0].name
+#     # Folgespieler ist Spieler 2
+#     assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[1].name
+#     # Folgespieler ist Spieler 3
+#     assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[2].name
+#     # Spieler 4 spielt nicht mit
+#     with pytest.raises(IndexError):
+#         assert runde.halbzeit_zweite.spieler_liste[3].name == spieler[3].name
+
+#     # alle spieler haben wieder 0 deckel
+#     assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
+#     assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
+#     assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
+
+#     wuerfel.werfen = lambda n: (1, 1, 1)
+#     runde.command_to_event(spieler[0].name, "wuerfeln")
+#     runde.command_to_event(spieler[0].name, "weiter")
+
+#     wuerfel.werfen = lambda n: (1, 2, 2)
+#     runde.command_to_event(spieler[1].name, "wuerfeln")
+
+#     wuerfel.werfen = lambda n: (3, 3, 3)
+#     runde.command_to_event(spieler[2].name, "wuerfeln")
+
+#     wuerfel.werfen = lambda n: (1, 1, 1)
+#     runde.command_to_event(spieler[1].name, "wuerfeln")
+#     runde.command_to_event(spieler[1].name, "weiter")
+
+#     wuerfel.werfen = lambda n: (1, 2, 2)
+#     runde.command_to_event(spieler[0].name, "wuerfeln")
+
+#     assert runde.leaf_state.name == "anstoßen!"

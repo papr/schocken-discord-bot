@@ -1,5 +1,6 @@
 import typing as T
 import pysm
+import threading
 from . import events, wuerfel
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 from .exceptions import (
@@ -177,8 +178,8 @@ class Halbzeit(pysm.StateMachine):
             spieler_liste = vorheriger_state.sortierte_spieler_liste()
             self.initiale_spieler = spieler_liste.copy()
 
-        if len(spieler_liste) < len(set(spieler_liste)):
-            self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+        if len(spieler_liste) > len(set(spieler_liste)):
+            threading.Thread(target=self.root_machine.dispatch, args=['FERTIG_HALBZEIT']).start()
         else:
             for s in spieler_liste:
                 s.deckel = 0
