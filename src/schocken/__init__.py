@@ -1,4 +1,4 @@
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 from .spiel import SchockenSpiel
 from .spieler import Spieler
