@@ -177,7 +177,9 @@ def test_nachgeworfen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
     runde.halbzeit_erste.spieler_liste[2].deckel == 1
 
 
-def test_uebergang_erste_halbzeit_zweite_halbzeit(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+def test_uebergang_erste_halbzeit_zweite_halbzeit(
+    spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
 
     # Herrenwurf verliert nicht ;)
@@ -217,7 +219,9 @@ def erste_halbzeit_beendet(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_w
     return runde
 
 
-def test_uebergang_zweite_halbzeit_finale_mit_zwei_spielern(spieler, erste_halbzeit_beendet):
+def test_uebergang_zweite_halbzeit_finale_mit_zwei_spielern(
+    spieler, erste_halbzeit_beendet
+):
     runde = erste_halbzeit_beendet
 
     # Erste Halbzeit verlor Spieler 2, diese wird Spieler 3 verlieren
@@ -256,7 +260,6 @@ def test_uebergang_zweite_halbzeit_finale_ein_spieler_verliert_beide_halbzeiten(
     assert runde.state_stack.deque[2].name == "Halbzeit"
     # root_machine sollte sich nun im state "anstoßen!" befinden
     assert runde.state.name == "anstoßen!"
-
 
 def test_lustwurf(spieler, erste_halbzeit_beendet):
     runde = erste_halbzeit_beendet

@@ -80,11 +80,11 @@ python -m schocken
 ### Using Docker (PyPI build)
 
 ```sh
-docker build -f Dockerfile.pypi -t schocken.pypi .
+docker build -f Dockerfile.remote -t schocken.remote .
 docker run              \
   --env-file .env       \
   --restart always      \
-  schocken.pypi:latest
+  schocken.remote:latest
 ```
 
 ### Using Docker (local build)
@@ -93,7 +93,6 @@ docker run              \
 docker build -f Dockerfile.local -t schocken.local .
 docker run              \
   --env-file .env       \
-  --restart always      \
   -v `pwd`:/schocken    \
   schocken.local:latest
 ```

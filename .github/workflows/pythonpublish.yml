@@ -30,4 +30,4 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python -m pep517.build .
-        twine upload dist/*
+        twine upload --skip-existing dist/*

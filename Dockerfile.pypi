@@ -1,3 +1,0 @@
-FROM python:3.8-buster
-WORKDIR /schocken
-CMD python -m pip install -U pip; python -m pip install -U schocken; python -m schocken
