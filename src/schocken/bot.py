@@ -165,7 +165,7 @@ class SchockenBot:
 
         except SpielLaeuftNicht:
             msg = f"Gerade läuft kein Spiel. "
-            msg += "`!{self._start_game_cmd}` zum starten"
+            msg += f"`!{self._start_game_cmd}` zum starten"
             await self.print_to_channel(channel, msg)
 
         except SpielLaeuft:
@@ -314,9 +314,9 @@ class SchockenBot:
             ]
             old_state_str = str(self.game_old.state).split()[1]
 
-            # erfordern besondere outputs nach der aktion
+            # erfordern besondere outputs:
             max_wuerfe = halbzeit.rdm.num_maximale_wuerfe
-            is_zug_vorbei = max_wuerfe == 1 or spieler.anzahl_wuerfe == max_wuerfe
+            is_zug_vorbei = max_wuerfe == 1 or spieler != halbzeit.aktiver_spieler
 
             if spieler == halbzeit.spieler_liste[-1]:
                 deckel_vorher = self.game_old.state.rdm.zahl_deckel_im_topf
@@ -327,6 +327,7 @@ class SchockenBot:
                 is_runde_vorbei = False
 
             is_verteilen_vorbei = False
+            is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
             # print(aus_einwerfen)
             if command == "wuerfeln":
@@ -336,6 +337,8 @@ class SchockenBot:
                     num_halbzeit = 1
                     pre_output = self.gen_enter_halbzeit_output(sp_liste, num_halbzeit)
                     await self.print_to_channel(msg_channel, pre_output)
+                    reicht_comment = False
+                elif is_vorlegen:
                     reicht_comment = False
                 elif is_runde_vorbei:
                     # wenn mit dieser aktion runde vorbei ist, kein reicht printen.
