@@ -210,3 +210,7 @@ class RundenDeckelManagement:
     @property
     def aktiver_spieler(self):
         return self._spieler[self._aktueller_spieler_idx]
+
+    @property
+    def zahl_deckel_im_topf(self):
+        return self._zahl_deckel_im_topf
