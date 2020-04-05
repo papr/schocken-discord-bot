@@ -241,7 +241,6 @@ class SchockenBot:
         root_state_str = str(self.game.state).split()[1]
         leaf_state_str = self.game.state.leaf_state.name
 
-
         if leaf_state_str == "einwerfen":
             spieler = self.spieler_by_name(
                 msg_author_name, self.game.einwerfen.spieler_liste
@@ -355,6 +354,7 @@ class SchockenBot:
                     deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
                     # deckel wurden verteilt, also ist runde vorbei
                     is_runde_vorbei = deckel_vorher != deckel_neu
+                    # TODO Wenn deckel im topf leer sind, spielerdeckel checken!!!
                 else:
                     is_runde_vorbei = False
             else:
@@ -470,30 +470,32 @@ class SchockenBot:
 
         elif leaf_state_str == "anstoßen!":
             outputs = []
-            outputs.append("Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :(")
+            outputs.append(
+                "Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :("
+            )
             finale = list(self.game.state_stack.deque)[-1]
             fin_namen_liste = [s.name for s in finale.spieler_liste]
             gab_es_finale = len(fin_namen_liste) == len(set(fin_namen_liste))
 
             fin_sp_liste = finale.spieler_liste
-            verlierer = next(s for s in fin_sp_liste if s.deckel==0)
+            verlierer = next(s for s in fin_sp_liste if s.deckel == 0)
             verl_member = self.name_to_member(verlierer.name)
             outputs.append(f"Verloren hat {verl_member.mention}")
             # if gab_es_finale:
-                # pass
+            # pass
             # else:
-                # print(list(self.game.state_stack.deque))
-                # halbzeit = list(self.game.state_stack.deque)[-2]
-                # print(halbzeit.spieler_liste)
-                # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
-                # print(spieler)
+            # print(list(self.game.state_stack.deque))
+            # halbzeit = list(self.game.state_stack.deque)[-2]
+            # print(halbzeit.spieler_liste)
+            # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
+            # print(spieler)
 
-                # outputs = []
-                # outputs.append(
-                    # self.gen_wuerfel_output(
-                        # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
-                    # )
-                # )
+            # outputs = []
+            # outputs.append(
+            # self.gen_wuerfel_output(
+            # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
+            # )
+            # )
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
 
@@ -531,11 +533,11 @@ class SchockenBot:
             )
             out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
         else:
-            noch_drin = ", ".join(
+            noch_drin = "**|**".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str = f"Noch im Spiel: " + noch_drin
-            out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
+            out_str = f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|** "
+            out_str += f"**Noch im Spiel: |**" + noch_drin + "**|**\n"
 
         out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
         out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen)}\n"
@@ -550,11 +552,17 @@ class SchockenBot:
 
     def gen_enter_halbzeit_output(self, spieler_liste, num_halbzeit):
         if num_halbzeit == 1:
-            out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
+            out_str0 = f"**Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:**\n"
             member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
             out_str0 += ", ".join([m.mention for m in member_list])
+            out_str0 += f"\n{member_list[0].mention} ist mit `!wuerfeln` dran."
         elif num_halbzeit == 2:
-            out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
+            out_str0 = f"**Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:**\n"
+            member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
+            out_str0 += ", ".join([m.mention for m in member_list])
+            out_str0 += f"\n{member_list[0].mention} ist mit `!wuerfeln` dran."
+        elif num_halbzeit == 3:
+            out_str0 = f"** Das Finale beginnt. Die Reihenfolge ist:**\n"
             member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
             out_str0 += ", ".join([m.mention for m in member_list])
             out_str0 += f"\n{member_list[0].mention} ist mit `!wuerfeln` dran."
