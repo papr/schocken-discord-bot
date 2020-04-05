@@ -12,6 +12,7 @@ def spieler(n=4):
     # testspieler
     return [Spieler(f"spieler_{i+1}") for i in range(n)]
 
+
 def test_bug(spieler):
     runde = SchockenSpiel()
     # spieler 1 faengt an
@@ -21,13 +22,13 @@ def test_bug(spieler):
     runde.command_to_event(spieler[1].name, "einwerfen")
 
     # spieler 1 wuerfelt 2 mal und laesst liegen
-    wuerfel.werfen = lambda n: (5,1,1)
+    wuerfel.werfen = lambda n: (5, 1, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "weiter")
 
     # spieler 0 wuerfelt 1 mal und laesst liegen
-    wuerfel.werfen = lambda n: (1,2,3)
+    wuerfel.werfen = lambda n: (1, 2, 3)
     runde.command_to_event(spieler[0].name, "wuerfeln")
     runde.command_to_event(spieler[0].name, "weiter")
     # Hier wird RundeVorbei geraised, sollte aber legal sein, oder?
