@@ -251,15 +251,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
             akt_spieler.anzahl_wuerfe = 0
             akt_spieler.einsen = 0
-            try:
-                self.rdm.weiter()
-            except RundeVorbei:
-                self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
-                if self.beendet():
-                    self.verlierende = self.spielzeit_status.spieler[0]
-                    self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-                else:
-                    self.rdm = RundenDeckelManagement(self.spielzeit_status)
+            self.weiter()
 
         if lust_wurf_geworfen:
             raise LustWurf(letzter_wurf)
@@ -298,15 +290,7 @@ class Halbzeit(pysm.StateMachine):
             raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
         else:
             akt_spieler.anzahl_wuerfe = 0
-            try:
-                self.rdm.weiter()
-            except RundeVorbei:
-                self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
-                if self.beendet():
-                    self.verlierende = self.spielzeit_status.spieler[0]
-                    self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-                else:
-                    self.rdm = RundenDeckelManagement(self.spielzeit_status)
+            self.weiter()
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -332,6 +316,17 @@ class Halbzeit(pysm.StateMachine):
 
     def beendet(self):
         return len(self.spieler_liste) == 1
+
+    def weiter(self):
+        try:
+            self.rdm.weiter()
+        except RundeVorbei:
+            self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
+            if self.beendet():
+                self.verlierende = self.spielzeit_status.spieler[0]
+                self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+            else:
+                self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
 
 class SchockenSpiel(pysm.StateMachine):

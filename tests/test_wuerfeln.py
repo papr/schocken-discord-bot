@@ -2,7 +2,12 @@ import pytest
 
 from schocken.spiel import Einwerfen, SchockenSpiel
 from schocken.spieler import Spieler
-from schocken.exceptions import FalscheAktion, FalscherSpieler, NochNichtGeworfen, LustWurf
+from schocken.exceptions import (
+    FalscheAktion,
+    FalscherSpieler,
+    NochNichtGeworfen,
+    LustWurf,
+)
 
 from schocken import wuerfel
 
@@ -265,7 +270,9 @@ def test_uebergang_zweite_halbzeit_finale_mit_zwei_spielern(
     assert runde.finale.spieler_liste[1].deckel == 0
 
 
-def test_uebergang_zweite_halbzeit_finale_ein_spieler_verliert_beide_halbzeiten(spieler, erste_halbzeit_beendet):
+def test_uebergang_zweite_halbzeit_finale_ein_spieler_verliert_beide_halbzeiten(
+    spieler, erste_halbzeit_beendet
+):
     runde = erste_halbzeit_beendet
 
     # Erste Halbzeit verlor Spieler 2, diese wird er ebenso verlieren
@@ -281,6 +288,7 @@ def test_uebergang_zweite_halbzeit_finale_ein_spieler_verliert_beide_halbzeiten(
     assert runde.state_stack.deque[2].name == "Halbzeit"
     # root_machine sollte sich nun im state "anstoßen!" befinden
     assert runde.state.name == "anstoßen!"
+
 
 def test_lustwurf(spieler, erste_halbzeit_beendet):
     runde = erste_halbzeit_beendet
