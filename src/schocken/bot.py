@@ -72,11 +72,11 @@ class SchockenBot:
     def wurf_to_emoji(self, wuerfe, einsen=0):
         if einsen > 0:
             out = ""
-            for _ in range(einsen):
-                out += f"{self._wuerfel_emoji_names[1]}"
-            out += " **|** "
             rest = [self._wuerfel_emoji_names[w] for w in wuerfe[einsen:]]
             out += " ".join(rest)
+            out += " **|**"
+            for _ in range(einsen):
+                out += f" {self._wuerfel_emoji_names[1]}"
         else:
             emoji_names = [self._wuerfel_emoji_names[w] for w in wuerfe]
             out = " ".join([self.emoji_by_name(n) for n in emoji_names])
@@ -241,6 +241,7 @@ class SchockenBot:
         root_state_str = str(self.game.state).split()[1]
         leaf_state_str = self.game.state.leaf_state.name
 
+
         if leaf_state_str == "einwerfen":
             spieler = self.spieler_by_name(
                 msg_author_name, self.game.einwerfen.spieler_liste
@@ -348,6 +349,7 @@ class SchockenBot:
                 spieler_old = self.spieler_by_name(
                     msg_author_name, halbzeit_old.spieler_liste
                 )
+                halbzeit_old.spieler_liste != halbzeit.spieler_liste
                 if spieler == halbzeit_old.spieler_liste[-1]:
                     deckel_vorher = halbzeit_old.rdm.zahl_deckel_im_topf
                     deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
@@ -402,14 +404,24 @@ class SchockenBot:
 
                 elif is_vorlegen:
                     print("vorlegen")
-                    einsen = spieler.einsen
-                    outputs.append(
-                        self.gen_wuerfel_output(
-                            spieler, halbzeit, reicht_comment=False, einsen=einsen
-                        )
-                    )
                     if is_zug_vorbei:
+                        spieler_old = self.spieler_by_name(
+                            spieler.name, halbzeit_old.spieler_liste
+                        )
+                        einsen = spieler_old.einsen
+                        outputs.append(
+                            self.gen_wuerfel_output(
+                                spieler, halbzeit, reicht_comment=False, einsen=einsen
+                            )
+                        )
                         outputs.append(self.gen_nach_zug_output(halbzeit))
+                    else:
+                        einsen = spieler.einsen
+                        outputs.append(
+                            self.gen_wuerfel_output(
+                                spieler, halbzeit, reicht_comment=False, einsen=einsen
+                            )
+                        )
 
                 elif is_runde_vorbei:
                     print("In Runde vorbei")
@@ -451,8 +463,37 @@ class SchockenBot:
                 outputs.append(self.gen_umdrehen_output(spieler))
 
             elif command == "beiseite":
-                raise NotImplementedError
+                outputs.append(self.gen_beiseite_output(spieler))
 
+            for out_str in outputs:
+                await self.print_to_channel(msg_channel, out_str)
+
+        elif leaf_state_str == "anstoßen!":
+            outputs = []
+            outputs.append("Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :(")
+            finale = list(self.game.state_stack.deque)[-1]
+            fin_namen_liste = [s.name for s in finale.spieler_liste]
+            gab_es_finale = len(fin_namen_liste) == len(set(fin_namen_liste))
+
+            fin_sp_liste = finale.spieler_liste
+            verlierer = next(s for s in fin_sp_liste if s.deckel==0)
+            verl_member = self.name_to_member(verlierer.name)
+            outputs.append(f"Verloren hat {verl_member.mention}")
+            # if gab_es_finale:
+                # pass
+            # else:
+                # print(list(self.game.state_stack.deque))
+                # halbzeit = list(self.game.state_stack.deque)[-2]
+                # print(halbzeit.spieler_liste)
+                # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
+                # print(spieler)
+
+                # outputs = []
+                # outputs.append(
+                    # self.gen_wuerfel_output(
+                        # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
+                    # )
+                # )
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
 
@@ -461,6 +502,12 @@ class SchockenBot:
         eins = self.emoji_by_name("wuerfel_1")
         out_str = f"{self.mention_mit_deckel(spieler)} dreht "
         out_str += f"{sechs}{sechs} zu {eins} um."
+        return out_str
+
+    def gen_beiseite_output(self, spieler):
+        n_1 = spieler.einsen
+        einsen_emoji = " ".join([self.emoji_by_name("wuerfel_1") for _ in range(n_1)])
+        out_str = f"{self.mention_mit_deckel(spieler)} legt {einsen_emoji} beiseite "
         return out_str
 
     def gen_halbzeit_vorbei_output(self, halbzeit):
@@ -477,8 +524,19 @@ class SchockenBot:
         naechster = halbzeit.aktiver_spieler
         deckel_emoji = self.emoji_by_name("kronkorken")
         um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
-        out_str = f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
-        out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
+        deckel_noch = halbzeit.rdm._zahl_deckel_im_topf
+        if deckel_noch > 0:
+            out_str = (
+                f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
+            )
+            out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
+        else:
+            noch_drin = ", ".join(
+                [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
+            )
+            out_str = f"Noch im Spiel: " + noch_drin
+            out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
+
         out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
         out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen)}\n"
         out_str += f"Low: {self.mention_mit_deckel(tief.spieler)} "
@@ -491,9 +549,15 @@ class SchockenBot:
         return out_str
 
     def gen_enter_halbzeit_output(self, spieler_liste, num_halbzeit):
-        out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
-        member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
-        out_str0 += ", ".join([m.mention for m in member_list])
+        if num_halbzeit == 1:
+            out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
+            member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
+            out_str0 += ", ".join([m.mention for m in member_list])
+        elif num_halbzeit == 2:
+            out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
+            member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
+            out_str0 += ", ".join([m.mention for m in member_list])
+            out_str0 += f"\n{member_list[0].mention} ist mit `!wuerfeln` dran."
         return out_str0
 
     def gen_runde_vorbei_output(self, halbzeit):
@@ -507,7 +571,13 @@ class SchockenBot:
         deckel_mitte = halbzeit.rdm.zahl_deckel_im_topf
         out_str = f"{verl_member.mention} verliert die Runde und bekommt "
         out_str += f"{deckel} {deckel_emoji}.\n"
-        out_str += f"{deckel_emoji} *in der Mitte: {deckel_mitte}.* "
+        if deckel_mitte > 0:
+            out_str += f"{deckel_emoji} **in der Mitte: {deckel_mitte}.**"
+        else:
+            noch_drin = ", ".join(
+                [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
+            )
+            out_str += f"Noch im Spiel: " + noch_drin + "\n"
         out_str += f"Du bist mit `!wuerfeln` an der Reihe, "
         out_str += f"{self.mention_mit_deckel(verlierer)}."
         return out_str
