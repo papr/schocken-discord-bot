@@ -61,15 +61,15 @@ class Einwerfen(pysm.StateMachine):
             raise FalscherSpieler
 
         spieler = Spieler(spieler_name)
-        einwurf = wuerfel.werfen(1)[0]
+        einwurf = wuerfel.werfen(1)
 
         spieler.augen = einwurf
         self.spieler_liste.append(spieler)
 
-        roll_list = [sp.augen for sp in self.spieler_liste]
+        roll_list = [sp.augen[0] for sp in self.spieler_liste]
 
         self.stecher_liste = [
-            sp for sp in self.spieler_liste if sp.augen == min(roll_list)
+            sp for sp in self.spieler_liste if sp.augen[0] == min(roll_list)
         ]
         self.stecher_count = len(self.stecher_liste)
 
@@ -86,16 +86,16 @@ class Einwerfen(pysm.StateMachine):
         if spieler_name not in [st.name for st in self.stecher_liste]:
             raise FalscherSpieler
 
-        stich = wuerfel.werfen(1)[0]
+        stich = wuerfel.werfen(1)
         stecher = [sp for sp in self.spieler_liste if sp.name == spieler_name][0]
         stecher.augen = stich
 
         self.gestochen_liste.append(stecher)
         # if all stiche done, determine starting player or stech again
         if len(self.gestochen_liste) == self._init_stecher_count:
-            stich_list = [st.augen for st in self.gestochen_liste]
+            stich_list = [st.augen[0] for st in self.gestochen_liste]
             self.stecher_liste = [
-                sp for sp in self.gestochen_liste if sp.augen == min(stich_list)
+                sp for sp in self.gestochen_liste if sp.augen[0] == min(stich_list)
             ]
             self.gestochen_liste = []
             # sort stecher by stich
