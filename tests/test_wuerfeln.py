@@ -37,8 +37,8 @@ def test_letzter_spieler_weiter(spieler):
     runde.command_to_event(spieler[0].name, "wuerfeln")
     runde.command_to_event(spieler[0].name, "weiter")
 
-    runde.halbzeit_erste.spieler_liste[0].name == spieler[1].name
-    runde.halbzeit_erste.spieler_liste[0].deckel == 2
+    assert runde.halbzeit_erste.spieler_liste[0].name == spieler[0].name
+    assert runde.halbzeit_erste.spieler_liste[0].deckel == 5
 
 
 def test_uebergang_einwerfen_halbzeit(spieler):
