@@ -9,7 +9,7 @@ from .exceptions import (
     PermissionError,
     FalscherSpieler,
     ZuOftGeworfen,
-    NochNichtGeworfen
+    NochNichtGeworfen,
 )
 from .spiel import SchockenSpiel
 from . import wurf
@@ -69,9 +69,17 @@ class SchockenBot:
         member = get(self.guild.members, name=name)
         return member
 
-    def wurf_to_emoji(self, wuerfe):
-        emoji_names = [self._wuerfel_emoji_names[w] for w in wuerfe]
-        out = " ".join([self.emoji_by_name(n) for n in emoji_names])
+    def wurf_to_emoji(self, wuerfe, einsen=0):
+        if einsen > 0:
+            out = ""
+            for _ in range(einsen):
+                out += f"{self._wuerfel_emoji_names[1]}"
+            out += " **|** "
+            rest = [self._wuerfel_emoji_names[w] for w in wuerfe[einsen:]]
+            out += " ".join(rest)
+        else:
+            emoji_names = [self._wuerfel_emoji_names[w] for w in wuerfe]
+            out = " ".join([self.emoji_by_name(n) for n in emoji_names])
         return out
 
     def discord_to_game_cmd(self, discord_cmd):
@@ -90,6 +98,13 @@ class SchockenBot:
             member = self.name_to_member(name)
             string = string.replace(name, member.mention)
         return string
+
+    def mention_mit_deckel(self, spieler):
+        name = spieler.name
+        deckel = spieler.deckel
+        deckel_emoji = self.emoji_by_name("kronkorken")
+        out = f"{self.name_to_member(name).mention} ({deckel} {deckel_emoji})"
+        return out
 
     def command_in_schock_channel(self, message):
         msg_text = message.content
@@ -325,7 +340,7 @@ class SchockenBot:
             # zug vorbei
             max_wuerfe = halbzeit.rdm.num_maximale_wuerfe
             is_zug_vorbei = max_wuerfe == 1 or spieler != halbzeit.aktiver_spieler
-            # runde vorbei
+            # halbzeit vorbei > runde vorbei > zug vorbei
             if not is_aus_einwerfen:
                 halbzeit_old = getattr(
                     self.game_old, self._halbzeit_state_names[num_halbzeit_old]
@@ -346,72 +361,86 @@ class SchockenBot:
             is_verteilen_vorbei = False
             # erster zug einer runde
             if is_runde_vorbei:
-                    is_vorlegen = False
+                is_vorlegen = False
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
             # print("is vorlegen: ", is_vorlegen)
 
             if command == "wuerfeln":
-                print(num_halbzeit)
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
                     print("aus einwerfen")
-                    # erster output fuer erste halbzeit TODO erste zu zweite
+                    # erster output fuer erste halbzeit
                     num_halbzeit = 1
                     sp_liste = halbzeit.spieler_liste
                     outputs.append(
                         self.gen_enter_halbzeit_output(sp_liste, num_halbzeit)
                     )
-
                     outputs.append(
-                        self.gen_wuerfel_output(spieler, halbzeit, reicht_comment=False)
+                        self.gen_wuerfel_output(
+                            spieler, halbzeit, reicht_comment=False, einsen=0,
+                        )
                     )
 
                 elif is_neue_halbzeit:
-                    print("neue halbzeit")
+                    # erster zug der neuen halbzeit
+                    spieler_old = self.spieler_by_name(
+                        spieler.name, halbzeit_old.spieler_liste
+                    )
+                    einsen = spieler_old.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
-                            spieler, halbzeit_old, reicht_comment=False
+                            spieler, halbzeit_old, reicht_comment=False, einsen=einsen,
                         )
+                    )
+                    outputs.append(self.gen_halbzeit_vorbei_output(halbzeit))
+                    sp_liste = halbzeit.spieler_liste
+                    outputs.append(
+                        self.gen_enter_halbzeit_output(sp_liste, num_halbzeit)
                     )
 
                 elif is_vorlegen:
                     print("vorlegen")
+                    einsen = spieler.einsen
                     outputs.append(
-                        self.gen_wuerfel_output(spieler, halbzeit, reicht_comment=False)
+                        self.gen_wuerfel_output(
+                            spieler, halbzeit, reicht_comment=False, einsen=einsen
+                        )
                     )
                     if is_zug_vorbei:
                         outputs.append(self.gen_nach_zug_output(halbzeit))
 
-                elif is_zug_vorbei:
-                    print("In Zug vorbei")
-                    outputs.append(self.gen_nach_zug_output(halbzeit))
-
                 elif is_runde_vorbei:
                     print("In Runde vorbei")
+                    spieler_old = self.spieler_by_name(
+                        spieler.name, halbzeit_old.spieler_liste
+                    )
+                    einsen = spieler_old.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
-                            spieler, halbzeit_old, reicht_comment=False
+                            spieler, halbzeit_old, reicht_comment=False, einsen=einsen
                         )
                     )
                     outputs.append(self.gen_runde_vorbei_output(halbzeit))
 
-                else:
+                elif is_zug_vorbei:
+                    print("In Zug vorbei")
+                    einsen = spieler.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
-                            spieler, halbzeit, reicht_comment=True
+                            spieler, halbzeit, reicht_comment=True, einsen=einsen
                         )
                     )
+                    outputs.append(self.gen_nach_zug_output(halbzeit))
 
-                # Output nach dem wuerfeln
-                # if is_runde_vorbei:
-                # out_str = self.gen_runde_vorbei_output(halbzeit)
-                # await self.print_to_channel(msg_channel, out_str)
-                # elif is_zug_vorbei:
-                # out_str = self.gen_nach_zug_output(halbzeit)
-                # await self.print_to_channel(msg_channel, out_str)
-
+                else:
+                    einsen = spieler.einsen
+                    outputs.append(
+                        self.gen_wuerfel_output(
+                            spieler, halbzeit, reicht_comment=True, einsen=einsen
+                        )
+                    )
             elif command == "weiter":
                 if is_runde_vorbei:
                     outputs.append(self.gen_runde_vorbei_output(halbzeit))
@@ -419,7 +448,7 @@ class SchockenBot:
                     outputs.append(self.gen_nach_zug_output(halbzeit))
 
             elif command == "umdrehen":
-                raise NotImplementedError
+                outputs.append(self.gen_umdrehen_output(spieler))
 
             elif command == "beiseite":
                 raise NotImplementedError
@@ -427,21 +456,28 @@ class SchockenBot:
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
 
-    def mention_mit_deckel(self, spieler):
-        name = spieler.name
-        deckel = spieler.deckel
-        deckel_emoji = self.emoji_by_name("kronkorken")
-        out = f"{self.name_to_member(name).mention} ({deckel} {deckel_emoji})"
-        return out
+    def gen_umdrehen_output(self, spieler):
+        sechs = self.emoji_by_name("wuerfel_6")
+        eins = self.emoji_by_name("wuerfel_1")
+        out_str = f"{self.mention_mit_deckel(spieler)} dreht "
+        out_str += f"{sechs}{sechs} zu {eins} um."
+        return out_str
+
+    def gen_halbzeit_vorbei_output(self, halbzeit):
+        verlierer = halbzeit.spieler_liste[0]
+        verlierer_old = next(
+            s for s in self.game_old.state.spieler_liste if s.name == verlierer.name
+        )
+        verl_member = self.name_to_member(verlierer.name)
+        out_str = f"{verl_member.mention} verliert die Halbzeit. "
+        return out_str
 
     def gen_nach_zug_output(self, halbzeit):
         hoch, tief = halbzeit.rdm.hoch_und_tief()
         naechster = halbzeit.aktiver_spieler
         deckel_emoji = self.emoji_by_name("kronkorken")
         um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
-        out_str = (
-            f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
-        )
+        out_str = f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
         out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
         out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
         out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen)}\n"
@@ -449,12 +485,15 @@ class SchockenBot:
         out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen)}\n"
         out_str += f"Als nächstes ist {self.mention_mit_deckel(naechster)} "
         out_str += f"mit `!wuerfeln` dran. "
-        out_str += f"Du hast {halbzeit.rdm.num_maximale_wuerfe} Würfe."
+        wuerfe = halbzeit.rdm.num_maximale_wuerfe
+        wurf_str = {1: "einen Wurf", 2: "zwei Würfe", 3: "drei Würfe"}
+        out_str += f"Du hast {wurf_str[wuerfe]}."
         return out_str
 
     def gen_enter_halbzeit_output(self, spieler_liste, num_halbzeit):
         out_str0 = f"Halbzeit {num_halbzeit} beginnt. Die Reihenfolge ist:\n"
-        out_str0 += ", ".join([self.mention_mit_deckel(pl) for pl in spieler_liste])
+        member_list = [self.name_to_member(sp.name) for sp in spieler_liste]
+        out_str0 += ", ".join([m.mention for m in member_list])
         return out_str0
 
     def gen_runde_vorbei_output(self, halbzeit):
@@ -473,11 +512,12 @@ class SchockenBot:
         out_str += f"{self.mention_mit_deckel(verlierer)}."
         return out_str
 
-    def gen_wuerfel_output(self, spieler, halbzeit, reicht_comment=False):
+    def gen_wuerfel_output(self, spieler, halbzeit, reicht_comment=False, einsen=0):
+        aus_der_hand = einsen == 0
         augen = spieler.augen
-        wurf_emoji = self.wurf_to_emoji(augen)
+        wurf_emoji = self.wurf_to_emoji(augen, einsen)
         # besonderer wurf?
-        augen_name = str(wurf.welcher_wurf(augen))
+        augen_name = str(wurf.welcher_wurf(augen, aus_der_hand=aus_der_hand))
 
         if halbzeit != self.game.state:
             # hier rein, wenn halbzeit old reingegeben wurde
