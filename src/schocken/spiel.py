@@ -298,7 +298,15 @@ class Halbzeit(pysm.StateMachine):
             raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
         else:
             akt_spieler.anzahl_wuerfe = 0
-            self.rdm.weiter()
+            try:
+                self.rdm.weiter()
+            except RundeVorbei:
+                self.spielzeit_status = self.rdm.deckel_verteilen_restliche_spieler()
+                if self.beendet():
+                    self.verlierende = self.spielzeit_status.spieler[0]
+                    self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
+                else:
+                    self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
