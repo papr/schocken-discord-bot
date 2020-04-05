@@ -18,6 +18,29 @@ def spieler(n=4):
     return [Spieler(f"spieler_{i+1}") for i in range(n)]
 
 
+def test_eins_beiseite_dann_weiter(spieler):
+    runde = SchockenSpiel()
+    # spieler 1 faengt an
+    wuerfel.werfen = lambda n: (6,)
+    runde.command_to_event(spieler[0].name, "einwerfen")
+    wuerfel.werfen = lambda n: (1,)
+    runde.command_to_event(spieler[1].name, "einwerfen")
+
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    # spieler1 dreht um, aber entscheidet sich dann doch dagegen
+    runde.command_to_event(spieler[1].name, "beiseite legen")
+    spieler1 = next(
+        s for s in runde.halbzeit_erste.spieler_liste if s.name == spieler[1].name
+    )
+    # spieler1 sollte eine eins haben
+    assert spieler1.einsen == 1
+    # entscheidet sich doch dagegen:
+    runde.command_to_event(spieler[1].name, "weiter")
+    # die einsen sollten jetzt wieder bei 0 sein
+    assert spieler1.einsen == 0
+
+
 def test_letzter_spieler_weiter(spieler):
     runde = SchockenSpiel()
     # spieler 1 faengt an
