@@ -73,10 +73,10 @@ class SchockenBot:
         if einsen > 0:
             out = ""
             rest = [self._wuerfel_emoji_names[w] for w in wuerfe[einsen:]]
-            out += " ".join(rest)
+            out += " ".join([self.emoji_by_name(r) for r in rest])
             out += " **|**"
             for _ in range(einsen):
-                out += f" {self._wuerfel_emoji_names[1]}"
+                out += f" {self.emoji_by_name(self._wuerfel_emoji_names[1])}"
         else:
             emoji_names = [self._wuerfel_emoji_names[w] for w in wuerfe]
             out = " ".join([self.emoji_by_name(n) for n in emoji_names])
@@ -572,7 +572,7 @@ class SchockenBot:
         out_str = f"{verl_member.mention} verliert die Runde und bekommt "
         out_str += f"{deckel} {deckel_emoji}.\n"
         if deckel_mitte > 0:
-            out_str += f"{deckel_emoji} **in der Mitte: {deckel_mitte}.**"
+            out_str += f"**Mitte: {deckel_mitte} {deckel_emoji}. **"
         else:
             noch_drin = ", ".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
