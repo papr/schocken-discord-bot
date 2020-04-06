@@ -241,7 +241,6 @@ class SchockenBot:
         root_state_str = str(self.game.state).split()[1]
         leaf_state_str = self.game.state.leaf_state.name
 
-
         if leaf_state_str == "einwerfen":
             spieler = self.spieler_by_name(
                 msg_author_name, self.game.einwerfen.spieler_liste
@@ -470,30 +469,32 @@ class SchockenBot:
 
         elif leaf_state_str == "anstoßen!":
             outputs = []
-            outputs.append("Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :(")
+            outputs.append(
+                "Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :("
+            )
             finale = list(self.game.state_stack.deque)[-1]
             fin_namen_liste = [s.name for s in finale.spieler_liste]
             gab_es_finale = len(fin_namen_liste) == len(set(fin_namen_liste))
 
             fin_sp_liste = finale.spieler_liste
-            verlierer = next(s for s in fin_sp_liste if s.deckel==0)
+            verlierer = next(s for s in fin_sp_liste if s.deckel == 0)
             verl_member = self.name_to_member(verlierer.name)
             outputs.append(f"Verloren hat {verl_member.mention}")
             # if gab_es_finale:
-                # pass
+            # pass
             # else:
-                # print(list(self.game.state_stack.deque))
-                # halbzeit = list(self.game.state_stack.deque)[-2]
-                # print(halbzeit.spieler_liste)
-                # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
-                # print(spieler)
+            # print(list(self.game.state_stack.deque))
+            # halbzeit = list(self.game.state_stack.deque)[-2]
+            # print(halbzeit.spieler_liste)
+            # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
+            # print(spieler)
 
-                # outputs = []
-                # outputs.append(
-                    # self.gen_wuerfel_output(
-                        # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
-                    # )
-                # )
+            # outputs = []
+            # outputs.append(
+            # self.gen_wuerfel_output(
+            # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
+            # )
+            # )
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
 
