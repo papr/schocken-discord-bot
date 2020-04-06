@@ -293,6 +293,9 @@ class SchockenBot:
                     pass
 
         elif leaf_state_str == "stechen":
+            spieler = self.spieler_by_name(
+                msg_author_name, self.game.einwerfen.spieler_liste
+            )
             if command == "stechen":
                 # wurf darstellen
                 out_str = f"{message.author.mention} sticht mit einer "
