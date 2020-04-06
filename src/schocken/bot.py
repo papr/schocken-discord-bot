@@ -10,6 +10,7 @@ from .exceptions import (
     FalscherSpieler,
     ZuOftGeworfen,
     NochNichtGeworfen,
+    LustWurf
 )
 from .spiel import SchockenSpiel
 from . import wurf
@@ -236,7 +237,11 @@ class SchockenBot:
 
         # run game state machine
         game_cmd = self.discord_to_game_cmd(command)
-        self.game.command_to_event(msg_author_name, game_cmd)
+        is_lustwurf = False
+        try:
+            self.game.command_to_event(msg_author_name, game_cmd)
+        except LustWurf:
+            is_lustwurf = True
 
         root_state_str = str(self.game.state).split()[1]
         leaf_state_str = self.game.state.leaf_state.name
@@ -378,6 +383,11 @@ class SchockenBot:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
             if command == "wuerfeln":
+                if is_lustwurf:
+                    mem = self.name_to_member(spieler.name)
+                    out_str = f"Das war ein Lustwurf, {mem.mention}. "
+                    out_str += f"Hier hast du einen {self.emoji_by_name('kronkorken')}"
+                    outputs.append(out_str)
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
                     # erster output fuer erste halbzeit
