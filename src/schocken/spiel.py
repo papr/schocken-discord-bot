@@ -336,7 +336,7 @@ class SchockenSpiel(pysm.StateMachine):
         self.halbzeit_erste = Halbzeit()
         self.halbzeit_zweite = Halbzeit()
         self.finale = Halbzeit()
-        anstoßen = pysm.State("anstoßen!")
+        anstoßen = pysm.StateMachine("anstoßen!")
 
         # add states to machine
         self.add_state(self.einwerfen, initial=True)
