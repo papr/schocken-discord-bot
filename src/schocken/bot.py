@@ -348,31 +348,38 @@ class SchockenBot:
                 spieler_old = self.spieler_by_name(
                     msg_author_name, halbzeit_old.spieler_liste
                 )
-                halbzeit_old.spieler_liste != halbzeit.spieler_liste
+                # deckel aus mitte verteilt
+                is_verteilen_vorbei = halbzeit.rdm.zahl_deckel_im_topf == 0
                 if spieler == halbzeit_old.spieler_liste[-1]:
-                    deckel_vorher = halbzeit_old.rdm.zahl_deckel_im_topf
-                    deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
-                    # deckel wurden verteilt, also ist runde vorbei
-                    is_runde_vorbei = deckel_vorher != deckel_neu
+                    if is_verteilen_vorbei:
+                        spieler_tief = halbzeit.spieler_liste[0]
+                        spieler_tief_old = next(
+                            sp
+                            for sp in halbzeit_old.spieler_liste
+                            if sp.name == spieler_tief.name
+                        )
+                        deckel_vorher = spieler_tief_old.deckel
+                        deckel_neu = spieler_tief.deckel
+                        is_runde_vorbei = deckel_vorher != deckel_neu
+                    else:
+                        deckel_vorher = halbzeit_old.rdm.zahl_deckel_im_topf
+                        deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
+                        # deckel wurden verteilt, also ist runde vorbei
+                        is_runde_vorbei = deckel_vorher != deckel_neu
                     # TODO Wenn deckel im topf leer sind, spielerdeckel checken!!!
                 else:
                     is_runde_vorbei = False
             else:
                 is_runde_vorbei = False
-            # deckel aus mitte verteilt
-            is_verteilen_vorbei = False
             # erster zug einer runde
             if is_runde_vorbei:
                 is_vorlegen = False
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
-            # print("is vorlegen: ", is_vorlegen)
-
             if command == "wuerfeln":
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
-                    print("aus einwerfen")
                     # erster output fuer erste halbzeit
                     num_halbzeit = 1
                     sp_liste = halbzeit.spieler_liste
@@ -403,7 +410,6 @@ class SchockenBot:
                     )
 
                 elif is_vorlegen:
-                    print("vorlegen")
                     if is_zug_vorbei:
                         spieler_old = self.spieler_by_name(
                             spieler.name, halbzeit_old.spieler_liste
@@ -424,7 +430,6 @@ class SchockenBot:
                         )
 
                 elif is_runde_vorbei:
-                    print("In Runde vorbei")
                     spieler_old = self.spieler_by_name(
                         spieler.name, halbzeit_old.spieler_liste
                     )
@@ -437,7 +442,6 @@ class SchockenBot:
                     outputs.append(self.gen_runde_vorbei_output(halbzeit))
 
                 elif is_zug_vorbei:
-                    print("In Zug vorbei")
                     einsen = spieler.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
@@ -481,21 +485,6 @@ class SchockenBot:
             verlierer = next(s for s in fin_sp_liste if s.deckel == 0)
             verl_member = self.name_to_member(verlierer.name)
             outputs.append(f"Verloren hat {verl_member.mention}")
-            # if gab_es_finale:
-            # pass
-            # else:
-            # print(list(self.game.state_stack.deque))
-            # halbzeit = list(self.game.state_stack.deque)[-2]
-            # print(halbzeit.spieler_liste)
-            # spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
-            # print(spieler)
-
-            # outputs = []
-            # outputs.append(
-            # self.gen_wuerfel_output(
-            # spieler_old, halbzeit_old, reicht_comment=False, einsen=einsen
-            # )
-            # )
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
 
