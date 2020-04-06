@@ -249,9 +249,7 @@ class Halbzeit(pysm.StateMachine):
             raise ZuOftGeworfen(meldung)
 
         if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
-            akt_spieler.anzahl_wuerfe = 0
-            akt_spieler.einsen = 0
-            self.weiter()
+            self.weiter(akt_spieler)
 
         if lust_wurf_geworfen:
             raise LustWurf(letzter_wurf)
@@ -289,8 +287,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe == 0:
             raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
         else:
-            akt_spieler.anzahl_wuerfe = 0
-            self.weiter()
+            self.weiter(akt_spieler)
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -317,7 +314,9 @@ class Halbzeit(pysm.StateMachine):
     def beendet(self):
         return len(self.spieler_liste) == 1
 
-    def weiter(self):
+    def weiter(self, spieler):
+        spieler.anzahl_wuerfe = 0
+        spieler.einsen = 0
         try:
             self.rdm.weiter()
         except RundeVorbei:
