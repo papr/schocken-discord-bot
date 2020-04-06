@@ -474,19 +474,41 @@ class SchockenBot:
 
         elif leaf_state_str == "anstoßen!":
             outputs = []
-            outputs.append(
-                "Das Spiel ist jetzt vorbei aber ich komm nicht an den letzten Wurf ran :("
-            )
-            finale = list(self.game.state_stack.deque)[-1]
+            stack_list = list(self.game.state_stack.deque)
+            stack_list_old = list(self.game_old.state_stack.deque)
+            finale = stack_list[-1]
+            finale_old = stack_list_old[-1]
             fin_namen_liste = [s.name for s in finale.spieler_liste]
             gab_es_finale = len(fin_namen_liste) == len(set(fin_namen_liste))
+            if gab_es_finale:
+                letzte_halbzeit = finale
+                letzte_halbzeit_old = finale_old
+            else:
+                letzte_halbzeit = stack_list[-2]
+                letzte_halbzeit_old = stack_list_old[-2]
 
-            fin_sp_liste = finale.spieler_liste
-            verlierer = next(s for s in fin_sp_liste if s.deckel == 0)
-            verl_member = self.name_to_member(verlierer.name)
-            outputs.append(f"Verloren hat {verl_member.mention}")
+            hoch, tief = letzte_halbzeit.rdm.hoch_und_tief()
+            spieler_liste = [hoch.spieler, tief.spieler]
+
+            spieler = self.spieler_by_name(msg_author_name, spieler_liste)
+            if command == "wuerfeln":
+                # einsen = spieler_old.einsen
+                einsen = 0
+                outputs.append(
+                    self.gen_wuerfel_output(
+                        spieler,
+                        letzte_halbzeit_old,
+                        reicht_comment=False,
+                        einsen=einsen,
+                    )
+                )
+
+            verl_member = self.name_to_member(tief.spieler.name)
+            gew_member = self.name_to_member(hoch.spieler.name)
+            outputs.append(f"**{verl_member.mention} verliert damit das Spiel!**")
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
+            self.game_running = False
 
     def gen_umdrehen_output(self, spieler):
         sechs = self.emoji_by_name("wuerfel_6")
