@@ -1,6 +1,7 @@
 import typing as T
 import pysm
-import threading
+import logging
+from datetime import datetime
 from . import events, wuerfel
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 from .exceptions import (
@@ -66,6 +67,10 @@ class Einwerfen(pysm.StateMachine):
         spieler.augen = einwurf
         self.spieler_liste.append(spieler)
 
+        self.root_machine.game_log.info(
+            "{} wirft mit einer {} ein.".format(spieler.name, spieler.augen)
+        )
+
         roll_list = [sp.augen[0] for sp in self.spieler_liste]
 
         self.stecher_liste = [
@@ -90,6 +95,10 @@ class Einwerfen(pysm.StateMachine):
         stecher = [sp for sp in self.spieler_liste if sp.name == spieler_name][0]
         stecher.augen = stich
 
+        self.root_machine.game_log.info(
+            "{} sticht mit einer {}".format(stecher.name, stecher.augen)
+        )
+
         self.gestochen_liste.append(stecher)
         # if all stiche done, determine starting player or stech again
         if len(self.gestochen_liste) == self._init_stecher_count:
@@ -98,7 +107,6 @@ class Einwerfen(pysm.StateMachine):
                 sp for sp in self.gestochen_liste if sp.augen[0] == min(stich_list)
             ]
             self.gestochen_liste = []
-            # sort stecher by stich
         elif len(self.gestochen_liste) < self._init_stecher_count:
             pass
 
@@ -337,6 +345,10 @@ class SchockenSpiel(pysm.StateMachine):
         self.finale = Halbzeit()
         anstoßen = pysm.StateMachine("anstoßen!")
 
+        game_log_filename = datetime.now().strftime("logs/%b_%d_%Y_%H_%M_%S_game_log")
+        self.game_log = self.setup_logger(game_log_filename)
+        self.game_log.info("Spiel startet")
+
         # add states to machine
         self.add_state(self.einwerfen, initial=True)
         self.add_state(self.halbzeit_erste)
@@ -386,3 +398,16 @@ class SchockenSpiel(pysm.StateMachine):
 
     def anstoßen(self, state, event):
         print("PROST!")
+
+    def setup_logger(self, log_file, level=logging.INFO):
+
+        formatter = logging.Formatter("%(asctime)s %(name)s - %(message)s")
+
+        handler = logging.FileHandler(log_file)
+        handler.setFormatter(formatter)
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(level)
+        logger.addHandler(handler)
+
+        return logger
