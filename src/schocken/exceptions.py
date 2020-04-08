@@ -54,6 +54,10 @@ class PermissionError(ValueError):
     pass
 
 
+class ZuVieleWuerfel(Exception):
+    pass
+
+
 class LustWurf(RuntimeError):
     def __init__(self, wurf):
         self.wurf = wurf
