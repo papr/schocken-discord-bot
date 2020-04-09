@@ -147,16 +147,21 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
     with pytest.raises(FalscheAktion):
         runde.command_to_event(spieler[1].name, "umdrehen")
 
+    assert runde.halbzeit_erste.spieler_liste[0].einsen == 1
+
     wuerfel.werfen = lambda n: (6, 6,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 6, 6)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (6,6,1)
 
     runde.command_to_event(spieler[1].name, "umdrehen")
+
+    assert runde.halbzeit_erste.spieler_liste[0].einsen == 2
+
     wuerfel.werfen = lambda n: (2,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1, 2)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (2,1,1)
 
     # Spieler 2 will noch mehr machen
     with pytest.raises(FalscherSpieler):
@@ -185,14 +190,18 @@ def test_einsen_beiseite_legen(
     with pytest.raises(FalscheAktion):
         runde.command_to_event(spieler[1].name, "beiseite legen")
 
+    assert runde.halbzeit_erste.spieler_liste[0].einsen == 1
+
     wuerfel.werfen = lambda n: (1, 2,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "beiseite legen")
 
+    assert runde.halbzeit_erste.spieler_liste[0].einsen == 2
+
     wuerfel.werfen = lambda n: (6,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1, 6)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (6,1,1)
 
 
 def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
@@ -210,7 +219,7 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
     wuerfel.werfen = lambda n: (3,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1, 3)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (3,1,1)
 
     assert runde.halbzeit_erste.aktiver_spieler.name == "spieler_3"
 
@@ -235,7 +244,7 @@ def test_beiseite_legen_umdrehen(
     wuerfel.werfen = lambda n: (3,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1, 3)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (3,1,1)
 
     # Nun ist weitergeben gestattet
     runde.command_to_event(spieler[1].name, "weiter")
