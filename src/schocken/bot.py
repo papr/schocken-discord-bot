@@ -74,7 +74,7 @@ class SchockenBot:
     def wurf_to_emoji(self, wuerfe, einsen=0):
         if einsen > 0:
             out = ""
-            rest = [self._wuerfel_emoji_names[w] for w in wuerfe[:3-einsen]]
+            rest = [self._wuerfel_emoji_names[w] for w in wuerfe[: 3 - einsen]]
             out += " ".join([self.emoji_by_name(r) for r in rest])
             out += " **|**"
             for _ in range(einsen):
