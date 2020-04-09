@@ -227,7 +227,9 @@ class Halbzeit(pysm.StateMachine):
             # check if ones were put aside
             if len(akt_spieler.augen) < 3:
                 wurf = wuerfel.werfen(3 - len(akt_spieler.augen))
-                akt_spieler.augen = akt_spieler.augen + wurf
+                akt_spieler.augen = tuple(
+                    sorted(akt_spieler.augen + wurf, reverse=True)
+                )
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
                 akt_spieler.umgedreht = False
@@ -271,6 +273,7 @@ class Halbzeit(pysm.StateMachine):
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
+            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -293,6 +296,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
             raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
 
+        akt_spieler.einsen = 0
         self.weiter(akt_spieler)
 
     def sechsen_handler(self, state, event):
@@ -315,6 +319,7 @@ class Halbzeit(pysm.StateMachine):
             )
         else:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
+            akt_spieler.einsen += 1
             akt_spieler.umgedreht = True
 
     def beendet(self):
