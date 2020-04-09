@@ -389,7 +389,7 @@ class SchockenBot:
                 if is_lustwurf:
                     mem = self.name_to_member(spieler.name)
                     out_str = f"Das war ein Lustwurf, {mem.mention}. "
-                    out_str += f"Hier hast du einen {self.emoji_by_name('kronkorken')}"
+                    out_str += f"Hier hast du einen {self.emoji_by_name('kronkorken')}."
                     outputs.append(out_str)
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
@@ -649,7 +649,7 @@ class SchockenBot:
                 ]
                 reicht_choices = {
                     "reicht": [" Aber reicht sogar.",],
-                    "reichtnicht": [" Und reicht nichtmal.",],
+                    "reichtnicht": [" Und reicht nicht mal.",],
                 }
 
             elif augen[0] == 6:
