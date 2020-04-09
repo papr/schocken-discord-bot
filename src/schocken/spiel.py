@@ -1,6 +1,5 @@
 import typing as T
 import pysm
-import threading
 from . import events, wuerfel
 from .deckel_management import RundenDeckelManagement, SpielzeitStatus
 from .exceptions import (
@@ -295,7 +294,6 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
             raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
 
-        akt_spieler.einsen = 0
         self.weiter(akt_spieler)
 
     def sechsen_handler(self, state, event):
@@ -325,6 +323,7 @@ class Halbzeit(pysm.StateMachine):
         return len(self.spieler_liste) == 1
 
     def weiter(self, spieler):
+        spieler.einsen = 0
         spieler.anzahl_wuerfe = 0
         try:
             self.rdm.weiter()

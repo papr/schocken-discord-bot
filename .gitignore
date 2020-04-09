@@ -136,3 +136,6 @@ pip-selfcheck.json
 *.swp
 # pipenv
 Pipfile*
+
+### Pylint
+.pylintrc
