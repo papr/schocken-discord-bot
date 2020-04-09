@@ -7,6 +7,7 @@ from schocken.exceptions import (
     FalscherSpieler,
     NochNichtGeworfen,
     LustWurf,
+    SpielerMussWuerfeln
 )
 
 from schocken import wuerfel
@@ -35,10 +36,9 @@ def test_eins_beiseite_dann_weiter(spieler):
     )
     # spieler1 sollte eine eins haben
     assert spieler1.einsen == 1
-    # entscheidet sich doch dagegen:
-    runde.command_to_event(spieler[1].name, "weiter")
-    # die einsen sollten jetzt wieder bei 0 sein
-    assert spieler1.einsen == 0
+    # der Befehl !weiter ist nun nicht erlaubt
+    with pytest.raises(SpielerMussWuerfeln):
+        runde.command_to_event(spieler[1].name, "weiter")
 
 
 def test_letzter_spieler_weiter(spieler):
@@ -214,6 +214,29 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
 
     assert runde.halbzeit_erste.aktiver_spieler.name == "spieler_3"
 
+
+def test_beiseite_legen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+
+    # Kombination aus Einsen beiseite legen und Sechsen umdrehen
+    wuerfel.werfen = lambda n: (1, 6, 6)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "umdrehen")
+    runde.command_to_event(spieler[1].name, "beiseite legen")
+
+    # weiter ist nicht erlaubt
+    with pytest.raises(SpielerMussWuerfeln):
+        runde.command_to_event(spieler[1].name, "weiter")
+    # spieler hat nun 2 einsen auf dem Brett zu liegen
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (1,1)
+
+    wuerfel.werfen = lambda n: (3,)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (1,1,3)
+
+    # Nun ist weitergeben gestattet
+    runde.command_to_event(spieler[1].name, "weiter")
 
 def test_nachgeworfen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
