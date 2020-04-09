@@ -7,7 +7,7 @@ from schocken.exceptions import (
     FalscherSpieler,
     NochNichtGeworfen,
     LustWurf,
-    SpielerMussWuerfeln
+    SpielerMussWuerfeln,
 )
 
 from schocken import wuerfel
@@ -215,7 +215,9 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
     assert runde.halbzeit_erste.aktiver_spieler.name == "spieler_3"
 
 
-def test_beiseite_legen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+def test_beiseite_legen_umdrehen(
+    spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
 
     # Kombination aus Einsen beiseite legen und Sechsen umdrehen
@@ -228,15 +230,16 @@ def test_beiseite_legen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_
     with pytest.raises(SpielerMussWuerfeln):
         runde.command_to_event(spieler[1].name, "weiter")
     # spieler hat nun 2 einsen auf dem Brett zu liegen
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1,1)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1)
 
     wuerfel.werfen = lambda n: (3,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
 
-    assert runde.halbzeit_erste.spieler_liste[0].augen == (1,1,3)
+    assert runde.halbzeit_erste.spieler_liste[0].augen == (1, 1, 3)
 
     # Nun ist weitergeben gestattet
     runde.command_to_event(spieler[1].name, "weiter")
+
 
 def test_nachgeworfen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
     runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
