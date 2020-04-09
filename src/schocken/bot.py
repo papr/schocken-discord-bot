@@ -10,7 +10,7 @@ from .exceptions import (
     FalscherSpieler,
     ZuOftGeworfen,
     NochNichtGeworfen,
-    LustWurf
+    LustWurf,
 )
 from .spiel import SchockenSpiel
 from . import wurf

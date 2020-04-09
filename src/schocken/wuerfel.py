@@ -1,8 +1,5 @@
 from random import randint
-
-
-class ZuVieleWuerfel(Exception):
-    pass
+from schocken.exceptions import ZuVieleWuerfel
 
 
 def werfen(anzahl):
