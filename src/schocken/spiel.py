@@ -183,7 +183,6 @@ class Halbzeit(pysm.StateMachine):
         self._spielerinnen_unique = set(s.name for s in spieler_liste)
         for s in spieler_liste:
             s.deckel = 0
-            s.augen = (None, None, None)
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
@@ -225,7 +224,7 @@ class Halbzeit(pysm.StateMachine):
 
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
-            if len(akt_spieler.augen) < 3:
+            if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - len(akt_spieler.augen))
                 akt_spieler.augen = tuple(
                     sorted(akt_spieler.augen + wurf, reverse=True)
