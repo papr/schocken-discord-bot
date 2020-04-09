@@ -15,19 +15,23 @@ def run_bot():
     GUILD = os.getenv("DISCORD_GUILD")
     client = discord.Client()
 
+    is_initial_start = True
+
     # when connecting
     @client.event
     async def on_ready():
+        nonlocal is_initial_start
         client.bot = SchockenBot(client)
         # check if server is correct:
         for guild in client.guilds:
             if guild.name != client.bot.valid_guild_name:
                 raise FalscherServer("Dieser Bot darf nur ins Café A")
 
-        ch = client.get_channel(690929770355097610)  # schocktresen
-        await ch.send(f"Schocken (v{__version__}) kann jetzt losgehen. :muscle:")
-        print("Success")
-        return
+        if is_initial_start:
+            ch = client.get_channel(690929770355097610)  # schocktresen
+            await ch.send(f"Schocken (v{__version__}) kann jetzt losgehen. :muscle:")
+            print("Success")
+            is_initial_start = False
 
     # when a message is read by the bot
     @client.event
