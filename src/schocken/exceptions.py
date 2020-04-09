@@ -58,6 +58,10 @@ class ZuVieleWuerfel(Exception):
     pass
 
 
+class SpielerMussWuerfeln(ValueError):
+    pass
+
+
 class LustWurf(RuntimeError):
     def __init__(self, wurf):
         self.wurf = wurf

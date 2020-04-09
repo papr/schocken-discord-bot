@@ -3,9 +3,13 @@ class Spieler:
         self.name = name
         self.deckel = 0
         self.beiseite_gelegt = False
-        self.einsen = 0
+        self.umgedreht = False
         self.augen = (None, None, None)
         self.anzahl_wuerfe = 0
+
+    @property
+    def einsen(self):
+        return self.augen.count(1)
 
     def __str__(self):
         return f"Spieler {self.name}\n\tDeckel: {self.deckel}\n\tAugen: {self.augen}\n"
