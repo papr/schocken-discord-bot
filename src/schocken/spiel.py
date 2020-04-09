@@ -12,6 +12,7 @@ from .exceptions import (
     NochNichtGeworfen,
     RundeVorbei,
     LustWurf,
+    SpielerMussWuerfeln,
 )
 from .spieler import Spieler
 
@@ -190,6 +191,7 @@ class Halbzeit(pysm.StateMachine):
         self._spielerinnen_unique = set(s.name for s in spieler_liste)
         for s in spieler_liste:
             s.deckel = 0
+            s.augen = (None, None, None)
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
@@ -231,11 +233,12 @@ class Halbzeit(pysm.StateMachine):
 
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
-            if akt_spieler.einsen > 0:
-                wurf = wuerfel.werfen(3 - akt_spieler.einsen)
-                akt_spieler.augen = (1,) * akt_spieler.einsen + wurf
+            if len(akt_spieler.augen) < 3:
+                wurf = wuerfel.werfen(3 - len(akt_spieler.augen))
+                akt_spieler.augen = akt_spieler.augen + wurf
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
+                akt_spieler.umgedreht = False
                 aus_der_hand = False
             else:
                 akt_spieler.augen = wuerfel.werfen(3)
@@ -275,7 +278,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.beiseite_gelegt:
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
-            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
+            akt_spieler.augen = self.update_augen(akt_spieler.augen)
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -294,8 +297,11 @@ class Halbzeit(pysm.StateMachine):
 
         if akt_spieler.anzahl_wuerfe == 0:
             raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
-        else:
-            self.weiter(akt_spieler)
+
+        if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
+            raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
+
+        self.weiter(akt_spieler)
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -311,20 +317,19 @@ class Halbzeit(pysm.StateMachine):
             raise FalscheAktion("Du hast keine Sechsen zum Umdrehen!")
         elif akt_spieler.augen.count(6) == 1:
             raise FalscheAktion("Du hast nur eine Sechs gewürfelt!")
-        elif akt_spieler.beiseite_gelegt:
+        elif akt_spieler.umgedreht:
             raise FalscheAktion(
                 f"Du hast bereits deine Sechsen zu einer Eins umgewandelt!"
             )
         else:
-            akt_spieler.einsen += 1
-            akt_spieler.beiseite_gelegt = True
+            akt_spieler.augen = self.update_augen(akt_spieler.augen)
+            akt_spieler.umgedreht = True
 
     def beendet(self):
         return len(self.spieler_liste) == 1
 
     def weiter(self, spieler):
         spieler.anzahl_wuerfe = 0
-        spieler.einsen = 0
         try:
             self.rdm.weiter()
         except RundeVorbei:
@@ -334,6 +339,17 @@ class Halbzeit(pysm.StateMachine):
                 self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
             else:
                 self.rdm = RundenDeckelManagement(self.spielzeit_status)
+
+    def update_augen(self, tup):
+        if tup.count(6) > 1:
+            tup_list = list(set(tup))
+            sechsen = [1 for x in tup_list if x == 6]
+        else:
+            sechsen = []
+        einsen = list(filter((1).__eq__, tup))
+        new_list = sechsen + einsen
+        new_tuple = tuple(new_list)
+        return new_tuple
 
 
 class SchockenSpiel(pysm.StateMachine):
