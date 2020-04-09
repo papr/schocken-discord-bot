@@ -355,8 +355,6 @@ class SchockenBot:
             halbzeit = getattr(self.game, self._halbzeit_state_names[num_halbzeit])
             spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
 
-            print(spieler)
-            print(stack_list)
             # Alle spezialfälle abfragen
             # kommen wir aus einwerfen?
             is_aus_einwerfen = str(self.game_old.state).split()[1] == "Einwerfen"
@@ -406,9 +404,6 @@ class SchockenBot:
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
-            print(is_lustwurf)
-            print(is_neue_halbzeit)
-
             if command == "wuerfeln":
                 if is_lustwurf and not is_neue_halbzeit:
                     mem = self.name_to_member(spieler.name)
@@ -448,12 +443,9 @@ class SchockenBot:
 
                 elif is_neue_halbzeit:
                     # erster zug der neuen halbzeit
-                    print("AAKHSAKFA")
                     spieler_old = self.spieler_by_name(
                         spieler.name, halbzeit_old.spieler_liste
                     )
-                    print(spieler_old)
-                    print(spieler)
                     einsen = spieler_old.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
