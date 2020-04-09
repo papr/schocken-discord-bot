@@ -11,7 +11,7 @@ from .exceptions import (
     NochNichtGeworfen,
     RundeVorbei,
     LustWurf,
-    SpielerMussWuerfeln
+    SpielerMussWuerfeln,
 )
 from .spieler import Spieler
 
@@ -289,10 +289,10 @@ class Halbzeit(pysm.StateMachine):
 
         if akt_spieler.anzahl_wuerfe == 0:
             raise NochNichtGeworfen("Es muss mindestens ein Mal gewürfelt werden!")
-        
+
         if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
             raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
-    
+
         self.weiter(akt_spieler)
 
     def sechsen_handler(self, state, event):
