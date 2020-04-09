@@ -11,6 +11,7 @@ from .exceptions import (
     ZuOftGeworfen,
     NochNichtGeworfen,
     LustWurf,
+    SpielerMussWuerfeln,
 )
 from .spiel import SchockenSpiel
 from . import wurf
@@ -60,7 +61,7 @@ class SchockenBot:
             3: "finale",
         }
 
-        self._num_halbzeit_old_old = -1
+        self._lustwuerfe_runde = dict()
 
     def emoji_by_name(self, name):
         emoji = get(self.guild.emojis, name=name)
@@ -73,7 +74,7 @@ class SchockenBot:
     def wurf_to_emoji(self, wuerfe, einsen=0):
         if einsen > 0:
             out = ""
-            rest = [self._wuerfel_emoji_names[w] for w in wuerfe[einsen:]]
+            rest = [self._wuerfel_emoji_names[w] for w in wuerfe[:3-einsen]]
             out += " ".join([self.emoji_by_name(r) for r in rest])
             out += " **|**"
             for _ in range(einsen):
@@ -222,6 +223,20 @@ class SchockenBot:
                 msg = "Es muss erst gewuerfelt werden!"
             await self.print_to_channel(channel, msg)
 
+        except NochNichtGeworfen as e:
+            if str(e):
+                msg = self.replace_names_by_mentions(str(e))
+            else:
+                msg = "Es muss erst gewuerfelt werden!"
+            await self.print_to_channel(channel, msg)
+
+        except SpielerMussWuerfeln as e:
+            if str(e):
+                msg = self.replace_names_by_mentions(str(e))
+            else:
+                msg = "Es muss erst gewuerfelt werden!"
+            await self.print_to_channel(channel, msg)
+
     async def print_to_channel(self, channel, text):
         return await channel.send(text)
 
@@ -243,7 +258,6 @@ class SchockenBot:
         except LustWurf:
             is_lustwurf = True
 
-        root_state_str = str(self.game.state).split()[1]
         leaf_state_str = self.game.state.leaf_state.name
 
         if leaf_state_str == "einwerfen":
@@ -368,13 +382,17 @@ class SchockenBot:
                         )
                         deckel_vorher = spieler_tief_old.deckel
                         deckel_neu = spieler_tief.deckel
-                        is_runde_vorbei = deckel_vorher != deckel_neu
+                        is_runde_vorbei = (
+                            deckel_vorher - deckel_neu
+                        ) != self._lustwuerfe_runde[spieler.name]
                     else:
                         deckel_vorher = halbzeit_old.rdm.zahl_deckel_im_topf
                         deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
                         # deckel wurden verteilt, also ist runde vorbei
-                        is_runde_vorbei = deckel_vorher != deckel_neu
-                    # TODO Wenn deckel im topf leer sind, spielerdeckel checken!!!
+                        alle_lustwuerfe = sum(
+                            [w for w in self._lustwuerfe_runde.values()]
+                        )
+                        is_runde_vorbei = deckel_vorher - deckel_neu != alle_lustwuerfe
                 else:
                     is_runde_vorbei = False
             else:
@@ -382,14 +400,32 @@ class SchockenBot:
             # erster zug einer runde
             if is_runde_vorbei:
                 is_vorlegen = False
+                self._lustwurf_in_runde = 0
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
             if command == "wuerfeln":
-                if is_lustwurf:
+                if is_lustwurf and not is_neue_halbzeit:
                     mem = self.name_to_member(spieler.name)
+                    abgeber = None
+                    for s in halbzeit_old.spieler_liste:
+                        sp_neu = self.spieler_by_name(s.name, halbzeit.spieler_liste)
+                        if s.deckel > sp_neu.deckel:
+                            abgeber = s
+
                     out_str = f"Das war ein Lustwurf, {mem.mention}. "
-                    out_str += f"Hier hast du einen {self.emoji_by_name('kronkorken')}"
+                    out_str += "Hier hast du einen "
+                    out_str += f"{self.emoji_by_name('kronkorken')} "
+                    if abgeber is None:
+                        out_str += "aus der Mitte."
+                    else:
+                        abg_mem = self.name_to_member(abgeber.name)
+                        out_str += f" von {abg_mem.mention}."
+                    try:
+                        old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
+                    except KeyError:
+                        old_lustwuerfe = 0
+                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
                     outputs.append(out_str)
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
@@ -470,8 +506,15 @@ class SchockenBot:
                             spieler, halbzeit, reicht_comment=True, einsen=einsen
                         )
                     )
+
             elif command == "weiter":
-                if is_runde_vorbei:
+                if is_neue_halbzeit:
+                    outputs.append(self.gen_halbzeit_vorbei_output(halbzeit))
+                    sp_liste = halbzeit.spieler_liste
+                    outputs.append(
+                        self.gen_enter_halbzeit_output(sp_liste, num_halbzeit)
+                    )
+                elif is_runde_vorbei:
                     outputs.append(self.gen_runde_vorbei_output(halbzeit))
                 else:
                     outputs.append(self.gen_nach_zug_output(halbzeit))
@@ -517,7 +560,6 @@ class SchockenBot:
                 )
 
             verl_member = self.name_to_member(tief.spieler.name)
-            gew_member = self.name_to_member(hoch.spieler.name)
             outputs.append(f"**{verl_member.mention} verliert damit das Spiel!**")
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
@@ -531,16 +573,13 @@ class SchockenBot:
         return out_str
 
     def gen_beiseite_output(self, spieler):
-        n_1 = spieler.einsen
+        n_1 = spieler.augen.count(1)
         einsen_emoji = " ".join([self.emoji_by_name("wuerfel_1") for _ in range(n_1)])
         out_str = f"{self.mention_mit_deckel(spieler)} legt {einsen_emoji} beiseite "
         return out_str
 
     def gen_halbzeit_vorbei_output(self, halbzeit):
         verlierer = halbzeit.spieler_liste[0]
-        verlierer_old = next(
-            s for s in self.game_old.state.spieler_liste if s.name == verlierer.name
-        )
         verl_member = self.name_to_member(verlierer.name)
         out_str = f"{verl_member.mention} verliert die Halbzeit. "
         return out_str
@@ -609,7 +648,7 @@ class SchockenBot:
             noch_drin = ", ".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str += f"Noch im Spiel: " + noch_drin + "\n"
+            out_str += f"**Noch im Spiel: **" + noch_drin + "\n"
         out_str += f"Du bist mit `!wuerfeln` an der Reihe, "
         out_str += f"{self.mention_mit_deckel(verlierer)}."
         return out_str
@@ -638,8 +677,8 @@ class SchockenBot:
                     "Wow.",
                 ]
                 reicht_choices = {
-                    "reicht": [" Aber reicht sogar.",],
-                    "reichtnicht": [" Und reicht nicht mal.",],
+                    "reicht": [" Aber reicht sogar."],
+                    "reichtnicht": [" Und reicht nicht mal."],
                 }
 
             elif augen[0] == 5:
@@ -648,8 +687,8 @@ class SchockenBot:
                     "Ausbaufähig...",
                 ]
                 reicht_choices = {
-                    "reicht": [" Aber reicht sogar.",],
-                    "reichtnicht": [" Und reicht nichtmal.",],
+                    "reicht": [" Aber reicht sogar."],
+                    "reichtnicht": [" Und reicht nicht mal."],
                 }
 
             elif augen[0] == 6:
@@ -658,15 +697,15 @@ class SchockenBot:
                     "Nicht schlecht!",
                 ]
                 reicht_choices = {
-                    "reicht": [" Und reicht sogar.",],
-                    "reichtnicht": [" Aber reicht gar nicht.",],
+                    "reicht": [" Und reicht sogar."],
+                    "reichtnicht": [" Aber reicht gar nicht."],
                 }
 
         elif "General" in augen_name:
             comment_choices = ["Kann man liegen lassen.", "General."]
             reicht_choices = {
-                "reicht": [" Reicht ja.",],
-                "reichtnicht": [" Aber reicht gar nicht.",],
+                "reicht": [" Reicht ja."],
+                "reichtnicht": [" Aber reicht gar nicht."],
             }
 
         elif "Straße" in augen_name:
@@ -676,7 +715,7 @@ class SchockenBot:
                     "Keine schöne Straße.",
                 ]
                 reicht_choices = {
-                    "reicht": [" Aber würde reichen.",],
+                    "reicht": [" Aber würde reichen."],
                     "reichtnicht": [" Reicht ja nicht mal"],
                 }
 
@@ -685,7 +724,7 @@ class SchockenBot:
                     "Straße.",
                 ]
                 reicht_choices = {
-                    "reicht": [" Reicht.",],
+                    "reicht": [" Reicht."],
                     "reichtnicht": [" Reicht ja nicht mal"],
                 }
 
@@ -697,28 +736,28 @@ class SchockenBot:
                     "Würde ich liegen lassen.",
                 ]
                 reicht_choices = {
-                    "reicht": [" Reicht.",],
-                    "reichtnicht": [" Aber reicht ja nicht mal.",],
+                    "reicht": [" Reicht."],
+                    "reichtnicht": [" Aber reicht ja nicht mal."],
                 }
             else:
                 comment_choices = ["Schöner Schock."]
                 reicht_choices = {
-                    "reicht": [" Reicht auch.",],
-                    "reichtnicht": [" Aber reicht gar nicht.",],
+                    "reicht": [" Reicht auch."],
+                    "reichtnicht": [" Aber reicht gar nicht."],
                 }
 
         elif "Herrenwurf" in augen_name:
             comment_choices = ["Herrenwurf. Verliert nicht."]
             reicht_choices = {
-                "reicht": [" Und reicht sogar.",],
-                "reichtnicht": [" ...aber diesmal vielleicht schon.",],
+                "reicht": [" Und reicht sogar."],
+                "reichtnicht": [" ...aber diesmal vielleicht schon."],
             }
 
         elif "Jule" in augen_name:
             comment_choices = ["Schöne Jule."]
             reicht_choices = {
-                "reicht": [" Und sie reicht.",],
-                "reichtnicht": [" Aber reicht leider nicht.",],
+                "reicht": [" Und sie reicht."],
+                "reichtnicht": [" Aber reicht leider nicht."],
             }
 
         out_str += f"\n{random.choice(comment_choices)}"

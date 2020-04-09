@@ -191,7 +191,6 @@ class Halbzeit(pysm.StateMachine):
         self._spielerinnen_unique = set(s.name for s in spieler_liste)
         for s in spieler_liste:
             s.deckel = 0
-            s.augen = (None, None, None)
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
@@ -233,9 +232,11 @@ class Halbzeit(pysm.StateMachine):
 
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
-            if len(akt_spieler.augen) < 3:
+            if akt_spieler.einsen > 0:
                 wurf = wuerfel.werfen(3 - len(akt_spieler.augen))
-                akt_spieler.augen = akt_spieler.augen + wurf
+                akt_spieler.augen = tuple(
+                    sorted(akt_spieler.augen + wurf, reverse=True)
+                )
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
                 akt_spieler.umgedreht = False
@@ -279,6 +280,7 @@ class Halbzeit(pysm.StateMachine):
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
+            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -323,12 +325,14 @@ class Halbzeit(pysm.StateMachine):
             )
         else:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
+            akt_spieler.einsen += 1
             akt_spieler.umgedreht = True
 
     def beendet(self):
         return len(self.spieler_liste) == 1
 
     def weiter(self, spieler):
+        spieler.einsen = 0
         spieler.anzahl_wuerfe = 0
         try:
             self.rdm.weiter()
