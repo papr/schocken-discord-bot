@@ -174,6 +174,7 @@ class Halbzeit(pysm.StateMachine):
             verlierende_1 = self.root_machine.halbzeit_erste.verlierende
             verlierende_2 = self.root_machine.halbzeit_zweite.verlierende
             spieler_liste = [verlierende_2, verlierende_1]
+            self.initiale_spieler = spieler_liste.copy()
         else:
             vorheriger_state = self.root_machine.state_stack.peek()
             spieler_liste = vorheriger_state.sortierte_spieler_liste()
