@@ -353,17 +353,7 @@ class SchockenBot:
             # entsprechend halbzeit_erste oder halbzeit_zweite oder finale aus
             # game holen
             halbzeit = getattr(self.game, self._halbzeit_state_names[num_halbzeit])
-            # Wenn spieler aus der spielerliste fliegt, also keine deckel mehr hat,
-            # kommt hier ein fehler.
-            # TODO FIXME der letzte wurf muss angezeigt werden, wenn dieser dafür sorgt,
-            # dass der spieler rausfliegt
-            try:
-                spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
-            except StopIteration:
-                is_spieler_raus = True
-                spieler = self.spieler_by_name(
-                    msg_author_name, self.game_old.state.spieler_liste
-                )
+            spieler = self.spieler_by_name(msg_author_name, halbzeit.initiale_spieler)
             # Alle spezialfälle abfragen
             # kommen wir aus einwerfen?
             is_aus_einwerfen = str(self.game_old.state).split()[1] == "Einwerfen"
@@ -497,7 +487,7 @@ class SchockenBot:
                     einsen = spieler_old.einsen
                     outputs.append(
                         self.gen_wuerfel_output(
-                            spieler, halbzeit_old, reicht_comment=False, einsen=einsen
+                            spieler, halbzeit_old, reicht_comment=True, einsen=einsen
                         )
                     )
                     outputs.append(self.gen_runde_vorbei_output(halbzeit))
