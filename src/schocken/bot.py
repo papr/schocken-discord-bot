@@ -592,8 +592,12 @@ class SchockenBot:
         deckel_emoji = self.emoji_by_name("kronkorken")
         um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
         deckel_noch = halbzeit.rdm._zahl_deckel_im_topf
+        if num_halbzeit < 3:
+            halbzeit_str = f" ** Halbzeit {num_halbzeit} **"
+        else:
+            halbzeit_str = f" ** Finale **"
+        out_str = halbzeit_str
         if deckel_noch > 0:
-            out_str = f"** Halbzeit {num_halbzeit} **"
             out_str += (
                 f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
             )
@@ -602,7 +606,7 @@ class SchockenBot:
             noch_drin = "**|**".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str = f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|** "
+            out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|** "
             out_str += f"**Noch im Spiel: |**" + noch_drin + "**|**\n"
 
         hoch_1 = hoch.spieler.einsen
@@ -647,14 +651,18 @@ class SchockenBot:
         deckel_mitte = halbzeit.rdm.zahl_deckel_im_topf
         out_str = f"{verl_member.mention} verliert die Runde und bekommt "
         out_str += f"{deckel} {deckel_emoji}.\n"
-        out_str += f"** Halbzeit {num_halbzeit} | **"
+        if num_halbzeit < 3:
+            halbzeit_str = f" ** Halbzeit {num_halbzeit} **"
+        else:
+            halbzeit_str = f" ** Finale **"
+        out_str += halbzeit_str
         if deckel_mitte > 0:
-            out_str += f"**Mitte: {deckel_mitte} {deckel_emoji}. **"
+            out_str += f"**| Mitte: {deckel_mitte} {deckel_emoji}. **"
         else:
             noch_drin = ", ".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str += f"**Noch im Spiel: **" + noch_drin + "\n"
+            out_str += f"** | Noch im Spiel: **" + noch_drin + "\n"
         out_str += f"Du bist mit `!wuerfeln` an der Reihe, "
         out_str += f"{self.mention_mit_deckel(verlierer)}."
         return out_str
