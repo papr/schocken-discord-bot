@@ -271,8 +271,8 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.beiseite_gelegt:
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
-            akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
+            akt_spieler.augen = self.augen_nach_beiseite(akt_spieler.augen)
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -316,8 +316,8 @@ class Halbzeit(pysm.StateMachine):
                 f"Du hast bereits deine Sechsen zu einer Eins umgewandelt!"
             )
         else:
-            akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += 1
+            akt_spieler.augen = self.augen_nach_beiseite(akt_spieler.augen)
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.umgedreht = True
 
     def beendet(self):
@@ -336,16 +336,16 @@ class Halbzeit(pysm.StateMachine):
             else:
                 self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
-    def update_augen(self, tup):
-        if tup.count(6) > 1:
-            tup_list = list(set(tup))
-            sechsen = [1 for x in tup_list if x == 6]
-        else:
-            sechsen = []
-        einsen = list(filter((1).__eq__, tup))
-        new_list = sechsen + einsen
-        new_tuple = tuple(new_list)
-        return new_tuple
+    def augen_nach_beiseite(
+        self, augen_aus_wurf: T.Tuple[int, int, int]
+    ) -> T.Tuple[int, ...]:
+        """Legt geworfene sechsen als einsen und geworfene einsen beiseite."""
+        # 2x6 -> 1x1, discard remaining 6s
+        einsen_aus_sechsen = (1,) if augen_aus_wurf.count(6) >= 2 else ()
+        # keep all 1, discard remaining
+        einsen_aus_wurf = augen_aus_wurf.count(1) * (1,)
+        einsen_alle = einsen_aus_sechsen + einsen_aus_wurf
+        return einsen_alle
 
 
 class SchockenSpiel(pysm.StateMachine):
