@@ -1,6 +1,6 @@
 [project]
 name = "schocken"
-version = "0.2.10"
+version = "0.2.12"
 description = "Schocken - The game"
 authors = ["Cafe A"]
 license = "MIT"

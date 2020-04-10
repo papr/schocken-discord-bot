@@ -471,7 +471,7 @@ class SchockenBot:
                                 spieler, halbzeit, reicht_comment=False, einsen=einsen
                             )
                         )
-                        outputs.append(self.gen_nach_zug_output(halbzeit))
+                        outputs.append(self.gen_nach_zug_output(halbzeit, num_halbzeit))
                     else:
                         einsen = spieler.einsen
                         outputs.append(
@@ -490,7 +490,7 @@ class SchockenBot:
                             spieler, halbzeit_old, reicht_comment=True, einsen=einsen
                         )
                     )
-                    outputs.append(self.gen_runde_vorbei_output(halbzeit))
+                    outputs.append(self.gen_runde_vorbei_output(halbzeit, num_halbzeit))
 
                 elif is_zug_vorbei:
                     einsen = spieler.einsen
@@ -499,7 +499,7 @@ class SchockenBot:
                             spieler, halbzeit, reicht_comment=True, einsen=einsen
                         )
                     )
-                    outputs.append(self.gen_nach_zug_output(halbzeit))
+                    outputs.append(self.gen_nach_zug_output(halbzeit, num_halbzeit))
 
                 else:
                     einsen = spieler.einsen
@@ -517,9 +517,9 @@ class SchockenBot:
                         self.gen_enter_halbzeit_output(sp_liste, num_halbzeit)
                     )
                 elif is_runde_vorbei:
-                    outputs.append(self.gen_runde_vorbei_output(halbzeit))
+                    outputs.append(self.gen_runde_vorbei_output(halbzeit, num_halbzeit))
                 else:
-                    outputs.append(self.gen_nach_zug_output(halbzeit))
+                    outputs.append(self.gen_nach_zug_output(halbzeit, num_halbzeit))
 
             elif command == "umdrehen":
                 outputs.append(self.gen_umdrehen_output(spieler))
@@ -586,14 +586,19 @@ class SchockenBot:
         out_str = f"{verl_member.mention} verliert die Halbzeit. "
         return out_str
 
-    def gen_nach_zug_output(self, halbzeit):
+    def gen_nach_zug_output(self, halbzeit, num_halbzeit):
         hoch, tief = halbzeit.rdm.hoch_und_tief()
         naechster = halbzeit.aktiver_spieler
         deckel_emoji = self.emoji_by_name("kronkorken")
         um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
         deckel_noch = halbzeit.rdm._zahl_deckel_im_topf
+        if num_halbzeit < 3:
+            halbzeit_str = f" ** Halbzeit {num_halbzeit} **"
+        else:
+            halbzeit_str = f" ** Finale **"
+        out_str = halbzeit_str
         if deckel_noch > 0:
-            out_str = (
+            out_str += (
                 f"**| Mitte:** {halbzeit.rdm._zahl_deckel_im_topf} {deckel_emoji} "
             )
             out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|**\n"
@@ -601,13 +606,15 @@ class SchockenBot:
             noch_drin = "**|**".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str = f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|** "
+            out_str += f"**| Es geht um** {um_wieviele_gehts} {deckel_emoji}**|** "
             out_str += f"**Noch im Spiel: |**" + noch_drin + "**|**\n"
 
+        hoch_1 = hoch.spieler.einsen
+        tief_1 = tief.spieler.einsen
         out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
-        out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen)}\n"
+        out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen,einsen=hoch_1)}\n"
         out_str += f"Low: {self.mention_mit_deckel(tief.spieler)} "
-        out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen)}\n"
+        out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen,einsen=tief_1)}\n"
         out_str += f"Als nächstes ist {self.mention_mit_deckel(naechster)} "
         out_str += f"mit `!wuerfeln` dran. "
         wuerfe = halbzeit.rdm.num_maximale_wuerfe
@@ -633,7 +640,7 @@ class SchockenBot:
             out_str0 += f"\n{member_list[0].mention} ist mit `!wuerfeln` dran."
         return out_str0
 
-    def gen_runde_vorbei_output(self, halbzeit):
+    def gen_runde_vorbei_output(self, halbzeit, num_halbzeit):
         verlierer = halbzeit.spieler_liste[0]
         verlierer_old = next(
             s for s in self.game_old.state.spieler_liste if s.name == verlierer.name
@@ -644,13 +651,18 @@ class SchockenBot:
         deckel_mitte = halbzeit.rdm.zahl_deckel_im_topf
         out_str = f"{verl_member.mention} verliert die Runde und bekommt "
         out_str += f"{deckel} {deckel_emoji}.\n"
+        if num_halbzeit < 3:
+            halbzeit_str = f" ** Halbzeit {num_halbzeit} **"
+        else:
+            halbzeit_str = f" ** Finale **"
+        out_str += halbzeit_str
         if deckel_mitte > 0:
-            out_str += f"**Mitte: {deckel_mitte} {deckel_emoji}. **"
+            out_str += f"**| Mitte: {deckel_mitte} {deckel_emoji}. **"
         else:
             noch_drin = ", ".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
             )
-            out_str += f"**Noch im Spiel: **" + noch_drin + "\n"
+            out_str += f"** | Noch im Spiel: **" + noch_drin + "\n"
         out_str += f"Du bist mit `!wuerfeln` an der Reihe, "
         out_str += f"{self.mention_mit_deckel(verlierer)}."
         return out_str

@@ -36,8 +36,17 @@ def run_bot():
     # when a message is read by the bot
     @client.event
     async def on_message(message):
-        await client.bot.parse_input(message)
-        return
+        try:
+            await client.bot.parse_input(message)
+        except AttributeError:
+            msg_text = message.content
+            author = message.author.mention
+            ch = client.get_channel(694603857950539887)  # errorland
+            await ch.send(
+                f"Dropping message because bot was not initialized yet.\n"
+                f"{author} said:\n"
+                f"> {msg_text}"
+            )
 
     @client.event
     async def on_error(error, *args, **kwargs):
