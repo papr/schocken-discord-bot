@@ -353,8 +353,17 @@ class SchockenBot:
             # entsprechend halbzeit_erste oder halbzeit_zweite oder finale aus
             # game holen
             halbzeit = getattr(self.game, self._halbzeit_state_names[num_halbzeit])
-            spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
-
+            # Wenn spieler aus der spielerliste fliegt, also keine deckel mehr hat,
+            # kommt hier ein fehler.
+            # TODO FIXME der letzte wurf muss angezeigt werden, wenn dieser dafür sorgt,
+            # dass der spieler rausfliegt
+            try:
+                spieler = self.spieler_by_name(msg_author_name, halbzeit.spieler_liste)
+            except StopIteration:
+                is_spieler_raus = True
+                spieler = self.spieler_by_name(
+                    msg_author_name, self.game_old.state.spieler_liste
+                )
             # Alle spezialfälle abfragen
             # kommen wir aus einwerfen?
             is_aus_einwerfen = str(self.game_old.state).split()[1] == "Einwerfen"
@@ -382,9 +391,12 @@ class SchockenBot:
                         )
                         deckel_vorher = spieler_tief_old.deckel
                         deckel_neu = spieler_tief.deckel
-                        is_runde_vorbei = (
-                            deckel_vorher - deckel_neu
-                        ) != self._lustwuerfe_runde[spieler.name]
+                        try:
+                            is_runde_vorbei = (
+                                deckel_vorher - deckel_neu
+                            ) != self._lustwuerfe_runde[spieler.name]
+                        except KeyError:
+                            is_runde_vorbei = deckel_vorher != deckel_neu
                     else:
                         deckel_vorher = halbzeit_old.rdm.zahl_deckel_im_topf
                         deckel_neu = halbzeit.rdm.zahl_deckel_im_topf
@@ -610,7 +622,7 @@ class SchockenBot:
         out_str += f"mit `!wuerfeln` dran. "
         wuerfe = halbzeit.rdm.num_maximale_wuerfe
         wurf_str = {1: "einen Wurf", 2: "zwei Würfe", 3: "drei Würfe"}
-        out_str += f"Du hast {wurf_str[wuerfe]}."
+        out_str += f"**Du hast {wurf_str[wuerfe]}.**"
         return out_str
 
     def gen_enter_halbzeit_output(self, spieler_liste, num_halbzeit):
