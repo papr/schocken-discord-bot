@@ -26,7 +26,7 @@ def bot():
 
 
 @pytest.fixture
-async def halbzeit_bot(member):
+async def hz1_bot(member):
     # spiel läuft, spieler 1 darf anfangen
     client = MockClient()
     bot = MockBot(client)
@@ -47,10 +47,10 @@ async def test_start_game(member, bot):
     assert bot.game_running
     await bot.parse_input(MockMessage(member[0], "!einwerfen"))
     # richtiger spieler:
-    assert "spieler_1 hat eine" in bot.msg
+    assert bot.is_in_msg("spieler_1 hat eine")
     # anderer spieler will auch starten
     await bot.parse_input(MockMessage(member[1], "!schocken"))
-    assert "Es läuft bereits ein Spiel" in bot.msg
+    assert bot.is_in_msg("Es läuft bereits ein Spiel")
 
 
 async def test_einwerfen(member, bot):
@@ -60,89 +60,103 @@ async def test_einwerfen(member, bot):
     await bot.parse_input(MockMessage(member[0], "!einwerfen"))
     wuerfel.werfen = lambda n: (2,)
     await bot.parse_input(MockMessage(member[1], "!einwerfen"))
+    bot.reset_msg()
     await bot.parse_input(MockMessage(member[2], "!einwerfen"))
     expected = "spieler_1 hat mit einer EMOJI:wuerfel_1 den niedgristen Wurf."
-    assert expected in bot.msg
+    assert bot.is_in_msg(expected)
+    # assert expected in bot.msg
 
 
-async def test_weiter(member, halbzeit_bot):
+async def test_weiter(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!weiter"))
-    assert "High: MENTION:spieler_1" in halbzeit_bot.msg
-    assert "Low: MENTION:spieler_1" in halbzeit_bot.msg
-    assert "Als nächstes ist MENTION:spieler_2 (0 EMOJI:kronkorken)" in halbzeit_bot.msg
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
+    high_msg = "High: MENTION:spieler_1"
+    assert hz1_bot.is_in_msg(high_msg)
+    low_msg = "Low: MENTION:spieler_1"
+    assert hz1_bot.is_in_msg(low_msg)
+    next_msg = "Als nächstes ist MENTION:spieler_2 (0 EMOJI:kronkorken)"
+    assert hz1_bot.is_in_msg(next_msg)
 
 
-async def test_runde(member, halbzeit_bot):
+async def test_runde(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
 
     wuerfel.werfen = lambda n: (2, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
     low_msg = "Low: MENTION:spieler_2 (0 EMOJI:kronkorken) mit: "
     low_msg += "EMOJI:wuerfel_2 EMOJI:wuerfel_2 EMOJI:wuerfel_1"
     # spieler zwei ist low
-    assert low_msg in halbzeit_bot.msg
+    assert hz1_bot.is_in_msg(low_msg)
     # hat nur einen Wurf
-    assert "Als nächstes ist MENTION:spieler_3" in halbzeit_bot.msg
+    assert hz1_bot.is_in_msg("Als nächstes ist MENTION:spieler_3")
 
     wuerfel.werfen = lambda n: (3, 2, 2)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
     # spieler 2 verliert!
     verl_msg = "MENTION:spieler_2 verliert die Runde und bekommt 7 EMOJI:kronkorken."
-    assert verl_msg in halbzeit_bot.msg
+    assert hz1_bot.is_in_msg(verl_msg)
     # spieler 2 fängt nächste runde an
     naechste_runde_msg = "Du bist mit `!wuerfeln` an der Reihe, "
     naechste_runde_msg += "MENTION:spieler_2 (7 EMOJI:kronkorken)."
-    assert naechste_runde_msg in halbzeit_bot.msg
+    assert hz1_bot.is_in_msg(naechste_runde_msg)
     # 8 deckel noch in der mitte:
-    assert "Mitte: 8 EMOJI:kronkorken." in halbzeit_bot.msg
+    assert hz1_bot.is_in_msg("Mitte: 8 EMOJI:kronkorken.")
 
 
-async def test_verteilen_vorbei(member, halbzeit_bot):
+async def test_verteilen_vorbei(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!weiter"))
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
 
     # spieler 3 bekommt 7
     wuerfel.werfen = lambda n: (2, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!weiter"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
 
     # spieler 2 bekommt 7
     wuerfel.werfen = lambda n: (2, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
 
     # spieler 2 bekommt den letzten in der mitte
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!weiter"))
     wuerfel.werfen = lambda n: (3, 3, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    s1_wirft_msg = "MENTION:spieler_1 (0 EMOJI:kronkorken) wirft EMOJI:wuerfel_3 "
+    s1_wirft_msg += "EMOJI:wuerfel_3 EMOJI:wuerfel_1."
+    assert hz1_bot.is_in_msg(s1_wirft_msg)
+    s2_verliert_msg = "MENTION:spieler_2 verliert die Runde"
+    assert hz1_bot.is_in_msg(s2_verliert_msg)
+    noch_drin_msg = "**Noch im Spiel: **MENTION:spieler_2 (8 EMOJI:kronkorken), "
+    noch_drin_msg += "MENTION:spieler_3 (7 EMOJI:kronkorken)"
+    assert hz1_bot.is_in_msg(noch_drin_msg)
 
 
-async def test_halbzeit_vorbei(member, halbzeit_bot):
+async def test_halbzeit_vorbei(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!weiter"))
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
     wuerfel.werfen = lambda n: (2, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
     wuerfel.werfen = lambda n: (2, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[2], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
     wuerfel.werfen = lambda n: (4, 2, 1)
-    await halbzeit_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    await halbzeit_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
-    # fertigmachen
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    hz1_bot.print_msg()
