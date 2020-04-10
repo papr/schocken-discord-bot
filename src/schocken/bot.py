@@ -599,9 +599,7 @@ class SchockenBot:
         deckel_noch = halbzeit.rdm._zahl_deckel_im_topf
         deckel_emoji = self.emoji_by_name("kronkorken")
         if deckel_noch > 0:
-            out_str += (
-                f"Mitte: {deckel_noch} {deckel_emoji}"
-            )
+            out_str += f"Mitte: {deckel_noch} {deckel_emoji}"
         else:
             noch_drin = ", ".join(
                 [self.mention_mit_deckel(s) for s in halbzeit.spieler_liste]
