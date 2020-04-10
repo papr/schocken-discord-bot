@@ -225,19 +225,12 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
-                assert (
-                    akt_spieler.einsen
-                    == len(akt_spieler.augen)
-                    == akt_spieler.augen.count(1)
-                ), (
-                    f"Einsen `{akt_spieler.einsen}` / "
-                    f"Augen `{akt_spieler.augen}` "
-                    f"Diskrepanz bei {akt_spieler.name}"
-                )
-                wurf = wuerfel.werfen(3 - akt_spieler.einsen)
-                akt_spieler.augen = tuple(
-                    sorted(akt_spieler.augen + wurf, reverse=True)
-                )
+                einsen_an_der_seite = akt_spieler.einsen * (1,)
+                num_restliche_wuerfel = 3 - akt_spieler.einsen
+                wurf = wuerfel.werfen(num_restliche_wuerfel)
+                wurf_mit_anliegenden_einsen = wurf + einsen_an_der_seite
+                augen_sotiert = sorted(wurf_mit_anliegenden_einsen, reverse=True)
+                akt_spieler.augen = tuple(augen_sotiert)
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
                 akt_spieler.umgedreht = False
