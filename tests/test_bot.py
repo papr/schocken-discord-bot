@@ -138,7 +138,7 @@ async def test_runde(member, hz1_bot):
     naechste_runde_msg += "MENTION:spieler_2 (7 EMOJI:kronkorken)."
     assert hz1_bot.is_in_msg(naechste_runde_msg)
     # 8 deckel noch in der mitte:
-    assert hz1_bot.is_in_msg("Mitte: 8 EMOJI:kronkorken.")
+    assert hz1_bot.is_in_msg("Mitte: 8 EMOJI:kronkorken")
 
 
 async def test_verteilen_vorbei(member, hz1_bot):
@@ -171,7 +171,7 @@ async def test_verteilen_vorbei(member, hz1_bot):
     assert hz1_bot.is_in_msg(s1_wirft_msg)
     s2_verliert_msg = "MENTION:spieler_2 verliert die Runde"
     assert hz1_bot.is_in_msg(s2_verliert_msg)
-    noch_drin_msg = "Noch im Spiel: **MENTION:spieler_2 (8 EMOJI:kronkorken), "
+    noch_drin_msg = "Noch im Spiel: MENTION:spieler_2 (8 EMOJI:kronkorken), "
     noch_drin_msg += "MENTION:spieler_3 (7 EMOJI:kronkorken)"
     assert hz1_bot.is_in_msg(noch_drin_msg)
 
