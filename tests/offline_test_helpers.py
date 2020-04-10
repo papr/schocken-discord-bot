@@ -55,6 +55,9 @@ class MockBot(SchockenBot):
     def name_to_member(self, name):
         return MockMember(name)
 
-    async def print_to_channel(self, channel, text):
+    async def print_to_channel(self, channel, text, to_std_out=False):
         msg = channel.send(text)
-        print(msg + "\n" + "-" * 72)
+        if to_std_out:
+            print(msg + "\n" + "-" * 72)
+        else:
+            self.msg = msg
