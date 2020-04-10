@@ -272,7 +272,7 @@ class Halbzeit(pysm.StateMachine):
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -317,7 +317,7 @@ class Halbzeit(pysm.StateMachine):
             )
         else:
             akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += 1
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.umgedreht = True
 
     def beendet(self):
