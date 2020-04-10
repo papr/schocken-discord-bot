@@ -48,6 +48,14 @@ class MockMessage:
 
 
 class MockBot(SchockenBot):
+    def __init__(self, client):
+        super().__init__(client)
+        self.msg = []
+
+    async def parse_input(self, message):
+        self.reset_msg()
+        await super().parse_input(message)
+
     # override methods that need a server connection
     def emoji_by_name(self, name):
         return f"EMOJI:{name}"
@@ -60,4 +68,14 @@ class MockBot(SchockenBot):
         if to_std_out:
             print(msg + "\n" + "-" * 72)
         else:
-            self.msg = msg
+            self.msg.append(msg)
+
+    def reset_msg(self):
+        self.msg = []
+
+    def print_msg(self):
+        for msg in self.msg:
+            print(msg)
+
+    def is_in_msg(self, string):
+        return any([string in m for m in self.msg])
