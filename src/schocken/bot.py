@@ -599,7 +599,7 @@ class SchockenBot:
         deckel_emoji = self.emoji_by_name("kronkorken")
         if not neue_runde:
             hoch, tief = halbzeit.rdm.hoch_und_tief()
-            um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
+            um_wieviele_gehts = hoch.wurf.deckel_wert
             out_str += f"Es geht um {um_wieviele_gehts} {deckel_emoji}"
             out_str += " | "
         wuerfe = halbzeit.rdm.num_maximale_wuerfe
