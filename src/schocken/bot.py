@@ -624,7 +624,6 @@ class SchockenBot:
         hoch, tief = halbzeit.rdm.hoch_und_tief()
         naechster = halbzeit.aktiver_spieler
         out_str = self.gen_info_header(halbzeit, num_halbzeit)
-        print(hoch)
         im_wievielten = {1: "ersten", 2: "zweiten", 3: "dritten"}
 
         hoch_1 = hoch.spieler.einsen
