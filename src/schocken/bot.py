@@ -363,6 +363,12 @@ class SchockenBot:
             is_zug_vorbei = max_wuerfe == 1 or spieler != halbzeit.aktiver_spieler
             # halbzeit vorbei > runde vorbei > zug vorbei
             if not is_aus_einwerfen:
+                if is_lustwurf:
+                    try:
+                        old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
+                    except KeyError:
+                        old_lustwuerfe = 0
+                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
                 halbzeit_old = getattr(
                     self.game_old, self._halbzeit_state_names[num_halbzeit_old]
                 )
@@ -423,11 +429,6 @@ class SchockenBot:
                     else:
                         abg_mem = self.name_to_member(abgeber.name)
                         out_str += f" von {abg_mem.mention}."
-                    try:
-                        old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
-                    except KeyError:
-                        old_lustwuerfe = 0
-                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
                     outputs.append(out_str)
                 # ggf output vor eigentlichem wurf
                 if is_aus_einwerfen:
@@ -672,6 +673,7 @@ class SchockenBot:
         return out_str
 
     def gen_wuerfel_output(self, spieler, halbzeit, reicht_comment=False, einsen=0):
+        max_wuerfe = halbzeit.rdm.num_maximale_wuerfe
         aus_der_hand = einsen == 0
         augen = spieler.augen
         wurf_emoji = self.wurf_to_emoji(augen, einsen)
@@ -685,7 +687,12 @@ class SchockenBot:
         else:
             out_str = f"{self.mention_mit_deckel(spieler)} wirft "
 
-        im_wievielten = {1: "im ersten", 2: "im zweiten", 0: "im dritten"}
+        im_wievielten = {
+            1: "im ersten",
+            2: "im zweiten",
+            3: "im dritten",
+        }
+        im_wievielten.update({0: im_wievielten[max_wuerfe]})
         out_str += wurf_emoji + f" {im_wievielten[spieler.anzahl_wuerfe]}. "
 
         if "Gemuese" in augen_name:
