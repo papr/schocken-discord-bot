@@ -624,13 +624,17 @@ class SchockenBot:
         hoch, tief = halbzeit.rdm.hoch_und_tief()
         naechster = halbzeit.aktiver_spieler
         out_str = self.gen_info_header(halbzeit, num_halbzeit)
+        print(hoch)
+        im_wievielten = {1: "ersten", 2: "zweiten", 3: "dritten"}
 
         hoch_1 = hoch.spieler.einsen
         tief_1 = tief.spieler.einsen
         out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
-        out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen,einsen=hoch_1)}\n"
+        out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen,einsen=hoch_1)} "
+        out_str += f"im {im_wievielten[hoch.wurf_anzahl]}. \n"
         out_str += f"Low: {self.mention_mit_deckel(tief.spieler)} "
-        out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen,einsen=tief_1)}\n"
+        out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen,einsen=tief_1)} "
+        out_str += f"im {im_wievielten[tief.wurf_anzahl]}. \n"
         out_str += f"Als nächstes ist {self.mention_mit_deckel(naechster)} "
         out_str += f"mit `!wuerfeln` dran. "
         return out_str
