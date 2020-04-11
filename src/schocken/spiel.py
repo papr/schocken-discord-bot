@@ -234,10 +234,12 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
-                wurf = wuerfel.werfen(3 - len(akt_spieler.einsen))
-                akt_spieler.augen = tuple(
-                    sorted(akt_spieler.augen + wurf, reverse=True)
-                )
+                einsen_an_der_seite = akt_spieler.einsen * (1,)
+                num_restliche_wuerfel = 3 - akt_spieler.einsen
+                wurf = wuerfel.werfen(num_restliche_wuerfel)
+                wurf_mit_anliegenden_einsen = wurf + einsen_an_der_seite
+                augen_sotiert = sorted(wurf_mit_anliegenden_einsen, reverse=True)
+                akt_spieler.augen = tuple(augen_sotiert)
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
                 akt_spieler.umgedreht = False
@@ -262,7 +264,7 @@ class Halbzeit(pysm.StateMachine):
             raise ZuOftGeworfen(meldung)
 
         if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
-            self.weiter(akt_spieler)
+            self.weiter()
 
         if lust_wurf_geworfen:
             raise LustWurf(letzter_wurf)
@@ -280,8 +282,8 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.beiseite_gelegt:
             raise FalscheAktion(f"Du hast bereits beiseite gelegt!")
         elif not akt_spieler.beiseite_gelegt and 1 in akt_spieler.augen:
-            akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += akt_spieler.augen.count(1) - akt_spieler.einsen
+            akt_spieler.augen = self.augen_nach_beiseite(akt_spieler.augen)
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.beiseite_gelegt = True
         else:
             raise FalscheAktion(
@@ -304,7 +306,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
             raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
 
-        self.weiter(akt_spieler)
+        self.weiter()
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -325,16 +327,14 @@ class Halbzeit(pysm.StateMachine):
                 f"Du hast bereits deine Sechsen zu einer Eins umgewandelt!"
             )
         else:
-            akt_spieler.augen = self.update_augen(akt_spieler.augen)
-            akt_spieler.einsen += 1
+            akt_spieler.augen = self.augen_nach_beiseite(akt_spieler.augen)
+            akt_spieler.einsen = akt_spieler.augen.count(1)
             akt_spieler.umgedreht = True
 
     def beendet(self):
         return len(self.spieler_liste) == 1
 
-    def weiter(self, spieler):
-        spieler.einsen = 0
-        spieler.anzahl_wuerfe = 0
+    def weiter(self):
         try:
             self.rdm.weiter()
         except RundeVorbei:
@@ -342,19 +342,25 @@ class Halbzeit(pysm.StateMachine):
             if self.beendet():
                 self.verlierende = self.spielzeit_status.spieler[0]
                 self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-            else:
-                self.rdm = RundenDeckelManagement(self.spielzeit_status)
+                return
+            self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        # naechsten spieler zueruecksetzen
+        self._spieler_zuruecksetzen(self.aktiver_spieler)
 
-    def update_augen(self, tup):
-        if tup.count(6) > 1:
-            tup_list = list(set(tup))
-            sechsen = [1 for x in tup_list if x == 6]
-        else:
-            sechsen = []
-        einsen = list(filter((1).__eq__, tup))
-        new_list = sechsen + einsen
-        new_tuple = tuple(new_list)
-        return new_tuple
+    def _spieler_zuruecksetzen(self, spieler):
+        spieler.einsen = 0
+        spieler.anzahl_wuerfe = 0
+
+    def augen_nach_beiseite(
+        self, augen_aus_wurf: T.Tuple[int, int, int]
+    ) -> T.Tuple[int, ...]:
+        """Legt geworfene sechsen als einsen und geworfene einsen beiseite."""
+        # 2x6 -> 1x1, discard remaining 6s
+        einsen_aus_sechsen = (1,) if augen_aus_wurf.count(6) >= 2 else ()
+        # keep all 1, discard remaining
+        einsen_aus_wurf = augen_aus_wurf.count(1) * (1,)
+        einsen_alle = einsen_aus_sechsen + einsen_aus_wurf
+        return einsen_alle
 
 
 class SchockenSpiel(pysm.StateMachine):
