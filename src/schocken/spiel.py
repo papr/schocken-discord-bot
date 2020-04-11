@@ -225,10 +225,12 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.anzahl_wuerfe < self.rdm.num_maximale_wuerfe:
             # check if ones were put aside
             if akt_spieler.einsen > 0:
-                wurf = wuerfel.werfen(3 - akt_spieler.einsen)
-                akt_spieler.augen = tuple(
-                    sorted(akt_spieler.augen + wurf, reverse=True)
-                )
+                einsen_an_der_seite = akt_spieler.einsen * (1,)
+                num_restliche_wuerfel = 3 - akt_spieler.einsen
+                wurf = wuerfel.werfen(num_restliche_wuerfel)
+                wurf_mit_anliegenden_einsen = wurf + einsen_an_der_seite
+                augen_sotiert = sorted(wurf_mit_anliegenden_einsen, reverse=True)
+                akt_spieler.augen = tuple(augen_sotiert)
                 akt_spieler.anzahl_wuerfe += 1
                 akt_spieler.beiseite_gelegt = False
                 akt_spieler.umgedreht = False
@@ -253,7 +255,7 @@ class Halbzeit(pysm.StateMachine):
             raise ZuOftGeworfen(meldung)
 
         if akt_spieler.anzahl_wuerfe == self.rdm.num_maximale_wuerfe:
-            self.weiter(akt_spieler)
+            self.weiter()
 
         if lust_wurf_geworfen:
             raise LustWurf(letzter_wurf)
@@ -295,7 +297,7 @@ class Halbzeit(pysm.StateMachine):
         if akt_spieler.umgedreht == True or akt_spieler.beiseite_gelegt == True:
             raise SpielerMussWuerfeln("Du musst noch einmal würfeln!")
 
-        self.weiter(akt_spieler)
+        self.weiter()
 
     def sechsen_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
@@ -323,9 +325,7 @@ class Halbzeit(pysm.StateMachine):
     def beendet(self):
         return len(self.spieler_liste) == 1
 
-    def weiter(self, spieler):
-        spieler.einsen = 0
-        spieler.anzahl_wuerfe = 0
+    def weiter(self):
         try:
             self.rdm.weiter()
         except RundeVorbei:
@@ -333,8 +333,14 @@ class Halbzeit(pysm.StateMachine):
             if self.beendet():
                 self.verlierende = self.spielzeit_status.spieler[0]
                 self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-            else:
-                self.rdm = RundenDeckelManagement(self.spielzeit_status)
+                return
+            self.rdm = RundenDeckelManagement(self.spielzeit_status)
+        # naechsten spieler zueruecksetzen
+        self._spieler_zuruecksetzen(self.aktiver_spieler)
+
+    def _spieler_zuruecksetzen(self, spieler):
+        spieler.einsen = 0
+        spieler.anzahl_wuerfe = 0
 
     def augen_nach_beiseite(
         self, augen_aus_wurf: T.Tuple[int, int, int]
