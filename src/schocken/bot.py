@@ -571,7 +571,7 @@ class SchockenBot:
         sechs = self.emoji_by_name("wuerfel_6")
         eins = self.emoji_by_name("wuerfel_1")
         out_str = f"{self.mention_mit_deckel(spieler)} dreht "
-        out_str += f"{sechs}{sechs} zu {eins} um."
+        out_str += f"{sechs} {sechs} zu {eins} um."
         return out_str
 
     def gen_beiseite_output(self, spieler):
@@ -587,9 +587,9 @@ class SchockenBot:
         return out_str
 
     def gen_info_header(self, halbzeit, num_halbzeit, neue_runde=False):
-        out_str = "**"
+        out_str = "**| "
         if num_halbzeit < 3:
-            halbzeit_str = f"Halbzeit {num_halbzeit} "
+            halbzeit_str = f"Halbzeit {num_halbzeit}"
         else:
             halbzeit_str = f"Finale "
         out_str += halbzeit_str
@@ -600,7 +600,7 @@ class SchockenBot:
         if not neue_runde:
             hoch, tief = halbzeit.rdm.hoch_und_tief()
             um_wieviele_gehts = wurf.welcher_wurf(hoch.spieler.augen).deckel_wert
-            out_str += f"Es geht um** {um_wieviele_gehts} {deckel_emoji}"
+            out_str += f"Es geht um {um_wieviele_gehts} {deckel_emoji}"
             out_str += " | "
         wuerfe = halbzeit.rdm.num_maximale_wuerfe
         wurf_str = {1: "Ein Wurf", 2: "Zwei Würfe", 3: "Drei Würfe"}
@@ -681,7 +681,9 @@ class SchockenBot:
             out_str = f"{self.mention_mit_deckel(spieler_old)} wirft "
         else:
             out_str = f"{self.mention_mit_deckel(spieler)} wirft "
-        out_str += wurf_emoji + ". "
+
+        im_wievielten = {1: "im ersten", 2: "im zweiten", 0: "im dritten"}
+        out_str += wurf_emoji + f" {im_wievielten[spieler.anzahl_wuerfe]}. "
 
         if "Gemuese" in augen_name:
             if augen[0] < 5:
