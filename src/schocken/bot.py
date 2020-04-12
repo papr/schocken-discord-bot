@@ -45,6 +45,7 @@ class SchockenBot:
         self.discord_to_game_cmd_dict = {
             "einwerfen": "einwerfen",
             "wuerfeln": "wuerfeln",
+            "würfeln": "wuerfeln",
             "stechen": "stechen",
             "weiter": "weiter",
             "beiseite": "beiseite legen",
