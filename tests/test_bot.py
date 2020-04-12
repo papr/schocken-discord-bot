@@ -186,8 +186,10 @@ async def test_verteilen_vorbei(member, hz1_bot):
     wuerfel.werfen = lambda n: (3, 3, 1)
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
     await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
-    msg = ("Noch im Spiel: MENTION:spieler_2 (8 EMOJI:kronkorken), "
-           "MENTION:spieler_3 (7 EMOJI:kronkorken)")
+    msg = (
+        "Noch im Spiel: MENTION:spieler_2 (8 EMOJI:kronkorken), "
+        "MENTION:spieler_3 (7 EMOJI:kronkorken)"
+    )
     assert hz1_bot.is_in_msg(msg)
 
 
