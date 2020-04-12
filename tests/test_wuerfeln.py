@@ -403,3 +403,45 @@ def test_lustwurf(spieler, erste_halbzeit_beendet):
         runde.command_to_event(spieler[1].name, "wuerfeln")
 
     assert runde.halbzeit_zweite.spieler_liste[2].deckel == 1
+
+
+def test_lustwurf_nochmal(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 1 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "weiter")
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    # spieler 3 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 3 bekommt den letzten aus der mitte, spieler 2 ist raus.
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "weiter")
+    wuerfel.werfen = lambda n: (5, 5, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    assert len(runde.state.spieler_liste) == 2
+
+    # jetzt ist spieler 3 dran, würfelt 221 im dritten.
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 1 würfelt ne jule und müsste sie im esten liegen lassen, weil er 7 deckel
+    # hat
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    # Das hier müsste jetzt ein lustwurf sein:
+    # Es wird ein lustwurf geraised, wenn die folgende Zeile auskommentiert ist
+    wuerfel.werfen = lambda n: (3, 3, 1)
+    with pytest.raises(LustWurf):
+        runde.command_to_event(spieler[0].name, "wuerfeln")
