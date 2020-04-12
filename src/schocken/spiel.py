@@ -158,7 +158,7 @@ class Halbzeit(pysm.StateMachine):
         wuerfeln = pysm.State("wuerfeln")
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
-            "beiseite legen": self.beiseite_legen_handler,
+            "beiseite": self.beiseite_handler,
             "weiter": self.naechster_spieler_handler,
             "umdrehen": self.sechsen_handler,
         }
@@ -260,7 +260,7 @@ class Halbzeit(pysm.StateMachine):
         if lust_wurf_geworfen:
             raise LustWurf(letzter_wurf)
 
-    def beiseite_legen_handler(self, state, event):
+    def beiseite_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
         spieler_name = event.cargo["spieler_name"]
 
@@ -402,8 +402,8 @@ class SchockenSpiel(pysm.StateMachine):
             event = pysm.Event("stechen", spieler_name=spieler_name)
         elif command == "weiter":
             event = pysm.Event("weiter", spieler_name=spieler_name)
-        elif command == "beiseite legen":
-            event = pysm.Event("beiseite legen", spieler_name=spieler_name)
+        elif command == "beiseite":
+            event = pysm.Event("beiseite", spieler_name=spieler_name)
         elif command == "umdrehen":
             event = pysm.Event("umdrehen", spieler_name=spieler_name)
         else:

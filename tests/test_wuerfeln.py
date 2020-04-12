@@ -30,7 +30,7 @@ def test_eins_beiseite_dann_weiter(spieler):
     wuerfel.werfen = lambda n: (2, 2, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     # spieler1 dreht um, aber entscheidet sich dann doch dagegen
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
     spieler1 = next(
         s for s in runde.halbzeit_erste.spieler_liste if s.name == spieler[1].name
     )
@@ -110,7 +110,7 @@ def test_falscher_spieler(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
         runde.command_to_event(spieler[0].name, "wuerfeln")
 
     with pytest.raises(FalscherSpieler):
-        runde.command_to_event(spieler[0].name, "beiseite legen")
+        runde.command_to_event(spieler[0].name, "beiseite")
 
     with pytest.raises(FalscherSpieler):
         runde.command_to_event(spieler[0].name, "weiter")
@@ -128,7 +128,7 @@ def test_falsche_aktion(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werf
     # Spieler 2 führt falsche Aktionen aus
     with pytest.raises(FalscheAktion):
         # keine Eins gewürfelt
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     with pytest.raises(FalscheAktion):
         # nur eine Sechs gewürfelt
@@ -171,7 +171,7 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
         runde.command_to_event(spieler[1].name, "wuerfeln")
 
     with pytest.raises(FalscherSpieler):
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     with pytest.raises(FalscherSpieler):
         runde.command_to_event(spieler[1].name, "umdrehen")
@@ -185,16 +185,16 @@ def test_einsen_beiseite_legen(
     # Spieler 2 würfelt zweimal zwei Einsen und legt diese nacheinander zur Seite
     wuerfel.werfen = lambda n: (1, 2, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
     # zweimal zur Seite legen derselben Eins ist nicht!
     with pytest.raises(FalscheAktion):
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 1
 
     wuerfel.werfen = lambda n: (1, 2,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 2
 
@@ -214,7 +214,7 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
 
     wuerfel.werfen = lambda n: (2, 1,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     wuerfel.werfen = lambda n: (3,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
@@ -233,7 +233,7 @@ def test_beiseite_legen_umdrehen(
     wuerfel.werfen = lambda n: (1, 6, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "umdrehen")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     # weiter ist nicht erlaubt
     with pytest.raises(SpielerMussWuerfeln):
