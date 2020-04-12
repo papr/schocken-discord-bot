@@ -85,6 +85,44 @@ async def test_lustwurf_deckel_mitte(member, hz1_bot):
     assert hz1_bot.is_in_msg("MENTION:spieler_2 verliert die Halbzeit.")
 
 
+async def test_lustwurf_deckel_spieler(member, hz1_bot):
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+
+    # spieler 3 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+
+    # spieler 2 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    # spieler 2 bekommt den letzten in der mitte
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!weiter"))
+    wuerfel.werfen = lambda n: (3, 3, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+
+    # spieler 1 ist raus, spieler 2 soll tief sein und spieler 1 nen lustwurf machen
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    hz1_bot.print_msg()
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    hz1_bot.print_msg()
+    wuerfel.werfen = lambda n: (3, 3, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    hz1_bot.print_msg()
+
+
 async def test_transition_to_finale(member, hz2_bot):
     await hz2_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
 
