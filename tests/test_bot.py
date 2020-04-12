@@ -76,7 +76,13 @@ async def test_lustwurf_deckel_mitte(member, hz1_bot):
     wuerfel.werfen = lambda n: (3, 2, 1)
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    msg = (
+        "Das war ein Lustwurf, MENTION:spieler_3. "
+        "Hier hast du einen EMOJI:kronkorken aus der Mitte."
+    )
+    assert hz1_bot.is_in_msg(msg)
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    assert hz1_bot.is_in_msg("MENTION:spieler_2 verliert die Halbzeit.")
 
 
 async def test_transition_to_finale(member, hz2_bot):
