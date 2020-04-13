@@ -416,9 +416,11 @@ class SchockenBot:
             # erster zug einer runde
             if is_runde_vorbei:
                 is_vorlegen = False
-                self._lustwurf_in_runde = 0
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
+
+            if is_vorlegen or is_neue_halbzeit:
+                self._lustwuerfe_runde = dict()
 
             if command in ["wuerfeln", "würfeln"]:
                 if is_lustwurf and not is_neue_halbzeit:
