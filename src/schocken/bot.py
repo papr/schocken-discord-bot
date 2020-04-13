@@ -375,12 +375,14 @@ class SchockenBot:
                         old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
                     except KeyError:
                         old_lustwuerfe = 0
+                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
                 if halbzeit.rdm.zahl_deckel_im_topf == 0:
                     if halbzeit_old.rdm.zahl_deckel_im_topf == 1 and is_lustwurf:
                         is_verteilen_vorbei = False
                     else:
                         is_verteilen_vorbei = True
-                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
+                else:
+                    is_verteilen_vorbei = False
                 alle_lustwuerfe = sum([w for w in self._lustwuerfe_runde.values()])
                 # deckel aus mitte verteilt
                 if spieler == halbzeit_old.spieler_liste[-1]:
