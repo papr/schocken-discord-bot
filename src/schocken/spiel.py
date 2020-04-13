@@ -334,6 +334,15 @@ class Halbzeit(pysm.StateMachine):
 
 
 class SchockenSpiel(pysm.StateMachine):
+    """
+    `!start` - startet eine neue Runde Schocken
+    `!beenden` - vorzeitiges Beenden einer Runde Schocken
+    `!einwerfen` - wirft in der Vorrunde einen Würfel ein
+    `!stechen` - sticht mit einem Würfel sofern zwei Spielende dieselbe Augenzahl eingeworfen haben
+    `!wuerfeln`/`würfeln` - würfelt bis zu drei Würfel; Anzahl der geworfenen Würfel hängt von zurückgelegten Einsen bzw. umgedrehten Sechsen ab
+    `!beiseite` - legt alle gewürfelten Einsen beiseite oder dreht zwei Sechsen zu einer Eins um und legt diese beiseite
+    """
+
     def __init__(self):
         super().__init__("SchockenSpiel")
         self.einwerfen = Einwerfen()
