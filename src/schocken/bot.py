@@ -48,7 +48,7 @@ class SchockenBot:
             "würfeln": "wuerfeln",
             "stechen": "stechen",
             "weiter": "weiter",
-            "beiseite": "beiseite legen",
+            "beiseite": "beiseite",
         }
 
         self.game_to_discord_cmd_dict = {
