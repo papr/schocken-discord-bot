@@ -63,5 +63,4 @@ class SpielerMussWuerfeln(ValueError):
 
 
 class LustWurf(RuntimeError):
-    def __init__(self, wurf):
-        self.wurf = wurf
+    pass

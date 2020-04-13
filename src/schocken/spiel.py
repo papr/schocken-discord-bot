@@ -237,10 +237,12 @@ class Halbzeit(pysm.StateMachine):
                 akt_spieler.augen = wuerfel.werfen(3)
                 akt_spieler.anzahl_wuerfe += 1
                 aus_der_hand = True
-            letzter_wurf = self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand)
-            if self.rdm.ist_lust_wurf(letzter_wurf):
-                self.rdm.strafdeckel_verteilen(letzter_wurf.spieler)
+
+            self.rdm.wurf_validieren(spieler_name)
+            if self.rdm.ist_lust_wurf(spieler_name):
+                self.rdm.strafdeckel_verteilen(akt_spieler)
                 lust_wurf_geworfen = True
+            self.rdm.wurf(spieler_name, akt_spieler.augen, aus_der_hand)
         else:
             # watch for semantics
             num_wurf = self.rdm.num_maximale_wuerfe
@@ -256,7 +258,7 @@ class Halbzeit(pysm.StateMachine):
             self.weiter()
 
         if lust_wurf_geworfen:
-            raise LustWurf(letzter_wurf)
+            raise LustWurf()
 
     def beiseite_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
