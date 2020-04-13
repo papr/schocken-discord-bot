@@ -522,11 +522,18 @@ class SchockenBot:
                 else:
                     outputs.append(self.gen_nach_zug_output(halbzeit, num_halbzeit))
 
-            elif command == "umdrehen":
-                outputs.append(self.gen_umdrehen_output(spieler))
-
             elif command == "beiseite":
-                outputs.append(self.gen_beiseite_output(spieler))
+                halbzeit_attr_name_alt = self._halbzeit_state_names[num_halbzeit]
+                halbzeit_alt = getattr(self.game_old, halbzeit_attr_name_alt)
+
+                spieler_liste_alt = halbzeit_alt.initiale_spieler
+                spieler_alt = self.spieler_by_name(msg_author_name, spieler_liste_alt)
+
+                augen_alt = spieler_alt.augen
+                num_einsen_neu = spieler.einsen
+
+                beiseite = self.gen_beiseite_output(spieler, augen_alt, num_einsen_neu)
+                outputs.append(beiseite)
 
             for out_str in outputs:
                 await self.print_to_channel(msg_channel, out_str)
@@ -568,17 +575,23 @@ class SchockenBot:
                 await self.print_to_channel(msg_channel, out_str)
             self.game_running = False
 
-    def gen_umdrehen_output(self, spieler):
-        sechs = self.emoji_by_name("wuerfel_6")
-        eins = self.emoji_by_name("wuerfel_1")
-        out_str = f"{self.mention_mit_deckel(spieler)} dreht "
-        out_str += f"{sechs} {sechs} zu {eins} um."
-        return out_str
+    def gen_beiseite_output(self, spieler, augen_vorher, num_einsen_nachher):
+        w1 = self.emoji_by_name("wuerfel_1")
+        w6 = self.emoji_by_name("wuerfel_6")
 
-    def gen_beiseite_output(self, spieler):
-        n_1 = spieler.einsen
-        einsen_emoji = " ".join([self.emoji_by_name("wuerfel_1") for _ in range(n_1)])
-        out_str = f"{self.mention_mit_deckel(spieler)} legt {einsen_emoji} beiseite "
+        if augen_vorher.count(6) >= 2:
+            sechsen_emoji = " ".join([w6] * 2)
+            umdrehen_out = f"dreht {sechsen_emoji} zu {w1} um und "
+        else:
+            umdrehen_out = ""
+
+        einsen_emoji = [w1] * num_einsen_nachher
+        einsen_emoji = " ".join(einsen_emoji)
+        beiseite_out = f"legt {einsen_emoji} beiseite. "
+
+        mention = self.mention_mit_deckel(spieler)
+        out_str = f"{mention} {umdrehen_out}{beiseite_out}"
+
         return out_str
 
     def gen_halbzeit_vorbei_output(self, halbzeit):

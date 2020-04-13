@@ -168,7 +168,11 @@ async def test_liegen_lassen(member, hz1_bot):
     wuerfel.werfen = lambda n: (6, 6, 1)
     await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
     await hz1_bot.parse_input(MockMessage(member[0], "!beiseite"))
-    msg = "spieler_1 (0 EMOJI:kronkorken) legt EMOJI:wuerfel_1 EMOJI:wuerfel_1 beiseite"
+    msg = (
+        "spieler_1 (0 EMOJI:kronkorken) "
+        "dreht EMOJI:wuerfel_6 EMOJI:wuerfel_6 zu EMOJI:wuerfel_1 um und "
+        "legt EMOJI:wuerfel_1 EMOJI:wuerfel_1 beiseite."
+    )
     assert hz1_bot.is_in_msg(msg)
 
     wuerfel.werfen = lambda n: (3,)
