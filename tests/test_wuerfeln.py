@@ -283,10 +283,11 @@ def test_uebergang_erste_halbzeit_zweite_halbzeit(
     # Spielerreihenfolge ist nun Spieler 2, Spieler 3, Spieler 1
     assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[2].name
     assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[0].name
-    # Alle Spieler haben wieder Null Deckel
-    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
+    # Alle Spieler haben wieder Null Deckel und Null Wuerfe
+
+    for s in runde.state.spieler_liste:
+        assert s.deckel == 0
+        assert s.anzahl_wuerfe == 0
 
 
 @pytest.fixture
