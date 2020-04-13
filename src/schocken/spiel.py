@@ -182,6 +182,7 @@ class Halbzeit(pysm.StateMachine):
         self._spielerinnen_unique = set(s.name for s in spieler_liste)
         for s in spieler_liste:
             s.deckel = 0
+            s.anzahl_wuerfe = 0
         self.spielzeit_status = SpielzeitStatus(15, spieler_liste)
         self.rdm = RundenDeckelManagement(self.spielzeit_status)
 
