@@ -312,8 +312,8 @@ class Halbzeit(pysm.StateMachine):
             if self.beendet():
                 self.verlierende = self.spielzeit_status.spieler[0]
                 self.root_machine.dispatch(pysm.Event(events.FERTIG_HALBZEIT))
-                return
-            self.rdm = RundenDeckelManagement(self.spielzeit_status)
+            else:
+                self.rdm = RundenDeckelManagement(self.spielzeit_status)
         # naechsten spieler zueruecksetzen
         self._spieler_zuruecksetzen(self.aktiver_spieler)
 
