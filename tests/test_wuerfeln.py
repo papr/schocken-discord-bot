@@ -30,7 +30,7 @@ def test_eins_beiseite_dann_weiter(spieler):
     wuerfel.werfen = lambda n: (2, 2, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     # spieler1 dreht um, aber entscheidet sich dann doch dagegen
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
     spieler1 = next(
         s for s in runde.halbzeit_erste.spieler_liste if s.name == spieler[1].name
     )
@@ -110,12 +110,12 @@ def test_falscher_spieler(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
         runde.command_to_event(spieler[0].name, "wuerfeln")
 
     with pytest.raises(FalscherSpieler):
-        runde.command_to_event(spieler[0].name, "beiseite legen")
+        runde.command_to_event(spieler[0].name, "beiseite")
 
     with pytest.raises(FalscherSpieler):
         runde.command_to_event(spieler[0].name, "weiter")
 
-    with pytest.raises(FalscherSpieler):
+    with pytest.raises(FalscheAktion):  # umdrehen gibt es nicht mehr
         runde.command_to_event(spieler[0].name, "umdrehen")
 
 
@@ -128,7 +128,7 @@ def test_falsche_aktion(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werf
     # Spieler 2 führt falsche Aktionen aus
     with pytest.raises(FalscheAktion):
         # keine Eins gewürfelt
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     with pytest.raises(FalscheAktion):
         # nur eine Sechs gewürfelt
@@ -141,11 +141,11 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
     # Spieler 2 würfelt zweimal zwei Sechsen und dreht diese um
     wuerfel.werfen = lambda n: (3, 6, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "umdrehen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     # Mehrmaliges umdrehen derselben Sechsen ist nicht erlaubt
     with pytest.raises(FalscheAktion):
-        runde.command_to_event(spieler[1].name, "umdrehen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 1
 
@@ -154,7 +154,7 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
 
     assert runde.halbzeit_erste.spieler_liste[0].augen == (6, 6, 1)
 
-    runde.command_to_event(spieler[1].name, "umdrehen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 2
 
@@ -171,9 +171,9 @@ def test_sechsen_umdrehen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
         runde.command_to_event(spieler[1].name, "wuerfeln")
 
     with pytest.raises(FalscherSpieler):
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
-    with pytest.raises(FalscherSpieler):
+    with pytest.raises(FalscheAktion):  # umdrehen gibt es nicht mehr
         runde.command_to_event(spieler[1].name, "umdrehen")
 
 
@@ -185,16 +185,16 @@ def test_einsen_beiseite_legen(
     # Spieler 2 würfelt zweimal zwei Einsen und legt diese nacheinander zur Seite
     wuerfel.werfen = lambda n: (1, 2, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
     # zweimal zur Seite legen derselben Eins ist nicht!
     with pytest.raises(FalscheAktion):
-        runde.command_to_event(spieler[1].name, "beiseite legen")
+        runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 1
 
     wuerfel.werfen = lambda n: (1, 2,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     assert runde.halbzeit_erste.spieler_liste[0].einsen == 2
 
@@ -210,11 +210,11 @@ def test_einsen_und_sechsen(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_
     # Kombination aus Einsen beiseite legen und Sechsen umdrehen
     wuerfel.werfen = lambda n: (5, 6, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "umdrehen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     wuerfel.werfen = lambda n: (2, 1,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     wuerfel.werfen = lambda n: (3,)
     runde.command_to_event(spieler[1].name, "wuerfeln")
@@ -232,8 +232,7 @@ def test_beiseite_legen_umdrehen(
     # Kombination aus Einsen beiseite legen und Sechsen umdrehen
     wuerfel.werfen = lambda n: (1, 6, 6)
     runde.command_to_event(spieler[1].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "umdrehen")
-    runde.command_to_event(spieler[1].name, "beiseite legen")
+    runde.command_to_event(spieler[1].name, "beiseite")
 
     # weiter ist nicht erlaubt
     with pytest.raises(SpielerMussWuerfeln):
@@ -403,3 +402,45 @@ def test_lustwurf(spieler, erste_halbzeit_beendet):
         runde.command_to_event(spieler[1].name, "wuerfeln")
 
     assert runde.halbzeit_zweite.spieler_liste[2].deckel == 1
+
+
+def test_lustwurf_nochmal(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 1 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[0].name, "weiter")
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    # spieler 3 bekommt 7
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 3 bekommt den letzten aus der mitte, spieler 2 ist raus.
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "weiter")
+    wuerfel.werfen = lambda n: (5, 5, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    assert len(runde.state.spieler_liste) == 2
+
+    # jetzt ist spieler 3 dran, würfelt 221 im dritten.
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler[2].name, "wuerfeln")
+    # spieler 1 würfelt ne jule und müsste sie im esten liegen lassen, weil er 7 deckel
+    # hat
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    runde.command_to_event(spieler[0].name, "wuerfeln")
+
+    # Das hier müsste jetzt ein lustwurf sein:
+    # Es wird ein lustwurf geraised, wenn die folgende Zeile auskommentiert ist
+    wuerfel.werfen = lambda n: (3, 3, 1)
+    with pytest.raises(LustWurf):
+        runde.command_to_event(spieler[0].name, "wuerfeln")
