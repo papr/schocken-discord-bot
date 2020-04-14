@@ -41,8 +41,7 @@ def run_bot():
         except AttributeError:
             msg_text = message.content
             author = message.author.mention
-            ch = client.get_channel(694603857950539887)  # errorland
-            await ch.send(
+            print(
                 f"Dropping message because bot was not initialized yet.\n"
                 f"{author} said:\n"
                 f"> {msg_text}"
