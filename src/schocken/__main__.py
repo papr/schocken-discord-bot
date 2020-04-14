@@ -21,13 +21,13 @@ def run_bot():
     @client.event
     async def on_ready():
         nonlocal is_initial_start
+        client.bot = SchockenBot(client)
         # check if server is correct:
         for guild in client.guilds:
             if guild.name != client.bot.valid_guild_name:
                 raise FalscherServer("Dieser Bot darf nur ins Café A")
 
         if is_initial_start:
-            client.bot = SchockenBot(client)
             ch = client.get_channel(690929770355097610)  # schocktresen
             await ch.send(f"Schocken (v{__version__}) kann jetzt losgehen. :muscle:")
             print("Success")
