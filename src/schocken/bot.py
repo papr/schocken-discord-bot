@@ -363,20 +363,28 @@ class SchockenBot:
             is_zug_vorbei = max_wuerfe == 1 or spieler != halbzeit.aktiver_spieler
             # halbzeit vorbei > runde vorbei > zug vorbei
             if not is_aus_einwerfen:
-                if is_lustwurf:
-                    try:
-                        old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
-                    except KeyError:
-                        old_lustwuerfe = 0
-                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
                 halbzeit_old = getattr(
                     self.game_old, self._halbzeit_state_names[num_halbzeit_old]
                 )
                 spieler_old = self.spieler_by_name(
                     msg_author_name, halbzeit_old.spieler_liste
                 )
+
+                if is_lustwurf:
+                    try:
+                        old_lustwuerfe = self._lustwuerfe_runde[spieler.name]
+                    except KeyError:
+                        old_lustwuerfe = 0
+                    self._lustwuerfe_runde.update({spieler.name: old_lustwuerfe + 1})
+                if halbzeit.rdm.zahl_deckel_im_topf == 0:
+                    if halbzeit_old.rdm.zahl_deckel_im_topf == 1 and is_lustwurf:
+                        is_verteilen_vorbei = False
+                    else:
+                        is_verteilen_vorbei = True
+                else:
+                    is_verteilen_vorbei = False
+                alle_lustwuerfe = sum([w for w in self._lustwuerfe_runde.values()])
                 # deckel aus mitte verteilt
-                is_verteilen_vorbei = halbzeit.rdm.zahl_deckel_im_topf == 0
                 if spieler == halbzeit_old.spieler_liste[-1]:
                     if is_verteilen_vorbei:
                         spieler_tief = halbzeit.spieler_liste[0]
@@ -390,7 +398,7 @@ class SchockenBot:
                         try:
                             is_runde_vorbei = (
                                 deckel_vorher - deckel_neu
-                            ) != self._lustwuerfe_runde[spieler.name]
+                            ) != alle_lustwuerfe
                         except KeyError:
                             is_runde_vorbei = deckel_vorher != deckel_neu
                     else:
@@ -408,11 +416,13 @@ class SchockenBot:
             # erster zug einer runde
             if is_runde_vorbei:
                 is_vorlegen = False
-                self._lustwurf_in_runde = 0
             else:
                 is_vorlegen = spieler == halbzeit.spieler_liste[0]
 
-            if command == "wuerfeln":
+            if is_vorlegen or is_neue_halbzeit:
+                self._lustwuerfe_runde = dict()
+
+            if command in ["wuerfeln", "würfeln"]:
                 if is_lustwurf and not is_neue_halbzeit:
                     mem = self.name_to_member(spieler.name)
                     abgeber = None
@@ -642,10 +652,10 @@ class SchockenBot:
 
         hoch_1 = hoch.spieler.einsen
         tief_1 = tief.spieler.einsen
-        out_str += f"High: {self.mention_mit_deckel(hoch.spieler)} "
+        out_str += f"Hoch: {self.mention_mit_deckel(hoch.spieler)} "
         out_str += f"mit: {self.wurf_to_emoji(hoch.spieler.augen,einsen=hoch_1)} "
         out_str += f"im {im_wievielten[hoch.wurf_anzahl]}. \n"
-        out_str += f"Low: {self.mention_mit_deckel(tief.spieler)} "
+        out_str += f"Tief: {self.mention_mit_deckel(tief.spieler)} "
         out_str += f"mit: {self.wurf_to_emoji(tief.spieler.augen,einsen=tief_1)} "
         out_str += f"im {im_wievielten[tief.wurf_anzahl]}. \n"
         out_str += f"Als nächstes ist {self.mention_mit_deckel(naechster)} "

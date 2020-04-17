@@ -21,13 +21,14 @@ def run_bot():
     @client.event
     async def on_ready():
         nonlocal is_initial_start
-        client.bot = SchockenBot(client)
-        # check if server is correct:
-        for guild in client.guilds:
-            if guild.name != client.bot.valid_guild_name:
-                raise FalscherServer("Dieser Bot darf nur ins Café A")
 
         if is_initial_start:
+            client.bot = SchockenBot(client)
+            # check if server is correct:
+            for guild in client.guilds:
+                if guild.name != client.bot.valid_guild_name:
+                    raise FalscherServer("Dieser Bot darf nur ins Café A")
+
             ch = client.get_channel(690929770355097610)  # schocktresen
             await ch.send(f"Schocken (v{__version__}) kann jetzt losgehen. :muscle:")
             print("Success")
@@ -41,8 +42,7 @@ def run_bot():
         except AttributeError:
             msg_text = message.content
             author = message.author.mention
-            ch = client.get_channel(694603857950539887)  # errorland
-            await ch.send(
+            print(
                 f"Dropping message because bot was not initialized yet.\n"
                 f"{author} said:\n"
                 f"> {msg_text}"

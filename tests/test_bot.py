@@ -85,6 +85,32 @@ async def test_lustwurf_deckel_mitte(member, hz1_bot):
     assert hz1_bot.is_in_msg("MENTION:spieler_2 verliert die Halbzeit.")
 
 
+async def test_lustwurf_runde_vorbei(member, hz1_bot):
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    # spieler 3 hat 7 deckel, fängt an
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    wuerfel.werfen = lambda n: (2, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    # spieler 2 hat 7 deckel, einer noch in der mitte
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
+
+    await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[2], "!weiter"))
+    wuerfel.werfen = lambda n: (4, 2, 1)
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
+    hz1_bot.print_msg()
+
 async def test_lustwurf_deckel_spieler(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
     await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
@@ -114,13 +140,10 @@ async def test_lustwurf_deckel_spieler(member, hz1_bot):
     await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
     await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
     await hz1_bot.parse_input(MockMessage(member[1], "!wuerfeln"))
-    hz1_bot.print_msg()
     wuerfel.werfen = lambda n: (4, 2, 1)
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    hz1_bot.print_msg()
     wuerfel.werfen = lambda n: (3, 3, 1)
     await hz1_bot.parse_input(MockMessage(member[2], "!wuerfeln"))
-    hz1_bot.print_msg()
 
 
 async def test_transition_to_finale(member, hz2_bot):

@@ -283,10 +283,11 @@ def test_uebergang_erste_halbzeit_zweite_halbzeit(
     # Spielerreihenfolge ist nun Spieler 2, Spieler 3, Spieler 1
     assert runde.halbzeit_zweite.spieler_liste[1].name == spieler[2].name
     assert runde.halbzeit_zweite.spieler_liste[2].name == spieler[0].name
-    # Alle Spieler haben wieder Null Deckel
-    assert runde.halbzeit_zweite.spieler_liste[0].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[1].deckel == 0
-    assert runde.halbzeit_zweite.spieler_liste[2].deckel == 0
+    # Alle Spieler haben wieder Null Deckel und Null Wuerfe
+
+    for s in runde.state.spieler_liste:
+        assert s.deckel == 0
+        assert s.anzahl_wuerfe == 0
 
 
 @pytest.fixture
@@ -409,38 +410,54 @@ def test_lustwurf_nochmal(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
     wuerfel.werfen = lambda n: (4, 2, 1)
     runde.command_to_event(spieler[1].name, "wuerfeln")
     runde.command_to_event(spieler[1].name, "weiter")
-    runde.command_to_event(spieler[2].name, "wuerfeln")
+
+    spieler_2, spieler_3, spieler_1 = runde.state.initiale_spieler
+    assert spieler_1.name[-1] == "1"
+    assert spieler_2.name[-1] == "2"
+    assert spieler_3.name[-1] == "3"
+
+    runde.command_to_event(spieler_3.name, "wuerfeln")
     # spieler 1 bekommt 7
     wuerfel.werfen = lambda n: (2, 2, 1)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "wuerfeln")
+    assert spieler_1.deckel == 7
+    assert spieler_2.deckel == 0
+    assert spieler_3.deckel == 0
 
     wuerfel.werfen = lambda n: (4, 2, 1)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
-    runde.command_to_event(spieler[0].name, "weiter")
-    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "weiter")
+    runde.command_to_event(spieler_2.name, "wuerfeln")
     # spieler 3 bekommt 7
     wuerfel.werfen = lambda n: (2, 2, 1)
-    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "wuerfeln")
+    assert spieler_1.deckel == 7
+    assert spieler_2.deckel == 0
+    assert spieler_3.deckel == 7
+
     # spieler 3 bekommt den letzten aus der mitte, spieler 2 ist raus.
-    runde.command_to_event(spieler[2].name, "wuerfeln")
-    runde.command_to_event(spieler[2].name, "weiter")
+    runde.command_to_event(spieler_3.name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "weiter")
     wuerfel.werfen = lambda n: (5, 5, 1)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
-    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "wuerfeln")
+    runde.command_to_event(spieler_2.name, "wuerfeln")
+    assert spieler_1.deckel == 7
+    assert spieler_2.deckel == 0
+    assert spieler_3.deckel == 8
     assert len(runde.state.spieler_liste) == 2
 
     # jetzt ist spieler 3 dran, würfelt 221 im dritten.
     wuerfel.werfen = lambda n: (2, 2, 1)
-    runde.command_to_event(spieler[2].name, "wuerfeln")
-    runde.command_to_event(spieler[2].name, "wuerfeln")
-    runde.command_to_event(spieler[2].name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "wuerfeln")
     # spieler 1 würfelt ne jule und müsste sie im esten liegen lassen, weil er 7 deckel
     # hat
     wuerfel.werfen = lambda n: (4, 2, 1)
-    runde.command_to_event(spieler[0].name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "wuerfeln")
 
     # Das hier müsste jetzt ein lustwurf sein:
     # Es wird ein lustwurf geraised, wenn die folgende Zeile auskommentiert ist
     wuerfel.werfen = lambda n: (3, 3, 1)
     with pytest.raises(LustWurf):
-        runde.command_to_event(spieler[0].name, "wuerfeln")
+        runde.command_to_event(spieler_1.name, "wuerfeln")

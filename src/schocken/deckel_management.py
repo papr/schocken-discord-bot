@@ -108,12 +108,7 @@ class RundenDeckelManagement:
     def _noch_im_spiel(self, spielerin):
         return self._zahl_deckel_im_topf or spielerin.deckel
 
-    def wurf(
-        self,
-        spieler_name: str,
-        augen: T.Tuple[int, int, int],
-        aus_der_hand: bool = True,
-    ) -> WurfEvaluierung:
+    def wurf_validieren(self, spieler_name):
         try:
             spieler_idx = self._spieler_namen.index(spieler_name)
         except ValueError as err:
@@ -124,10 +119,18 @@ class RundenDeckelManagement:
             raise FalscherSpieler(
                 f"{spieler_name} hat geworfen, {aktueller_spieler} war aber dran!"
             )
-
         bestehende_wuerfe = self._wuerfe[spieler_name]
         if len(bestehende_wuerfe) >= self.num_maximale_wuerfe:
             raise ZuOftGeworfen()
+
+    def wurf(
+        self,
+        spieler_name: str,
+        augen: T.Tuple[int, int, int],
+        aus_der_hand: bool = True,
+    ) -> WurfEvaluierung:
+        spieler_idx = self._spieler_namen.index(spieler_name)
+        bestehende_wuerfe = self._wuerfe[spieler_name]
 
         wurf = welcher_wurf(augen, aus_der_hand)
         bestehende_wuerfe.append(wurf)
@@ -140,12 +143,18 @@ class RundenDeckelManagement:
             wurf=wurf,
         )
 
-    def ist_lust_wurf(self, wurf: WurfEvaluierung):
-        if wurf.wurf_anzahl <= 1 or wurf.reihenfolge == 0:
+    def ist_lust_wurf(self, spieler_name):
+        spieler_idx = self._spieler_namen.index(spieler_name)
+        erster_spieler_der_runde = spieler_idx == 0
+
+        bestehende_wuerfe = self._wuerfe[spieler_name]
+        hat_noch_nicht_geworfen = len(bestehende_wuerfe) < 1
+        if erster_spieler_der_runde or hat_noch_nicht_geworfen:
             return False
+
         simulation = deepcopy(self)
         verteilung = simulation.deckel_verteilen_restliche_spieler()
-        waere_raus = wurf.spieler not in verteilung.spieler
+        waere_raus = self._spieler[spieler_idx] not in verteilung.spieler
         return waere_raus
 
     def strafdeckel_verteilen(self, bestrafte: Spieler):
