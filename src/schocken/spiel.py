@@ -67,7 +67,7 @@ class Einwerfen(pysm.StateMachine):
 
         spieler.augen = einwurf
         self.spieler_liste.append(spieler)
-
+        # game log
         self.root_machine.game_log.info(
             "{} wirft mit einer {} ein.".format(spieler.name, spieler.augen)
         )
@@ -95,7 +95,7 @@ class Einwerfen(pysm.StateMachine):
         stich = wuerfel.werfen(1)
         stecher = [sp for sp in self.spieler_liste if sp.name == spieler_name][0]
         stecher.augen = stich
-
+        # game log
         self.root_machine.game_log.info(
             "{} sticht mit einer {}".format(stecher.name, stecher.augen)
         )
