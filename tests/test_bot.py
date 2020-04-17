@@ -111,6 +111,7 @@ async def test_lustwurf_runde_vorbei(member, hz1_bot):
     await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
     hz1_bot.print_msg()
 
+
 async def test_lustwurf_deckel_spieler(member, hz1_bot):
     wuerfel.werfen = lambda n: (4, 2, 1)
     await hz1_bot.parse_input(MockMessage(member[0], "!wuerfeln"))
