@@ -272,6 +272,9 @@ class Halbzeit(pysm.StateMachine):
                 f"{akt_spieler.name} ist an der Reihe!"
             )
 
+        if akt_spieler.anzahl_wuerfe == 0:
+            raise NochNichtGeworfen("Du musst erst würfeln!")
+
         hat_sechsen_zum_umdrehen = akt_spieler.augen.count(6) >= 2
         hat_einsen_zum_beiseite_legen = akt_spieler.augen.count(1) >= 1
         kann_beseite_legen = hat_sechsen_zum_umdrehen or hat_einsen_zum_beiseite_legen

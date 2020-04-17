@@ -31,9 +31,7 @@ def test_eins_beiseite_dann_weiter(spieler):
     runde.command_to_event(spieler[1].name, "wuerfeln")
     # spieler1 dreht um, aber entscheidet sich dann doch dagegen
     runde.command_to_event(spieler[1].name, "beiseite")
-    spieler1 = next(
-        s for s in runde.state.spieler_liste if s.name == spieler[1].name
-    )
+    spieler1 = next(s for s in runde.state.spieler_liste if s.name == spieler[1].name)
     # spieler1 sollte eine eins haben
     assert spieler1.einsen == 1
     # der Befehl !weiter ist nun nicht erlaubt
@@ -461,3 +459,31 @@ def test_lustwurf_nochmal(spieler, drei_spieler_eingeworfen_spieler_zwei_muss_we
     wuerfel.werfen = lambda n: (3, 3, 1)
     with pytest.raises(LustWurf):
         runde.command_to_event(spieler_1.name, "wuerfeln")
+
+
+def test_beiseite_legen_in_nächste_runde_ohne_wuerfeln(
+    spieler, drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+):
+    runde = drei_spieler_eingeworfen_spieler_zwei_muss_werfen
+    wuerfel.werfen = lambda n: (3, 2, 1)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "beiseite")
+    wuerfel.werfen = lambda n: (5, 2,)
+    runde.command_to_event(spieler[1].name, "wuerfeln")
+    runde.command_to_event(spieler[1].name, "weiter")
+
+    spieler_2, spieler_3, spieler_1 = runde.state.initiale_spieler
+    assert spieler_1.name[-1] == "1"
+    assert spieler_2.name[-1] == "2"
+    assert spieler_3.name[-1] == "3"
+
+    wuerfel.werfen = lambda n: (3, 2, 1)
+    runde.command_to_event(spieler_3.name, "wuerfeln")
+    runde.command_to_event(spieler_3.name, "weiter")
+
+    wuerfel.werfen = lambda n: (3, 2, 1)
+    runde.command_to_event(spieler_1.name, "wuerfeln")
+    runde.command_to_event(spieler_1.name, "weiter")
+
+    with pytest.raises(NochNichtGeworfen):
+        runde.command_to_event(spieler_2.name, "beiseite")
