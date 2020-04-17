@@ -159,7 +159,7 @@ class Halbzeit(pysm.StateMachine):
         wuerfeln.handlers = {
             "wuerfeln": self.wuerfeln_handler,
             "beiseite": self.beiseite_handler,
-            "weiter": self.naechster_spieler_handler,
+            "weiter": self.weiter_handler,
         }
         self.add_state(wuerfeln, initial=True)
 
@@ -290,7 +290,7 @@ class Halbzeit(pysm.StateMachine):
                 f"Du hast keine Einsen gewürfelt die du zur Seite legen kannst!"
             )
 
-    def naechster_spieler_handler(self, state, event):
+    def weiter_handler(self, state, event):
         akt_spieler = self.aktiver_spieler
         spieler_name = event.cargo["spieler_name"]
 
